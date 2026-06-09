@@ -1,17 +1,19 @@
 {
   "name": "Livraisanté",
   "short_name": "Livraisanté",
-  "description": "Livraison de médicaments et conseil pharmaceutique à domicile.",
-  "start_url": "/",
+  "description": "Livraison de médicaments et conseil pharmaceutique à domicile. Compléments alimentaires, dispositifs médicaux, ordonnances.",
+  "start_url": "/?utm_source=pwa",
   "id": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#0D0E09",
   "theme_color": "#0D0E09",
   "lang": "fr",
   "dir": "ltr",
   "categories": ["health", "medical", "lifestyle"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "icons": [
     {"src": "icons/icon-192.png",          "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icons/icon-512.png",          "sizes": "512x512", "type": "image/png", "purpose": "any"},
@@ -50,6 +52,19 @@
       "label": "Tableau de bord pharmacien Livraisanté"
     }
   ],
+  "share_target": {
+    "action": "/?share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
   "prefer_related_applications": false,
   "related_applications": []
 }
