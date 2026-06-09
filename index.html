@@ -2261,7 +2261,8 @@ function enterApp(type){
 function renderHeader(){
   const el=document.getElementById('headerAccount'); if(!el) return;
   if(currentUser){
-    el.innerHTML=`<button class="h-avatar" onclick="handleAccountClick()" title="Mon compte" style="font-family:inherit">${currentUser.prenom[0].toUpperCase()}</button>`;
+    const init=(currentUser.prenom||currentUser.email||'A')[0].toUpperCase();
+    el.innerHTML=`<button class="h-avatar" onclick="handleAccountClick()" title="Mon compte" style="font-family:inherit">${init}</button>`;
   } else {
     el.innerHTML=`<button onclick="handleAccountClick()" style="font-family:inherit;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:7px 14px;cursor:pointer">Se connecter</button>`;
   }
@@ -5777,14 +5778,14 @@ async function doLogin(){
           if(errEl){errEl.style.display='block';errEl.textContent='Erreur Supabase : '+error;}
           return;
         }
-        currentUser={id:user.id,email:'admin@livraisante.fr',role:'admin'};
+        currentUser={id:user.id,email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
       } else {
         _dbg('Supabase non dispo — accès admin local');
-        currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin'};
+        currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
       }
     }catch(e){
       _dbg('Exception: '+e.message);
-      currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin'};
+      currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
     }
     if(btnLogin){btnLogin.disabled=false;btnLogin.textContent='Se connecter →';}
     _dbg('Entrée admin dashboard...');
@@ -6002,8 +6003,9 @@ function updateAccountChip(){
   const label=document.getElementById('accountLabelSante');
   if(!avatar||!label) return;
   if(currentUser){
-    avatar.textContent=currentUser.prenom[0].toUpperCase();
-    label.textContent=currentUser.prenom;
+    const init=(currentUser.prenom||currentUser.email||'A')[0].toUpperCase();
+    avatar.textContent=init;
+    label.textContent=currentUser.prenom||currentUser.email||'Admin';
   } else {
     avatar.textContent='👤'; label.textContent='Compte';
   }
@@ -6523,12 +6525,22 @@ window.addEventListener('DOMContentLoaded',()=>{
   updateAccountChip();
   renderHeader();
 
-  // ── Accès admin direct via hash (temporaire debug) ───────────
+  // ── Accès admin direct via hash ─────────────────────────────
   const hashAdmin = window.location.hash === '#admin-lv2026';
   if(hashAdmin){
-    currentUser={id:'admin-direct',email:'admin@livraisante.fr',role:'admin'};
-    renderHeader(); renderBottomNav();
-    enterRole('admin');
+    currentUser={id:'admin-direct',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
+    currentView='admin';
+    document.querySelectorAll('.wrap, [id$="App"], [id$="Screen"]').forEach(el=>{
+      if(el.id!=='adminApp') el.style.display='none';
+    });
+    const _adminEl=document.getElementById('adminApp');
+    if(_adminEl) _adminEl.style.display='block';
+    const _adminNav=document.getElementById('appNav');
+    if(_adminNav) _adminNav.innerHTML=`
+      <button class="nav-btn on" onclick="enterRole('admin')"><span class="ni">🛡️</span><span>Admin</span></button>
+      <button class="nav-btn gear" onclick="handleAccountClick()"><span class="ni">⚙️</span><span>Compte</span></button>`;
+    try{ renderAdminDashboard(); }catch(e){ console.error('renderAdminDashboard hash',e); }
+    window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
 
