@@ -3677,22 +3677,61 @@ function renderCart(){
       </div>`).join('')}
     </div>
     ${feeLine}
-    <div class="assoc-section">
+    <div class="assoc-section" id="donationSection">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:${donationEnabled?'10px':'0'}">
         <input type="checkbox" ${donationEnabled?'checked':''} onchange="toggleDonation()" style="width:17px;height:17px;accent-color:var(--pharma)">
         Activer l'arrondi solidaire (${donation>0?'+€'+donation.toFixed(2):'+€0 ce mois'})
       </label>
-      ${donationEnabled?`<div class="donation-line">
-        <div><span style="font-size:18px">${assoc.icon}</span> <span style="font-size:12.5px">Ce mois de ${monthName}, <b>Livraisanté</b> reverse votre arrondi à<br><b>${assoc.name}</b></span></div>
-        <span class="amt">+€${donation.toFixed(2)}</span>
+      ${donationEnabled?`
+      <div id="donationTargetSection">
+        <div class="donation-line" style="flex-direction:column;align-items:flex-start;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+            <div><span style="font-size:18px">${assoc.icon}</span> <span style="font-size:12.5px">Ce mois : <b>${assoc.name}</b></span></div>
+            <span class="amt">+€${donation.toFixed(2)}</span>
+          </div>
+          <div id="clubDonationOptions" style="width:100%;display:none"><!-- rempli async --></div>
+        </div>
       </div>`:''}
     </div>
     <div class="cart-total-row">
       <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':'Livraison incluse'}${donationEnabled?' · Don solidaire inclus':''}</div>
-      ${deliveryMode==='livraison'&&!hasSub&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
+      ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
       <div class="cart-grand-total">€${total.toFixed(2)}</div>
-    </div>`
+    </div>`;
+  // Charger les options club en asynchrone après le rendu
+  if(donationEnabled) renderDonationClubOptions();
 }
+async function renderDonationClubOptions(){
+  if(!donationEnabled) return;
+  const el=document.getElementById('clubDonationOptions'); if(!el) return;
+  const club=await getPatientClub();
+  if(!club){el.style.display='none';return;}
+  el.style.display='block';
+  const assoc=getCurrentAssoc();
+  const donation=donationAmount(cartTotal(deliveryMode));
+  const half=(donation/2).toFixed(2);
+  el.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:var(--pharma);margin-bottom:8px">🏆 Vous êtes licencié(e) à <b>${esc(club.nom)}</b> — choisissez le bénéficiaire :</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='assoc'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='assoc'?'#f5f3ff':'var(--paper-2)'}">
+        <input type="radio" name="donTarget" value="assoc" ${donationTarget==='assoc'?'checked':''} onchange="setDonationTarget('assoc')" style="accent-color:var(--pharma)">
+        <span>${assoc.icon} ${esc(assoc.name)} <span style="font-size:11px;color:var(--ink-soft)">(+€${donation.toFixed(2)})</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='club'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='club'?'#f5f3ff':'var(--paper-2)'}">
+        <input type="radio" name="donTarget" value="club" ${donationTarget==='club'?'checked':''} onchange="setDonationTarget('club')" style="accent-color:var(--pharma)">
+        <span>🏆 ${esc(club.nom)} <span style="font-size:11px;color:var(--ink-soft)">(+€${donation.toFixed(2)})</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='both'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='both'?'#f5f3ff':'var(--paper-2)'}">
+        <input type="radio" name="donTarget" value="both" ${donationTarget==='both'?'checked':''} onchange="setDonationTarget('both')" style="accent-color:var(--pharma)">
+        <span>🤝 Les deux · 50/50 <span style="font-size:11px;color:var(--ink-soft)">(${assoc.icon} €${half} + 🏆 €${half})</span></span>
+      </label>
+    </div>`;
+  // Alimenter la cagnotte du club si target = club ou both
+  if(club?.id && (donationTarget==='club'||donationTarget==='both')){
+    // Juste un aperçu — l'enregistrement réel se fait à la validation de commande
+  }
+}
+
 function removeFromCartAndRefresh(key){
   removeFromCart(key);
   Object.entries(PROD_REG).forEach(([pKey,p])=>{
@@ -3756,6 +3795,10 @@ const HEALTH_ASSOCIATIONS=[
   {id:'aides',name:'Aides (VIH / Hépatites)',icon:'🌈',color:'#E8590C',url:'https://www.aides.org'},
 ];
 let donationEnabled=true; // opt-in patient (activé par défaut)
+// 'assoc' = association du mois uniquement
+// 'club'  = club du patient uniquement (licencié)
+// 'both'  = 50% assoc + 50% club (licencié)
+let donationTarget='assoc';
 
 /* Association mensuelle tournante — décision de Livraisanté (société mère) */
 function getCurrentAssoc(){
@@ -3773,6 +3816,16 @@ function cartTotalFull(mode){
   return parseFloat((raw+donationAmount(raw)).toFixed(2));
 }
 function toggleDonation(){ donationEnabled=!donationEnabled; renderCart(); }
+function setDonationTarget(t){ donationTarget=t; renderCart(); }
+async function getPatientClub(){
+  // Vérifie si le patient courant est licencié dans un club
+  if(!currentUser?.id) return null;
+  const sb=window.LS_SB?.getSB(); if(!sb) return null;
+  try{
+    const {data}=await sb.from('club_members').select('clubs(id,nom)').eq('user_id',currentUser.id).eq('validated',true).single();
+    return data?.clubs||null;
+  }catch(e){return null;}
+}
 
 /* ---- Vue combinée multi-symptômes ---- */
 /* ═══════════════════════════════════════════════════════════
@@ -4236,8 +4289,6 @@ function setMode(m){
   const details=document.getElementById('modeDetails');
   const addrRow=document.getElementById('addrRow');
   if(!details) return;
-  const acc=currentUser?getAccounts()[currentUser.email]:null;
-  const hasSub=acc?.patientSub?.active;
   const fee=getDeliveryFee();
   const tier=getDeliveryTier();
 
@@ -4246,24 +4297,23 @@ function setMode(m){
     if(addrRow) addrRow.style.display='none';
   } else {
     // Grille tarifaire colorée
-    const subBadge=hasSub?`<span style="background:#16A34A;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:30px;margin-left:8px">✓ ABONNÉ · GRATUIT</span>`:'';
     const tiersHtml=DELIVERY_TIERS.map(t=>{
       const isCurrent=tier&&t.maxKm===tier.maxKm;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:${isCurrent&&!hasSub?t.color+'18':'transparent'};border:${isCurrent&&!hasSub?`1.5px solid ${t.color}40`:'1px solid transparent'}">
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:${isCurrent?t.color+'18':'transparent'};border:${isCurrent?`1.5px solid ${t.color}40`:'1px solid transparent'}">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:10px;height:10px;border-radius:50%;background:${t.color};flex:0 0 auto"></div>
           <span style="font-size:13px;font-weight:600">${t.label}</span>
           <span style="font-size:11px;color:var(--ink-soft)">${t.desc}</span>
         </div>
-        <span style="font-weight:800;font-size:14px;color:${hasSub?'var(--ok)':t.color}">${hasSub?'Gratuit ✓':'€'+t.price.toFixed(2)}</span>
+        <span style="font-weight:800;font-size:14px;color:${t.color}">€${t.price.toFixed(2)}</span>
       </div>`;
     }).join('');
 
     details.innerHTML=`<div style="background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-weight:800;font-size:13.5px;margin-bottom:10px;display:flex;align-items:center">🛵 Frais de livraison${subBadge}</div>
+      <div style="font-weight:800;font-size:13.5px;margin-bottom:10px;display:flex;align-items:center">🛵 Frais de livraison</div>
       ${tiersHtml}
       ${deliveryDistanceKm!==null?`<div style="margin-top:10px;padding:8px 12px;background:white;border-radius:8px;border:1px solid var(--line);font-size:13px">
-        📍 Distance estimée : <b>${deliveryDistanceKm.toFixed(1)} km</b> → <b style="color:${hasSub?'var(--ok)':tier?.color||'var(--ink)'}">${hasSub?'Gratuit ✓':'€'+fee.toFixed(2)}</b>
+        📍 Distance estimée : <b>${deliveryDistanceKm.toFixed(1)} km</b> → <b style="color:${tier?.color||'var(--ink)'}">€${fee.toFixed(2)}</b>
       </div>`:`<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;padding:0 12px">📍 Prix calculé selon votre distance — utilisez le bouton <b>📍 Ma position</b> pour un tarif exact.</div>`}
     </div>
     ${renderPharmacyCard()}
@@ -4280,7 +4330,25 @@ function placeOrderSante(){
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
   const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
   const assocObj=donationEnabled?getCurrentAssoc():null;
-  const donInfo=assocObj?{assoc:assocObj.name,icon:assocObj.icon,amount:donationAmount(cartTotal(deliveryMode)).toFixed(2),byLivraisante:true}:null;
+  const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
+  // Construire l'objet don selon la cible choisie
+  let donInfo=null;
+  if(assocObj && donAmt>0){
+    if(donationTarget==='assoc'){
+      donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};
+    } else if(donationTarget==='club'){
+      donInfo={assoc:null,icon:'🏆',amount:donAmt.toFixed(2),clubShare:donAmt.toFixed(2),assocShare:0};
+    } else { // both
+      const half=(donAmt/2).toFixed(2);
+      donInfo={assoc:assocObj.name,icon:'🤝',amount:donAmt.toFixed(2),clubShare:half,assocShare:half};
+    }
+  }
+  // Alimenter la cagnotte club si applicable
+  if((donationTarget==='club'||donationTarget==='both') && donAmt>0){
+    getPatientClub().then(club=>{
+      if(club?.id) addCagnotteContribution(club.id, 'order-'+Date.now());
+    });
+  }
   createOrder({items, kind:deliveryMode==='cnc'?'click-collect':'santé',
     patient:{name:document.getElementById('santeName')?.value.trim()||'Patient',pos:santePos,addr,donation:donInfo},
     trackId:'santeOrderTrack', btn:document.getElementById('santeOrderBtn')});
