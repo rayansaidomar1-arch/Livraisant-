@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Livraisanté — La santé du quotidien, livrée à domicile</title>
+<meta name="description" content="Conseils pharmaceutiques personnalisés et livraison à domicile de compléments alimentaires et dispositifs médicaux. Validés par votre pharmacien.">
+<meta property="og:title" content="Livraisanté">
+<meta property="og:description" content="La santé du quotidien, livrée à domicile.">
+<meta property="og:image" content="icons/icon-512.png">
+<meta name="theme-color" content="#0D0E09">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0D0E09;
+  --white: #FFFFFF;
+  --grey: #F2F2F2;
+  --grey-mid: #888880;
+  --lime: #C2F23E;
+  --lime-deep: #6E9A0A;
+  --pharma: #7C3AED;
+  --kine: #1F6FEB;
+  --orange: #E8590C;
+  --serif: 'Bricolage Grotesque', sans-serif;
+  --sans: 'Hanken Grotesk', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--white); color: var(--black); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+/* ========= NAV ========= */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px;
+  background: rgba(13,14,9,.96); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.nav-brand img { width: 36px; height: 36px; border-radius: 9px; }
+.nav-brand span { font-family: var(--serif); font-weight: 800; font-size: 20px; color: var(--white); letter-spacing: -.03em; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a { color: rgba(255,255,255,.6); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .15s; }
+.nav-links a:hover { color: var(--white); }
+.nav-cta {
+  display: flex; gap: 10px; align-items: center;
+}
+.btn-nav { font-family: var(--sans); font-size: 13px; font-weight: 700; border-radius: 30px; padding: 9px 18px; cursor: pointer; transition: .15s; border: none; text-decoration: none; display: inline-block; }
+.btn-ghost-nav { background: transparent; border: 1.5px solid rgba(255,255,255,.25); color: rgba(255,255,255,.8); }
+.btn-ghost-nav:hover { border-color: rgba(255,255,255,.5); color: var(--white); }
+.btn-lime { background: var(--lime); color: var(--black); }
+.btn-lime:hover { background: #d4ff50; }
+
+/* ========= HERO ========= */
+.hero {
+  min-height: 100vh; background: var(--black);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; padding: 120px 40px 80px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 110%, rgba(194,242,62,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-size: 11px; font-weight: 800; letter-spacing: .25em; text-transform: uppercase;
+  color: var(--black); background: var(--lime); padding: 5px 14px; border-radius: 30px;
+  display: inline-block; margin-bottom: 28px; animation: fadeUp .6s ease both;
+}
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(48px, 8vw, 96px); font-weight: 800;
+  color: var(--white); line-height: .95; letter-spacing: -.04em; max-width: 860px;
+  animation: fadeUp .7s .1s ease both;
+}
+.hero h1 em { font-style: normal; color: var(--lime); }
+.hero-sub {
+  font-size: clamp(16px, 2vw, 20px); color: rgba(255,255,255,.55); margin: 28px auto 0;
+  max-width: 560px; line-height: 1.55; font-weight: 400;
+  animation: fadeUp .7s .2s ease both;
+}
+.hero-actions {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 40px;
+  animation: fadeUp .7s .3s ease both;
+}
+.btn-hero-primary {
+  font-family: var(--sans); font-size: 16px; font-weight: 700; padding: 16px 32px;
+  border-radius: 14px; background: var(--lime); color: var(--black); border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; transition: .15s; text-decoration: none;
+}
+.btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(194,242,62,.35); }
+.btn-hero-secondary {
+  font-family: var(--sans); font-size: 16px; font-weight: 700; padding: 16px 32px;
+  border-radius: 14px; background: transparent; color: var(--white);
+  border: 1.5px solid rgba(255,255,255,.25); cursor: pointer; transition: .15s; text-decoration: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-hero-secondary:hover { border-color: rgba(255,255,255,.5); }
+.hero-stats {
+  display: flex; gap: 48px; flex-wrap: wrap; justify-content: center; margin-top: 64px;
+  padding-top: 48px; border-top: 1px solid rgba(255,255,255,.1);
+  animation: fadeUp .8s .45s ease both;
+}
+.stat { text-align: center; }
+.stat .n { font-family: var(--serif); font-size: 42px; font-weight: 800; color: var(--lime); line-height: 1; }
+.stat .l { font-size: 13px; color: rgba(255,255,255,.5); margin-top: 6px; }
+
+/* ========= SECTIONS ========= */
+section { padding: 96px 40px; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--lime-deep); margin-bottom: 14px;
+}
+.section-title { font-family: var(--serif); font-size: clamp(32px, 5vw, 52px); font-weight: 800; line-height: 1.0; letter-spacing: -.03em; }
+.section-sub { font-size: 17px; color: var(--grey-mid); margin-top: 12px; max-width: 520px; line-height: 1.55; }
+
+/* ========= FEATURES PATIENT ========= */
+.features { background: var(--white); }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 52px; }
+.feat-card {
+  background: var(--grey); border-radius: 20px; padding: 28px 26px;
+  border: 1px solid rgba(13,14,9,.07); transition: .2s;
+}
+.feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.08); }
+.feat-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--black); color: var(--lime); font-size: 22px; display: grid; place-items: center; margin-bottom: 18px; }
+.feat-card h3 { font-family: var(--serif); font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.feat-card p { font-size: 14.5px; color: var(--grey-mid); line-height: 1.55; }
+.feat-badge { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 3px 8px; border-radius: 4px; margin-top: 12px; }
+.badge-lime { background: var(--lime); color: var(--black); }
+.badge-purple { background: #ede9fe; color: var(--pharma); }
+.badge-blue { background: #dbeafe; color: var(--kine); }
+.badge-orange { background: #ffedd5; color: var(--orange); }
+
+/* ========= HOW IT WORKS ========= */
+.how { background: var(--black); }
+.how .section-label { color: var(--lime); }
+.how .section-title { color: var(--white); }
+.how .section-sub { color: rgba(255,255,255,.5); }
+.steps-flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; margin-top: 56px; position: relative; }
+.step { padding: 0 24px; position: relative; }
+.step:not(:last-child)::after { content: '→'; position: absolute; right: -8px; top: 20px; color: rgba(255,255,255,.25); font-size: 20px; }
+.step-num { font-family: var(--serif); font-size: 64px; font-weight: 800; color: rgba(255,255,255,.08); line-height: 1; }
+.step-icon { font-size: 28px; margin: -16px 0 12px; }
+.step h3 { font-family: var(--serif); font-size: 19px; font-weight: 800; color: var(--white); margin-bottom: 8px; }
+.step p { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.55; }
+
+/* ========= PHARMACY ========= */
+.pharmacy { background: var(--grey); }
+.pharma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-top: 56px; }
+.pharma-copy h3 { font-family: var(--serif); font-size: 28px; font-weight: 800; margin-bottom: 16px; }
+.pharma-features { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.pharma-features li { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+.pharma-features li::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--pharma); flex: 0 0 auto; }
+.plans-preview { display: flex; flex-direction: column; gap: 10px; }
+.plan-pill {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-radius: 14px; background: var(--white);
+  border: 1.5px solid rgba(13,14,9,.1);
+}
+.plan-pill.highlight { background: var(--black); border-color: var(--black); color: var(--white); }
+.plan-pill.highlight .plan-name { color: var(--lime); }
+.plan-name { font-family: var(--serif); font-weight: 800; font-size: 17px; }
+.plan-price { font-family: var(--serif); font-weight: 800; font-size: 22px; }
+.plan-desc { font-size: 12px; color: var(--grey-mid); margin-top: 2px; }
+
+/* ========= DOWNLOAD ========= */
+.download { background: var(--white); text-align: center; }
+.download .section-title { max-width: 600px; margin: 0 auto 14px; }
+.download .section-sub { margin: 0 auto 48px; }
+.store-badges { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.store-badge {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--black); color: var(--white); border-radius: 16px;
+  padding: 14px 24px; text-decoration: none; transition: .2s;
+  min-width: 200px;
+}
+.store-badge:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,.18); background: #1a1b15; }
+.store-icon { font-size: 32px; }
+.store-info .store-label { font-size: 11px; font-weight: 600; opacity: .6; text-transform: uppercase; letter-spacing: .08em; }
+.store-info .store-name { font-family: var(--serif); font-size: 20px; font-weight: 800; }
+.pwa-note { font-size: 13px; color: var(--grey-mid); margin-top: 22px; }
+.pwa-note a { color: var(--black); font-weight: 700; }
+
+/* ========= CRAT SECTION ========= */
+.safety { background: var(--black); }
+.safety .section-title { color: var(--white); }
+.safety .section-sub { color: rgba(255,255,255,.5); }
+.safety-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 48px; }
+.safety-card { border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 22px; }
+.safety-card .si { font-size: 28px; margin-bottom: 12px; }
+.safety-card h4 { font-family: var(--serif); font-weight: 800; font-size: 17px; color: var(--white); margin-bottom: 8px; }
+.safety-card p { font-size: 13.5px; color: rgba(255,255,255,.45); line-height: 1.55; }
+.safety-card .pill-badge { display: inline-block; margin-top: 10px; background: var(--lime); color: var(--black); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 3px 9px; border-radius: 4px; }
+
+/* ========= FOOTER ========= */
+footer { background: var(--black); padding: 64px 40px 40px; border-top: 1px solid rgba(255,255,255,.07); }
+.footer-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; }
+.footer-brand { }
+.footer-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.footer-logo img { width: 36px; height: 36px; border-radius: 9px; }
+.footer-logo span { font-family: var(--serif); font-weight: 800; font-size: 20px; color: var(--white); }
+.footer-tagline { font-size: 14px; color: rgba(255,255,255,.4); line-height: 1.6; max-width: 260px; }
+.footer-col h4 { font-family: var(--serif); font-weight: 800; font-size: 15px; color: var(--white); margin-bottom: 16px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col ul li a { font-size: 14px; color: rgba(255,255,255,.4); text-decoration: none; transition: .15s; }
+.footer-col ul li a:hover { color: var(--white); }
+.footer-bottom { max-width: 1100px; margin: 48px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-bottom p { font-size: 13px; color: rgba(255,255,255,.3); }
+.footer-bottom a { color: rgba(255,255,255,.4); text-decoration: none; }
+.footer-legal { display: flex; gap: 24px; }
+
+/* ========= ANIMATIONS ========= */
+@keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: none; } }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .55s ease, transform .55s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ========= SCROLL ANIMATION TARGET ========= */
+.phone-mock {
+  width: 220px; height: 420px; background: var(--black); border-radius: 36px;
+  border: 8px solid rgba(255,255,255,.15); position: relative; margin: 0 auto;
+  box-shadow: 0 40px 80px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.phone-mock::before {
+  content: ''; position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 6px; background: rgba(255,255,255,.25); border-radius: 3px;
+}
+.phone-screen {
+  position: absolute; inset: 8px; border-radius: 28px; background: var(--white);
+  overflow: hidden; padding: 16px 12px;
+}
+.mock-topbar { background: var(--black); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.mock-topbar span { font-family: var(--serif); font-weight: 800; font-size: 10px; color: var(--white); }
+.mock-topbar .lime-dot { width: 8px; height: 8px; background: var(--lime); border-radius: 50%; }
+.mock-ail { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.mock-ail-card { background: var(--grey); border-radius: 8px; padding: 8px; font-size: 9px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.mock-ail-card.sel { background: var(--black); color: var(--lime); }
+.mock-cta { background: var(--lime); border-radius: 8px; padding: 8px; font-size: 9px; font-weight: 800; text-align: center; }
+.mock-product { background: var(--grey); border-radius: 8px; padding: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.mock-product .mp-name { font-size: 8.5px; font-weight: 700; }
+.mock-product .mp-price { font-size: 9px; font-weight: 800; color: var(--black); }
+.mock-product .mp-add { background: var(--black); color: var(--lime); border-radius: 4px; font-size: 7px; font-weight: 800; padding: 2px 5px; }
+
+/* ========= RESPONSIVE ========= */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  section { padding: 64px 20px; }
+  .pharma-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .hero { padding: 100px 20px 60px; }
+  .hero-stats { gap: 32px; }
+  .steps-flow { gap: 32px; }
+  .step:not(:last-child)::after { display: none; }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 42px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="landing.html">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="42" height="42" style="border-radius:10px;flex:0 0 auto">
+<rect width="1080" height="1080" rx="180" fill="#0D0E09"/>
+<rect x="150" y="110" width="228" height="450" rx="114" fill="#0D0E09" stroke="#C2F23E" stroke-width="56"/>
+<line x1="150" y1="335" x2="378" y2="335" stroke="#C2F23E" stroke-width="50"/>
+<circle cx="382" cy="592" r="178" fill="#0D0E09" stroke="#C2F23E" stroke-width="56"/>
+<line x1="234" y1="718" x2="530" y2="466" stroke="#C2F23E" stroke-width="52" stroke-linecap="round"/>
+<line x1="92" y1="796" x2="624" y2="796" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="624" y1="440" x2="624" y2="796" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="530" y1="440" x2="624" y2="440" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="670" y1="72" x2="530" y2="440" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<circle cx="214" cy="900" r="90" fill="#C2F23E"/>
+<circle cx="408" cy="900" r="90" fill="#C2F23E"/>
+</svg>
+    <span>Livraisanté</span>
+  </a>
+  <div class="nav-links">
+    <a href="#patients">Patients</a>
+    <a href="#pharmacies">Pharmacies</a>
+    <a href="#fonctionnement">Comment ça marche</a>
+    <a href="#securite">Sécurité</a>
+  </div>
+  <div class="nav-cta">
+    <a href="index.html" class="btn-nav btn-ghost-nav">Se connecter</a>
+    <a href="index.html" class="btn-nav btn-lime">Essayer gratuitement</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-eyebrow">Nouvelle plateforme de santé</span>
+  <h1>La santé<br><em>livrée</em> à<br>votre porte.</h1>
+  <p class="hero-sub">Conseil pharmaceutique personnalisé, sécurisé selon votre profil de santé. Compléments alimentaires et dispositifs médicaux validés par votre pharmacien, livrés en 1 à 3 heures.</p>
+  <div class="hero-actions">
+    <a href="index.html" class="btn-hero-primary">
+      <span>🩹</span> Consulter gratuitement
+    </a>
+    <a href="#pharmacies" class="btn-hero-secondary">
+      <span>💊</span> Je suis pharmacien
+    </a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="n">&lt;5<span style="font-size:22px">min</span></div><div class="l">Pour une réponse à votre symptôme</div></div>
+    <div class="stat"><div class="n">10</div><div class="l">Problèmes de santé couverts</div></div>
+    <div class="stat"><div class="n">54</div><div class="l">Laboratoires partenaires COS</div></div>
+    <div class="stat"><div class="n">1–3h</div><div class="l">Délai de livraison estimé</div></div>
+  </div>
+</section>
+
+<!-- PATIENTS -->
+<section class="features" id="patients">
+  <div class="container">
+    <p class="section-label">Pour les patients</p>
+    <h2 class="section-title">Votre santé, sécurisée<br>dès la première question.</h2>
+    <p class="section-sub">Un parcours clinique complet avant de vous recommander quoi que ce soit. Votre profil de santé guide chaque conseil.</p>
+
+    <div class="features-grid">
+      <div class="feat-card reveal">
+        <div class="feat-icon">🩺</div>
+        <h3>Triage clinique obligatoire</h3>
+        <p>Avant tout conseil : tranche d'âge, durée des symptômes, grossesse ou allaitement, traitements chroniques. Bloqué automatiquement sous 15 ans.</p>
+        <span class="feat-badge badge-lime">Sécurité</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">🫁</div>
+        <h3>Filtres CRAT grossesse</h3>
+        <p>Les substances contre-indiquées pendant la grossesse ou l'allaitement sont automatiquement exclues, en référence aux données du CRAT (lecrat.fr).</p>
+        <span class="feat-badge badge-purple">CRAT</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">⚠️</div>
+        <h3>Interactions médicamenteuses</h3>
+        <p>3 niveaux d'alerte : Éviter · Prudence · Décaler la prise. Adapté à vos traitements chroniques déclarés (anticoagulants, Lévothyrox, antibiotiques…).</p>
+        <span class="feat-badge badge-orange">Pharmacovigilance</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">🛒</div>
+        <h3>Multi-symptômes et croisements</h3>
+        <p>Sélectionnez plusieurs problèmes à la fois. L'app détecte les corrélations (ex. tête + diarrhée → déshydratation) et génère une réponse globale unique.</p>
+        <span class="feat-badge badge-lime">Innovations</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">🏪</div>
+        <h3>Livraison ou Click &amp; Collect</h3>
+        <p>Livraison à domicile en 1–3h ou retrait en pharmacie sur un créneau choisi. Code couleur d'affluence en temps réel (vert / jaune / rouge).</p>
+        <span class="feat-badge badge-blue">Logistique</span>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-icon">🐷</div>
+        <h3>Arrondi solidaire mensuel</h3>
+        <p>Chaque mois, Livraisanté reverse l'arrondi de votre panier à une association de santé (Ligue contre le cancer, AFM-Téléthon, MSF…). Opt-in / opt-out libre.</p>
+        <span class="feat-badge badge-lime">Solidarité</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="fonctionnement">
+  <div class="container">
+    <p class="section-label">Comment ça marche</p>
+    <h2 class="section-title">De la question<br>à la livraison.</h2>
+    <p class="section-sub">4 étapes simples, entièrement guidées par l'application.</p>
+
+    <div class="steps-flow">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-icon">🩹</div>
+        <h3>Choisissez votre symptôme</h3>
+        <p>Parmi 10 problèmes du quotidien — seul ou en combinaison. L'app pose les questions cliniques de sécurité.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <div class="step-icon">🧴</div>
+        <h3>Recevez vos conseils</h3>
+        <p>Produits nommés des laboratoires partenaires (Nutergia, Pileje, Arkopharma…) filtrés selon votre profil de santé.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <div class="step-icon">💊</div>
+        <h3>Le pharmacien valide</h3>
+        <p>Votre pharmacien reçoit la demande, la valide ou propose une substitution moins chère. Délai : quelques minutes.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <div class="step-icon">🛵</div>
+        <h3>Livré chez vous</h3>
+        <p>Un livreur indépendant prend en charge votre commande. Suivi en temps réel dans l'application.</p>
+      </div>
+    </div>
+
+    <!-- Phone mockup -->
+    <div style="margin-top:72px; display:flex; gap:40px; flex-wrap:wrap; justify-content:center; align-items:center;">
+      <div class="phone-mock reveal">
+        <div class="phone-screen">
+          <div class="mock-topbar"><span>Livraisanté</span><div class="lime-dot"></div></div>
+          <div class="mock-ail">
+            <div class="mock-ail-card sel">🤕 Maux de tête</div>
+            <div class="mock-ail-card sel">🤢 Digestion</div>
+            <div class="mock-ail-card">😤 Rhume</div>
+            <div class="mock-ail-card">😴 Sommeil</div>
+          </div>
+          <div class="mock-cta">🔗 Corrélation détectée — voir conseils</div>
+          <div style="margin:8px 0;font-size:8px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.08em">Produits conseils</div>
+          <div class="mock-product"><div><div class="mp-name">Ergymag — Nutergia</div></div><div style="display:flex;align-items:center;gap:5px"><span class="mp-price">€13.75</span><span class="mp-add">+</span></div></div>
+          <div class="mock-product"><div><div class="mp-name">Lactibiane Référence</div></div><div style="display:flex;align-items:center;gap:5px"><span class="mp-price">€16.39</span><span class="mp-add">+</span></div></div>
+        </div>
+      </div>
+      <div style="max-width:340px;">
+        <p style="font-family:'Bricolage Grotesque';font-size:28px;font-weight:800;color:var(--white);line-height:1.1;margin-bottom:16px">Une interface conçue<br>pour la clarté.</p>
+        <p style="font-size:15px;color:rgba(255,255,255,.45);line-height:1.6">Chaque conseil est hiérarchisé par niveau de preuve clinique (HAS, OMS, OMEDIT). Les produits non référencés par votre pharmacie ne s'affichent pas. Prix unique affiché — aucune surprise.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHARMACIES -->
+<section class="pharmacy" id="pharmacies">
+  <div class="container">
+    <p class="section-label">Pour les pharmacies</p>
+    <h2 class="section-title">Développez votre<br>chiffre d'affaires digital.</h2>
+    <p class="section-sub">La plateforme de livraison conçue pour les officines. Tableau de bord, analytics, gestion des laboratoires et seuil de rentabilité inclus.</p>
+
+    <div class="pharma-grid">
+      <div class="pharma-copy">
+        <h3>Tout ce dont votre officine a besoin pour se lancer.</h3>
+        <ul class="pharma-features">
+          <li>Tableau de bord commandes avec statuts en temps réel</li>
+          <li>Taux de transformation et raisons d'abandon des patients</li>
+          <li>Seuil de rentabilité calculé automatiquement</li>
+          <li>Substitution produit avec cagnotte pour le patient</li>
+          <li>Sélection de vos laboratoires partenaires COS</li>
+          <li>Panier moyen cible par problème de santé</li>
+          <li>Click &amp; Collect avec gestion des créneaux horaires</li>
+        </ul>
+        <a href="index.html" class="btn-hero-primary" style="display:inline-flex;margin-top:28px;background:var(--black);color:var(--lime);font-size:14px;padding:12px 22px">Essai gratuit 30 jours →</a>
+      </div>
+      <div class="plans-preview reveal">
+        <div class="plan-pill">
+          <div><div class="plan-name">🎁 Essai gratuit</div><div class="plan-desc">5 labs · 5km · 10 cmd/mois · 30 jours</div></div>
+          <div class="plan-price">€0</div>
+        </div>
+        <div class="plan-pill">
+          <div><div class="plan-name">🚀 Démarrage</div><div class="plan-desc">15 labs · Prioritaire · 5km · illimité</div></div>
+          <div class="plan-price">€49<span style="font-size:13px;font-weight:400">/mois</span></div>
+        </div>
+        <div class="plan-pill highlight">
+          <div><div class="plan-name">⭐ Développement</div><div class="plan-desc">Labs illimités · Prioritaire · 15km</div></div>
+          <div class="plan-price">€99<span style="font-size:13px;font-weight:400">/mois</span></div>
+        </div>
+        <div class="plan-pill">
+          <div><div class="plan-name">👑 Premium</div><div class="plan-desc">Labs illimités · 30km · Alternative garantie</div></div>
+          <div class="plan-price">€199<span style="font-size:13px;font-weight:400">/mois</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SÉCURITÉ -->
+<section class="safety" id="securite">
+  <div class="container">
+    <p class="section-label" style="color:var(--lime)">Sécurité clinique</p>
+    <h2 class="section-title">Conçu avec des<br>professionnels de santé.</h2>
+    <p class="section-sub">Chaque conseil est soumis à des règles cliniques strictes avant d'être affiché. L'application n'est pas un outil de diagnostic.</p>
+    <div class="safety-grid">
+      <div class="safety-card reveal">
+        <div class="si">🫁</div>
+        <h4>Référentiel CRAT</h4>
+        <p>Substances contre-indiquées pendant la grossesse et l'allaitement automatiquement retirées, en référence aux données du Centre de Référence sur les Agents Tératogènes.</p>
+        <span class="pill-badge">lecrat.fr</span>
+      </div>
+      <div class="safety-card reveal">
+        <div class="si">💊</div>
+        <h4>Interactions médicamenteuses</h4>
+        <p>7 classes thérapeutiques vérifiées : anticoagulants, Lévothyrox, antidépresseurs, antidiabétiques, antihypertenseurs, antibiotiques, immunosuppresseurs.</p>
+        <span class="pill-badge">ANSM</span>
+      </div>
+      <div class="safety-card reveal">
+        <div class="si">🔞</div>
+        <h4>Accès +15 ans uniquement</h4>
+        <p>Un triage d'âge bloque l'accès aux recommandations pour les moins de 15 ans et redirige vers un professionnel de santé pédiatrique.</p>
+        <span class="pill-badge">Sécurité</span>
+      </div>
+      <div class="safety-card reveal">
+        <div class="si">✅</div>
+        <h4>Validation pharmacien</h4>
+        <p>Toute commande est soumise à validation par un pharmacien avant préparation. Le pharmacien peut refuser ou proposer une substitution adaptée.</p>
+        <span class="pill-badge">Ordre national</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section class="download" id="telecharger">
+  <div class="container">
+    <p class="section-label">Téléchargez l'application</p>
+    <h2 class="section-title">Disponible sur<br>iOS, Android et web.</h2>
+    <p class="section-sub">Une application native sur toutes vos plateformes. Gratuite, sans publicité. Vos données de santé ne quittent jamais votre appareil.</p>
+    <div class="store-badges">
+      <a href="#" class="store-badge" aria-label="Télécharger sur l'App Store">
+        <span class="store-icon">🍎</span>
+        <div class="store-info">
+          <div class="store-label">Disponible sur</div>
+          <div class="store-name">App Store</div>
+        </div>
+      </a>
+      <a href="#" class="store-badge" aria-label="Télécharger sur Google Play">
+        <span class="store-icon">▶</span>
+        <div class="store-info">
+          <div class="store-label">Disponible sur</div>
+          <div class="store-name">Google Play</div>
+        </div>
+      </a>
+      <a href="index.html" class="store-badge" aria-label="Ouvrir dans le navigateur">
+        <span class="store-icon">🌐</span>
+        <div class="store-info">
+          <div class="store-label">Accessible via</div>
+          <div class="store-name">Navigateur web</div>
+        </div>
+      </a>
+    </div>
+    <p class="pwa-note">Progressive Web App — installez-la directement depuis votre navigateur, sans passer par un store. <a href="index.html">Essayer maintenant →</a></p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="42" height="42" style="border-radius:10px;flex:0 0 auto">
+<rect width="1080" height="1080" rx="180" fill="#0D0E09"/>
+<rect x="150" y="110" width="228" height="450" rx="114" fill="#0D0E09" stroke="#C2F23E" stroke-width="56"/>
+<line x1="150" y1="335" x2="378" y2="335" stroke="#C2F23E" stroke-width="50"/>
+<circle cx="382" cy="592" r="178" fill="#0D0E09" stroke="#C2F23E" stroke-width="56"/>
+<line x1="234" y1="718" x2="530" y2="466" stroke="#C2F23E" stroke-width="52" stroke-linecap="round"/>
+<line x1="92" y1="796" x2="624" y2="796" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="624" y1="440" x2="624" y2="796" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="530" y1="440" x2="624" y2="440" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<line x1="670" y1="72" x2="530" y2="440" stroke="#C2F23E" stroke-width="56" stroke-linecap="round"/>
+<circle cx="214" cy="900" r="90" fill="#C2F23E"/>
+<circle cx="408" cy="900" r="90" fill="#C2F23E"/>
+</svg>
+        <span>Livraisanté</span>
+      </div>
+      <p class="footer-tagline">La santé du quotidien, livrée à domicile. Compléments alimentaires et dispositifs médicaux validés par votre pharmacien.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Application</h4>
+      <ul>
+        <li><a href="index.html">Consulter</a></li>
+        <li><a href="index.html">Se connecter</a></li>
+        <li><a href="index.html">Créer un compte</a></li>
+        <li><a href="#">App Store</a></li>
+        <li><a href="#">Google Play</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Pharmacies</h4>
+      <ul>
+        <li><a href="index.html">Espace pro</a></li>
+        <li><a href="index.html">Nos offres</a></li>
+        <li><a href="index.html">Essai gratuit</a></li>
+        <li><a href="mailto:pro@livraisante.fr">Contact commercial</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Légal</h4>
+      <ul>
+        <li><a href="#">Mentions légales</a></li>
+        <li><a href="#">Politique de confidentialité</a></li>
+        <li><a href="#">CGU</a></li>
+        <li><a href="mailto:contact@livraisante.fr">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Livraisanté SAS — Tous droits réservés. Outil d'aide à la décision, ne remplace pas un avis médical.</p>
+    <div class="footer-legal">
+      <a href="#">Cookies</a>
+      <a href="#">RGPD</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

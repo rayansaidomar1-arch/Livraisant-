@@ -1,0 +1,31 @@
+{
+  "appId": "fr.livraisante.app",
+  "appName": "Livraisanté",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://livraisante.fr",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#0D0E09",
+    "scheme": "Livraisanté",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#0D0E09",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0D0E09",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#C2F23E"
+    }
+  }
+}
