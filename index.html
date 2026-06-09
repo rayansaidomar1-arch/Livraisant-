@@ -6,8 +6,9 @@
 <title>Livraisanté — Santé du quotidien, livré</title>
 <meta name="description" content="Conseil pharmaceutique et livraison de compléments alimentaires validés par votre pharmacien.">
 <meta name="theme-color" content="#0D0E09">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Livraisanté">
 <meta property="og:title" content="Livraisanté — Santé du quotidien, livré">
 <meta property="og:description" content="Conseil pharmaceutique et livraison de compléments alimentaires validés par votre pharmacien.">
@@ -217,6 +218,9 @@
   .ph-item .d{font-weight:700;color:var(--kine);white-space:nowrap}
   .ph-item a{color:var(--ink);text-decoration:none}
   .geo-note{font-size:11.5px;color:var(--ink-soft);margin-top:12px}
+  .empty-zone-msg{text-align:center;padding:2rem;color:var(--ink-soft)}
+  .empty-zone-msg strong{color:#16a34a}
+  .empty-zone-msg p{margin-top:8px;font-size:14px}
 
   /* ===== HUB : choix d'interface ===== */
   .hub-hero{padding:18px 0 6px}
@@ -225,10 +229,10 @@
   .roles{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
   .role{text-align:left;background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:22px;cursor:pointer;transition:.16s;position:relative;overflow:hidden;font-family:inherit;color:var(--ink)}
   .role::before{content:"";position:absolute;top:0;left:0;right:0;height:7px}
-  .role.pat::before{background:var(--accent)} .role.pro::before{background:var(--pharma)} .role.liv::before{background:var(--prepa)}
+  .role.pat::before{background:var(--accent)} .role.pro::before{background:var(--pharma)} .role.liv::before{background:var(--prepa)} .role.hp::before{background:var(--kine)} .role.club::before{background:var(--ok)}
   .role:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(21,22,15,.12)}
   .role .ric{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:24px;color:#fff;margin-bottom:14px}
-  .role.pat .ric{background:var(--accent-deep)} .role.pro .ric{background:var(--pharma)} .role.liv .ric{background:var(--prepa)}
+  .role.pat .ric{background:var(--accent-deep)} .role.pro .ric{background:var(--pharma)} .role.liv .ric{background:var(--prepa)} .role.hp .ric{background:var(--kine)} .role.club .ric{background:var(--ok)}
   .role h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;margin-bottom:5px}
   .role p{font-size:13.5px;color:var(--ink-soft)}
   .role .go{margin-top:14px;font-weight:700;font-size:14px;color:var(--ink)}
@@ -1235,6 +1239,30 @@
   <div id="livContent"></div>
 </div>
 
+<!-- ===== PROFESSIONNEL DE SANTÉ ===== -->
+<div class="wrap" id="healthProApp" style="display:none">
+  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
+    <div class="dt" style="display:flex;align-items:center;gap:12px">
+      <div class="dmark" style="background:var(--kine)">🩺</div>
+      <div><b>Espace professionnel de santé</b><small>Rendez-vous &amp; patients du club</small></div>
+    </div>
+    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
+  </div>
+  <div id="healthProContent"></div>
+</div>
+
+<!-- ===== CLUB SPORTIF ===== -->
+<div class="wrap" id="clubApp" style="display:none">
+  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
+    <div class="dt" style="display:flex;align-items:center;gap:12px">
+      <div class="dmark" style="background:var(--ok)">🏆</div>
+      <div><b>Espace club sportif</b><small>Membres &amp; professionnels de santé</small></div>
+    </div>
+    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
+  </div>
+  <div id="clubContent"></div>
+</div>
+
 <!-- ===== INSCRIPTION LIVREUR ===== -->
 <div class="wrap" id="driverSignup" style="display:none">
   <div class="signup-topbar">
@@ -1395,6 +1423,17 @@
     <div class="plans-grid" id="plansGrid">
       <!-- rendered by JS -->
     </div>
+    <!-- Code promo -->
+    <div style="max-width:480px;margin:0 auto 16px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px">🏷️ Code promo <span style="font-weight:400;color:var(--ink-soft)">(optionnel)</span></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="planPromoInput" placeholder="Ex. LIVR25" maxlength="16"
+          style="flex:1;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:.06em;padding:10px 12px;border:1.5px solid var(--line-strong);border-radius:10px;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+        <button onclick="checkPlanPromoCode()" style="font-family:inherit;font-weight:700;font-size:13px;padding:10px 16px;border-radius:10px;border:1.5px solid var(--ink);background:var(--ink);color:white;cursor:pointer">Appliquer</button>
+      </div>
+      <div id="planPromoResult" style="margin-top:7px;font-size:13px"></div>
+    </div>
     <div class="note">💳 <div><b>Sans engagement pour le mensuel.</b> L'abonnement annuel est renouvelable automatiquement avec une réduction de <b>2 mois offerts</b>. Résiliation possible à tout moment avec 30 jours de préavis pour le mensuel.</div></div>
     <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(2)">← Retour</button></div>
   </div>
@@ -1417,21 +1456,7 @@
       <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
       <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
     </div>
-    <div class="demo-block">
-      <h4>🎭 Comptes de démonstration</h4>
-      <div class="demo-cred">
-        <div><div class="label">💊 Pharmacie 115 — Grenoble</div><div class="info">pharmacie.demo@livraisante.fr · Demo2024!</div></div>
-        <button class="demo-btn" onclick="fillDemo('pharmacie')">Remplir</button>
-      </div>
-      <div class="demo-cred">
-        <div><div class="label">🛵 Jean-Marc Dupont (Livreur)</div><div class="info">livreur.demo@livraisante.fr · Demo2024!</div></div>
-        <button class="demo-btn" onclick="fillDemo('livreur')">Remplir</button>
-      </div>
-      <div class="demo-cred">
-        <div><div class="label">🩺 Patient démo</div><div class="info">patient.demo@livraisante.fr · Demo2024!</div></div>
-        <button class="demo-btn" onclick="fillDemo('patient')">Remplir</button>
-      </div>
-    </div>
+    <!-- demo-block intentionally removed — demo accounts exist in Supabase but are not displayed in the UI -->
   </div>
 </div>
 
@@ -1458,6 +1483,8 @@
           <button class="chip sel" data-v="patient">🩹 Patient</button>
           <button class="chip" data-v="pharmacien">💊 Pharmacien</button>
           <button class="chip" data-v="livreur">🛵 Livreur</button>
+          <button class="chip" data-v="professionnel_sante">🩺 Professionnel de santé</button>
+          <button class="chip" data-v="club">🏆 Club sportif</button>
         </div>
       </div>
       <!-- Profil santé (patient uniquement) -->
@@ -1510,6 +1537,57 @@
           </div>
         </div>
       </div>
+
+      <!-- Champs professionnel de santé -->
+      <div id="regHealthProFields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nom de famille</label>
+          <input type="text" id="regNomHP" placeholder="Ex. Martin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Profession réglementée</label>
+          <select id="regProfession" style="font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%">
+            <option value="">-- Choisir votre profession --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Numéro RPPS <span class="opt">(11 chiffres)</span></label>
+          <input type="text" id="regRPPS" placeholder="Ex. 10001234567" maxlength="11" inputmode="numeric" pattern="\d{11}">
+          <div class="field-msg" id="rppsMsg"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Club sportif de rattachement</label>
+          <select id="regClubHP" style="font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%">
+            <option value="">-- Sélectionner un club --</option>
+          </select>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:5px">Vous devrez être validé(e) par le club avant de pouvoir proposer des rendez-vous.</div>
+        </div>
+      </div>
+
+      <!-- Champs club sportif -->
+      <div id="regClubFields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nom du club</label>
+          <input type="text" id="regClubNom" placeholder="Ex. AS Saint-Germain Football">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ville</label>
+          <input type="text" id="regClubVille" placeholder="Ex. Saint-Germain-en-Laye">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fédération <span class="opt">(facultatif)</span></label>
+          <input type="text" id="regClubFed" placeholder="Ex. FFF, FFR, FFN…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SIRET <span class="opt">(facultatif)</span></label>
+          <input type="text" id="regClubSiret" placeholder="Ex. 12345678900001" maxlength="14" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email de contact du club <span class="opt">(facultatif)</span></label>
+          <input type="email" id="regClubEmail" placeholder="contact@monclub.fr">
+        </div>
+      </div>
+
       <div id="regErr" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
 
       <!-- ══ CONSENTEMENTS RGPD (Art. 6 & 9 RGPD) ══ -->
@@ -1537,6 +1615,11 @@
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px;margin-top:6px" onclick="doRegister()">Créer mon compte →</button>
     </div>
   </div>
+</div>
+
+<!-- ===== SUPER ADMIN DASHBOARD ===== -->
+<div class="wrap" id="adminApp" style="display:none">
+  <div id="adminDashboardContent"></div>
 </div>
 
 <!-- ===== MON PROFIL ===== -->
@@ -1887,6 +1970,16 @@ const DELIVERY_TIERS=[
   {maxKm:10,       price:6.90, label:'5 – 10 km',  color:'#EA580C', desc:'Livraison ville'},
   {maxKm:20,       price:8.90, label:'10 – 20 km', color:'#D97706', desc:'Livraison agglo'},
   {maxKm:Infinity, price:12.90,label:'+ 20 km',    color:'#7C3AED', desc:'Livraison grande distance'},
+];
+
+/* ── Professions de santé réglementées avec ordre ── */
+const PROFESSIONS_ORDRE = [
+  'Médecin','Chirurgien-dentiste','Pharmacien','Sage-femme',
+  'Infirmier(e)','Masseur-kinésithérapeute','Pédicure-podologue',
+  'Ergothérapeute','Psychomotricien(ne)','Orthophoniste',
+  'Orthoptiste','Manipulateur en électroradiologie médicale',
+  'Technicien de laboratoire médical','Audioprothésiste',
+  'Opticien-lunetier','Prothésiste / Orthésiste','Diététicien(ne)'
 ];
 
 /* ── ABONNEMENT PATIENT — supprimé ── */
@@ -2589,7 +2682,7 @@ function findPharmacies(){
           return {name:(e.tags&&e.tags.name)||'Pharmacie', la, lo, dist, level};
         }).filter(x=>x.la&&x.lo);
         items.sort((a,b)=>a.dist-b.dist);
-        if(!items.length){out.innerHTML='<p class="ph-msg">Aucune pharmacie trouvée dans un rayon de 30 km.</p>';}
+        if(!items.length){out.innerHTML='<div class="empty-zone-msg"><span style="font-size:2rem">📍</span><p><strong>Bientôt disponible dans votre zone !</strong></p><p>Parlez de Livraisanté à votre pharmacien pour accélérer le déploiement près de chez vous.</p></div>';}
         else{
           items.slice(0,40).forEach(p=>L.marker([p.la,p.lo]).addTo(leafletMap).bindPopup(`<b>${esc(p.name)}</b><br>${Math.round(p.dist)} m`));
           out.innerHTML=items.slice(0,8).map(p=>{
@@ -2614,7 +2707,7 @@ function findPharmacies(){
    (persistance locale optionnelle, dégradée proprement si indispo)
 =================================================================== */
 let currentView='sante';
-const APPS={home:'homeScreen',sante:'santeApp',sportif:'sportifApp',pro:'proApp',livreur:'livreurApp',proHub:'proHub',sportGate:'sportGate',driverSignup:'driverSignup',pharmacySignup:'pharmacySignup',loginScreen:'loginScreen',registerScreen:'registerScreen',profileScreen:'profileScreen'};
+const APPS={home:'homeScreen',sante:'santeApp',sportif:'sportifApp',pro:'proApp',livreur:'livreurApp',proHub:'proHub',sportGate:'sportGate',driverSignup:'driverSignup',pharmacySignup:'pharmacySignup',loginScreen:'loginScreen',registerScreen:'registerScreen',profileScreen:'profileScreen',healthPro:'healthProApp',club:'clubApp',admin:'adminApp'};
 
 /* ── Page d'accueil ── */
 function enterApp(type){
@@ -2649,7 +2742,10 @@ function renderBottomNav(){
     </button>`;
 
   let html='';
-  if(role==='pharmacien'){
+  if(role==='admin'){
+    html=btn('🛡️','Admin',"enterRole('admin')",v==='admin')
+        +btn('⚙️','Compte',"handleAccountClick()",v==='profileScreen',true);
+  } else if(role==='pharmacien'){
     html=btn('📊','Dashboard',"enterRole('pro')",v==='pro')
         +btn('📦','Commandes',"enterRole('pro')",false)
         +btn('🏷️','Catalogue',"enterRole('pro')",false)
@@ -2658,6 +2754,15 @@ function renderBottomNav(){
     html=btn('🛵','Mes courses',"enterRole('livreur')",v==='livreur')
         +btn('👥','Parrainage',"enterRole('livreur')",false)
         +btn('📋','Mon dossier',"enterRole('driverSignup')",v==='driverSignup')
+        +btn('⚙️','Profil',"handleAccountClick()",v==='profileScreen',true);
+  } else if(role==='professionnel_sante'){
+    html=btn('🩺','Dashboard',"enterRole('healthPro')",v==='healthPro')
+        +btn('📅','Rendez-vous',"enterRole('healthPro')",false)
+        +btn('⚙️','Profil',"handleAccountClick()",v==='profileScreen',true);
+  } else if(role==='club'){
+    html=btn('🏆','Dashboard',"enterRole('club')",v==='club')
+        +btn('👥','Membres',"enterRole('club')",false)
+        +btn('🩺','Professionnels',"enterRole('club')",false)
         +btn('⚙️','Profil',"handleAccountClick()",v==='profileScreen',true);
   } else {
     // Patient ou non connecté
@@ -2917,6 +3022,9 @@ function enterRole(r){
   if(r==='loginScreen') updateAccountChip();
   if(r==='registerScreen') initRegisterForm();
   if(r==='profileScreen') renderProfile();
+  if(r==='healthPro') renderHealthProDashboard();
+  if(r==='club') renderClubDashboard();
+  if(r==='admin') renderAdminDashboard();
   renderHeader();
   renderBottomNav();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -4916,6 +5024,8 @@ function dsGo_ps(n){psGo(n);}
 let planPeriod='mens';
 /* Rétrocompatibilité des anciens IDs de plan */
 const PLAN_ID_MAP={prio:'pro', alt:'premium', ref:'starter'}; // backwards compat
+/* Remises annuelles par plan (ex. 0.15 = 15 % de réduction) */
+const ANNUAL_DISCOUNTS={starter:0.15, pro:0.20, premium:0.25};
 function getPlanConstraints(planId){ return PLAN_CONSTRAINTS[PLAN_ID_MAP[planId]||planId]||PLAN_CONSTRAINTS.free; }
 /* Contraintes par plan (rayon en mètres, maxLabs null = illimité) */
 const PLAN_CONSTRAINTS={
@@ -4983,18 +5093,24 @@ function renderPlans(){
         <button class="plan-btn" onclick="selectPlan('free','free')">Essayer gratuitement →</button>
       </div>`;
     }
-    const monthly=pl.monthly, annual=Math.round(monthly*10*100)/100, saveAmt=Math.round(monthly*2*100)/100;
-    const shown=ann?Math.round(annual/12*100)/100:monthly;
+    const monthly=pl.monthly;
+    const discountRate=ANNUAL_DISCOUNTS[pl.id]||0;
+    const annualTotal=Math.round(monthly*12*(1-discountRate)*100)/100;
+    const annualMonthly=Math.round(annualTotal/12*100)/100;
+    const saveAmt=Math.round(monthly*12*discountRate*100)/100;
+    const discountPct=Math.round(discountRate*100);
+    const shown=ann?annualMonthly:monthly;
     const c=getPlanConstraints(pl.id);
     const accentStyle=pl.popular?'border-color:var(--pharma)':pl.color?`border-color:${pl.color}`:'';
     return `<div class="plan ${pl.popular?'popular':''}" style="${accentStyle}">
       ${pl.popular?'<span class="popular-badge">Populaire</span>':''}
+      ${ann&&discountPct?`<span class="annual-discount-badge" style="position:absolute;top:14px;right:14px;background:#16A34A;color:#fff;font-size:11px;font-weight:800;border-radius:30px;padding:4px 10px">-${discountPct}%</span>`:''}
       <div class="plan-head">
         <div class="level">Niveau ${PLANS.filter(p=>!p.free).indexOf(pl)+1} ${pl.icon}</div>
         <h3>${pl.name}</h3>
         <div class="plan-price">
           <div><span class="amount">€${shown}</span><span class="per">/mois${ann?' (facturé an.)':''}</span></div>
-          ${ann?`<div class="plan-save">2 mois offerts — économisez €${saveAmt}/an</div>`:'<div style="height:24px"></div>'}
+          ${ann?`<div class="plan-save">-${discountPct}% de réduction — économisez €${saveAmt}/an</div>`:'<div style="height:24px"></div>'}
         </div>
         <div class="plan-limits">Labs : <b>${c.maxLabs||'Illimité'}</b> · Zone : <b>${c.radius/1000} km</b></div>
       </div>
@@ -5003,12 +5119,44 @@ function renderPlans(){
     </div>`;
   }).join('');
 }
+// Stores the currently-applied promo for plan selection
+let _planAppliedPromo=null;
+
+function checkPlanPromoCode(){
+  const code=(document.getElementById('planPromoInput')?.value||'').trim().toUpperCase();
+  const resultEl=document.getElementById('planPromoResult');
+  if(!code){if(resultEl) resultEl.innerHTML='';return;}
+  if(!resultEl) return;
+  const result=applyPromoCode(code,'pharmacie');
+  if(result.error){
+    _planAppliedPromo=null;
+    resultEl.innerHTML=`<span style="color:var(--err);font-weight:700">❌ ${esc(result.error)}</span>`;
+    return;
+  }
+  _planAppliedPromo=result.promo;
+  const discStr=result.promo.type==='percent'?`-${result.promo.value}%`:`-${result.promo.value}€`;
+  resultEl.innerHTML=`<span style="color:var(--ok);font-weight:700">✅ Code appliqué : ${esc(discStr)} de réduction</span>`;
+  showToast(`Code promo ${esc(code)} appliqué (${esc(discStr)}) !`,'var(--ok)');
+}
+
 function selectPlan(pid,period){
   const pl=PLANS.find(p=>p.id===pid);
   const ann=(period==='ann');
-  const total=ann?pl.monthly*10:pl.monthly;
-  try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=period;ph.planName=pl.name;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
-  alert(`✅ Abonnement "${pl.name}" ${ann?'annuel':'mensuel'} sélectionné.\n\nMontant : €${total}${ann?'/an':`/mois`}.\n\nUn conseiller Livraisanté vous contactera pour finaliser le paiement et l'activation.`);
+  const discountRate=ANNUAL_DISCOUNTS[pid]||0;
+  let total=ann?Math.round(pl.monthly*12*(1-discountRate)*100)/100:pl.monthly;
+  let promoLine='';
+  if(_planAppliedPromo){
+    const p=_planAppliedPromo;
+    const before=total;
+    if(p.type==='percent') total=Math.round(total*(1-p.value/100)*100)/100;
+    else total=Math.max(0,Math.round((total-p.value)*100)/100);
+    promoLine=`\nCode promo "${p.code}" appliqué : économisez €${(before-total).toFixed(2)}.`;
+  }
+  try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=period;ph.planName=pl.name;if(_planAppliedPromo)ph.promoCode=_planAppliedPromo.code;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
+  _planAppliedPromo=null;
+  const promoInput=document.getElementById('planPromoInput'); if(promoInput) promoInput.value='';
+  const promoResult=document.getElementById('planPromoResult'); if(promoResult) promoResult.innerHTML='';
+  alert(`✅ Abonnement "${pl.name}" ${ann?'annuel':'mensuel'} sélectionné.${promoLine}\n\nMontant : €${total}${ann?'/an':`/mois`}.\n\nUn conseiller Livraisanté vous contactera pour finaliser le paiement et l'activation.`);
 }
 
 /* ---- Dashboard livreur — section parrainage ---- */
@@ -5578,26 +5726,100 @@ function cagnotteHtml(){
   return `<div class="cagnotte-badge"><span style="font-size:24px">🐷</span><div><div class="amount">€${cagnotte.total.toFixed(2)}</div><div style="font-size:12px">dans votre cagnotte Livraisanté</div></div></div>`;
 }
 
+/* ===== BASE MÉDICAMENTS FRANÇAIS (CIP13) ===== */
+const MEDICAMENT_DB=[
+  {nom:'Doliprane 1000mg',cip13:'3400935362082',dci:'Paracétamol',laboratoire:'Sanofi'},
+  {nom:'Doliprane 500mg',cip13:'3400933613110',dci:'Paracétamol',laboratoire:'Sanofi'},
+  {nom:'Efferalgan 1000mg',cip13:'3400938070086',dci:'Paracétamol',laboratoire:'UPSA'},
+  {nom:'Efferalgan 500mg',cip13:'3400938070024',dci:'Paracétamol',laboratoire:'UPSA'},
+  {nom:'Advil 200mg',cip13:'3400930031261',dci:'Ibuprofène',laboratoire:'Pfizer'},
+  {nom:'Nurofen 400mg',cip13:'3400936660956',dci:'Ibuprofène',laboratoire:'Reckitt'},
+  {nom:'Spasfon 80mg',cip13:'3400930016282',dci:'Phloroglucinol',laboratoire:'Teva'},
+  {nom:'Spasfon lyoc 80mg',cip13:'3400933692961',dci:'Phloroglucinol',laboratoire:'Teva'},
+  {nom:'Smecta 3g',cip13:'3400930167619',dci:'Diosmectite',laboratoire:'Ipsen'},
+  {nom:'Imodium 2mg',cip13:'3400930158020',dci:'Lopéramide',laboratoire:'Johnson & Johnson'},
+  {nom:'Voltarène emulgel 1%',cip13:'3400934009057',dci:'Diclofénac',laboratoire:'Novartis'},
+  {nom:'Levothyrox 100µg',cip13:'3400936081733',dci:'Lévothyroxine',laboratoire:'Merck'},
+  {nom:'Levothyrox 50µg',cip13:'3400936081696',dci:'Lévothyroxine',laboratoire:'Merck'},
+  {nom:'Metformine 500mg',cip13:'3400937477501',dci:'Metformine',laboratoire:'Biogaran'},
+  {nom:'Metformine 850mg',cip13:'3400937477518',dci:'Metformine',laboratoire:'Biogaran'},
+  {nom:'Amoxicilline 500mg',cip13:'3400935842282',dci:'Amoxicilline',laboratoire:'Sandoz'},
+  {nom:'Amoxicilline 1g',cip13:'3400935842299',dci:'Amoxicilline',laboratoire:'Sandoz'},
+  {nom:'Augmentin 1g',cip13:'3400935573186',dci:'Amoxicilline/Acide clavulanique',laboratoire:'GSK'},
+  {nom:'Ibuprofène 400mg',cip13:'3400937420040',dci:'Ibuprofène',laboratoire:'Arrow'},
+  {nom:'Dafalgan 1g',cip13:'3400938561302',dci:'Paracétamol',laboratoire:'UPSA'},
+  {nom:'Rhinadvil',cip13:'3400930150444',dci:'Ibuprofène/Pseudoéphédrine',laboratoire:'Pfizer'},
+  {nom:'Toplexil',cip13:'3400930125978',dci:'Oxomémazine',laboratoire:'Sanofi'},
+  {nom:'Nux Vomica 9CH',cip13:'3400930000695',dci:'Homéopathie',laboratoire:'Boiron'},
+  {nom:'Oscillococcinum',cip13:'3400930009476',dci:'Homéopathie',laboratoire:'Boiron'},
+  {nom:'Maalox',cip13:'3400930029367',dci:'Alginate/Bicarbonate',laboratoire:'Sanofi'},
+  {nom:'Gaviscon',cip13:'3400934071260',dci:'Alginate de sodium',laboratoire:'Reckitt'},
+  {nom:'Lysopaine',cip13:'3400930024638',dci:'Amylméta/Chlorobutanol',laboratoire:'Ipsen'},
+  {nom:'Strepsils',cip13:'3400930211601',dci:'Dichlorobenzylalcool',laboratoire:'Reckitt'},
+  {nom:'Euphon',cip13:'3400930025727',dci:'Pholcodine',laboratoire:'Sanofi'},
+  {nom:'Biseptine',cip13:'3400930217429',dci:'Chlorhexidine/Chlorure benzalkonium',laboratoire:'Sanofi'}
+];
+
+/* Catalogue de substitutions par pharmacie */
+const PHARMACY_CATALOG_KEY='livraisante_pharmacy_catalog';
+function getPharmacyCatalog(){
+  try{return JSON.parse(localStorage.getItem(PHARMACY_CATALOG_KEY)||'{}');}catch(e){return {};}
+}
+function savePharmacyCatalogEntry(pharmacyId, originalCip13, substituteCip13, nom, prix){
+  const catalog=getPharmacyCatalog();
+  if(!catalog[pharmacyId]) catalog[pharmacyId]={};
+  catalog[pharmacyId][originalCip13]={substituteCip13, nom, prix, date:new Date().toISOString()};
+  try{localStorage.setItem(PHARMACY_CATALOG_KEY,JSON.stringify(catalog));}catch(e){}
+}
+
 /* ---- Substitution pharmacien ---- */
 function proposeSubstitution(orderId){
   const el=document.getElementById(`sub-${orderId}`);
   if(!el) return;
   el.innerHTML=`<div class="sub-form">
-    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Produit de substitution proposé</label>
-    <input type="text" id="subProd-${orderId}" placeholder="Nom du produit de remplacement">
+    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Rechercher un médicament de substitution</label>
+    <input type="text" id="subSearch-${orderId}" placeholder="Nom ou code CIP13…" oninput="filterMedDB('${orderId}')" style="margin-bottom:4px">
+    <div id="subResults-${orderId}" style="max-height:160px;overflow-y:auto;border:1.5px solid var(--line-strong);border-radius:10px;margin-bottom:6px;display:none"></div>
+    <input type="text" id="subProd-${orderId}" placeholder="Produit sélectionné" readonly style="background:var(--paper-2);margin-bottom:4px">
+    <input type="hidden" id="subCip-${orderId}" value="">
     <input type="number" id="subPrix-${orderId}" placeholder="Prix proposé (€)" step="0.01" style="margin-top:4px">
     <button onclick="sendSubstitution('${orderId}')">📤 Envoyer la proposition au patient</button>
   </div>`;
 }
+function filterMedDB(orderId){
+  const q=(document.getElementById(`subSearch-${orderId}`)?.value||'').toLowerCase();
+  const res=document.getElementById(`subResults-${orderId}`);
+  if(!res) return;
+  if(!q){res.style.display='none';return;}
+  const matches=MEDICAMENT_DB.filter(m=>m.nom.toLowerCase().includes(q)||m.cip13.includes(q)||m.dci.toLowerCase().includes(q));
+  if(!matches.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=matches.slice(0,10).map(m=>`<div onclick="selectMedSub('${orderId}','${m.cip13}',${JSON.stringify(m.nom).replace(/'/g,"\\'")})" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px" onmouseover="this.style.background='var(--paper-2)'" onmouseout="this.style.background=''">
+    <b>${m.nom}</b> <span style="font-size:11px;color:var(--ink-soft)">${m.dci} · ${m.laboratoire} · CIP: ${m.cip13}</span>
+  </div>`).join('');
+}
+function selectMedSub(orderId, cip13, nom){
+  const prodEl=document.getElementById(`subProd-${orderId}`);
+  const cipEl=document.getElementById(`subCip-${orderId}`);
+  const resEl=document.getElementById(`subResults-${orderId}`);
+  if(prodEl) prodEl.value=nom;
+  if(cipEl) cipEl.value=cip13;
+  if(resEl) resEl.style.display='none';
+}
 function sendSubstitution(orderId){
   const o=ORDERS[orderId]; if(!o) return;
   const newProd=document.getElementById(`subProd-${orderId}`)?.value?.trim();
+  const newCip=document.getElementById(`subCip-${orderId}`)?.value?.trim()||'';
   const newPrixRaw=document.getElementById(`subPrix-${orderId}`)?.value;
   if(!newProd||!newPrixRaw){alert('Remplissez le produit et le prix proposé.');return;}
   const newPrix=parseFloat(newPrixRaw);
   const origPrix=o.items.reduce((s,i)=>s+(prixOf(i.name)||0),0)*(1+MARGE_PCT);
   const savings=Math.max(0,origPrix-newPrix*(1+MARGE_PCT));
-  o.substitution={proposedAt:Date.now(),newProduct:newProd,newPrice:newPrix,savings:savings.toFixed(2),status:'pending'};
+  o.substitution={proposedAt:Date.now(),newProduct:newProd,newCip13:newCip,newPrice:newPrix,savings:savings.toFixed(2),status:'pending'};
+  // Enregistrer dans le catalogue de la pharmacie
+  const ph=currentUser?.pharmacyInfo||{}; const phId=ph.id||currentUser?.id||'local';
+  const origCip=o.items?.[0]?.cip13||'unknown';
+  savePharmacyCatalogEntry(phId, origCip, newCip, newProd, newPrix);
   saveOrder(o); renderPro();
 }
 function patientAcceptSub(orderId){
@@ -5792,6 +6014,12 @@ loadAccounts();
     const ph = await window.LS_SB.sbGetPharmacy(session.user.id);
     if(ph){ localStorage.setItem('livraisante_pharmacy', JSON.stringify(ph)); activeLabs = ph.active_labs ? new Set(ph.active_labs) : new Set(PARTNER_LABS); }
   }
+  if(profile.role==='professionnel_sante'||profile.role==='club'){
+    // Pre-load role-specific data on restore
+    if(typeof renderHeader === 'function') renderHeader();
+    if(typeof renderBottomNav === 'function') renderBottomNav();
+    return;
+  }
   renderHeader();
 })();
 
@@ -5978,9 +6206,441 @@ function afterLogin(){
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPassword').value='';
   updateAccountChip(); renderHeader(); renderBottomNav();
-  if(currentUser.role==='pharmacien') enterRole('pro');
+  if(currentUser.role==='admin') enterRole('admin');
+  else if(currentUser.role==='pharmacien') enterRole('pro');
   else if(currentUser.role==='livreur') enterRole('livreur');
+  else if(currentUser.role==='professionnel_sante') enterRole('healthPro');
+  else if(currentUser.role==='club') enterRole('club');
   else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); }
+}
+
+/* ===================================================================
+   SUPER ADMIN DASHBOARD
+=================================================================== */
+const LS_ADMIN_MESSAGES='livraisante_admin_messages';
+
+function renderAdminDashboard(){
+  // Ensure adminApp is visible (enterRole may not have fired yet)
+  try{
+    const adminAppEl=document.getElementById('adminApp');
+    if(adminAppEl && adminAppEl.style.display==='none') adminAppEl.style.display='block';
+  }catch(e){}
+  const el=document.getElementById('adminDashboardContent');
+  if(!el){ console.error('[Admin] adminDashboardContent not found'); return; }
+  try{
+
+  /* Collect data from localStorage */
+  const allKeys=Object.keys(localStorage);
+  let pharmacies=[], patients=[], livreurs=[], clubs=[], pros=[], orders=[];
+
+  /* Try session list */
+  allKeys.forEach(k=>{
+    try{
+      const v=JSON.parse(localStorage.getItem(k)||'null');
+      if(!v||typeof v!=='object') return;
+      if(k==='livraisante_pharmacy'||k.startsWith('livraisante_pharmacy_')){
+        if(v.nom||v.email) pharmacies.push(v);
+      }
+      if(k.startsWith('livraisante_orders_')||k==='livraisante_orders'){
+        const ords=Array.isArray(v)?v:Object.values(v);
+        orders=orders.concat(ords);
+      }
+    }catch(e){}
+  });
+
+  /* Demo data aggregates */
+  try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}'); if(ph.nom||ph.email){pharmacies=[ph,...pharmacies.filter(p=>p.email!==ph.email)];}}catch(e){}
+  try{const ords=Object.values(ORDERS||{}); orders=orders.concat(ords);}catch(e){}
+  // Deduplicate orders by id
+  const seenOrd=new Set(); orders=orders.filter(o=>{if(!o?.id||seenOrd.has(o.id))return false;seenOrd.add(o.id);return true;});
+  // Deduplicate pharmacies
+  const seenPh=new Set(); pharmacies=pharmacies.filter(p=>{const k=p.email||p.nom;if(!k||seenPh.has(k))return false;seenPh.add(k);return true;});
+
+  const totalPharma=Math.max(pharmacies.length,1);
+  const totalPatients=patients.length||0;
+  const totalLivreurs=livreurs.length||0;
+  const totalClubs=clubs.length||0;
+  const totalPros=pros.length||0;
+  const totalOrders=orders.length;
+  const totalCA=orders.reduce((s,o)=>s+(parseFloat(o.total||o.montant||0)),0);
+  const now=new Date(); const thisMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const ordsMois=orders.filter(o=>(o.createdAt||o.date||'').startsWith(thisMonth)).length;
+
+  /* Messages */
+  let adminMessages=[]; try{adminMessages=JSON.parse(localStorage.getItem(LS_ADMIN_MESSAGES)||'[]');}catch(e){}
+
+  function statCard(icon,label,value,color='var(--ok)'){
+    return `<div style="background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px 16px;text-align:center">
+      <div style="font-size:26px;margin-bottom:4px">${icon}</div>
+      <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:${color}">${value}</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">${label}</div>
+    </div>`;
+  }
+
+  const pharmaciesRows=pharmacies.slice(0,50).map(p=>`<tr>
+    <td style="padding:8px 10px">${esc(p.nom||p.name||'—')}</td>
+    <td style="padding:8px 10px">${esc(p.ville||p.city||'—')}</td>
+    <td style="padding:8px 10px"><span style="font-size:11px;background:var(--paper-2);border:1px solid var(--line);border-radius:30px;padding:3px 9px">${esc(p.plan||'free')}</span></td>
+    <td style="padding:8px 10px">${esc(p.createdAt||p.dateInscription||'—')}</td>
+    <td style="padding:8px 10px;text-align:center">${orders.filter(o=>o.pharmacyId===p.id||o.pharmacie===p.nom).length}</td>
+    <td style="padding:8px 10px"><span style="font-size:11px;color:${p.active===false?'var(--err)':'var(--ok)'}">●</span> ${p.active===false?'Inactif':'Actif'}</td>
+  </tr>`).join('');
+
+  const ordersRows=orders.slice(0,20).map(o=>`<tr>
+    <td style="padding:8px 10px;font-family:'Bricolage Grotesque';font-weight:700;font-size:13px">${esc(o.id||'—').substring(0,12)}</td>
+    <td style="padding:8px 10px">${esc(o.pharmacie||o.pharmacyName||'—')}</td>
+    <td style="padding:8px 10px">€${parseFloat(o.total||o.montant||0).toFixed(2)}</td>
+    <td style="padding:8px 10px"><span class="ostatus ${o.status||'nouvelle'}">${esc(o.status||'nouvelle')}</span></td>
+    <td style="padding:8px 10px">${esc((o.createdAt||o.date||'').substring(0,10)||'—')}</td>
+  </tr>`).join('');
+
+  el.innerHTML=`
+  <div style="padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;background:#0D0E09;border-radius:12px;display:grid;place-items:center;font-size:22px">🛡️</div>
+      <div><div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:22px">Super Admin</div><div style="font-size:12px;color:var(--ink-soft)">Tableau de bord Livraisanté</div></div>
+    </div>
+    <button onclick="exportAdminCSV()" style="font-family:inherit;font-weight:700;font-size:13px;padding:9px 18px;border-radius:10px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer">📥 Exporter CSV pharmacies</button>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:28px">
+    ${statCard('💊','Pharmacies inscrites',totalPharma)}
+    ${statCard('🩹','Patients inscrits',totalPatients,'var(--kine)')}
+    ${statCard('🛵','Livreurs inscrits',totalLivreurs,'var(--prepa)')}
+    ${statCard('🏆','Clubs inscrits',totalClubs,'var(--ok)')}
+    ${statCard('🩺','Professionnels santé',totalPros,'var(--pharma)')}
+    ${statCard('📦','Livraisons effectuées',totalOrders,'var(--ink)')}
+    ${statCard('💶','Chiffre d\'affaires total','€'+totalCA.toFixed(2),'#6E9A0A')}
+    ${statCard('📅','Livraisons ce mois',ordsMois,'var(--warn)')}
+  </div>
+
+  <!-- Table pharmacies -->
+  <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px">💊 Pharmacies <span style="font-size:12px;background:var(--ink);color:var(--paper);border-radius:30px;padding:2px 9px">${totalPharma}</span></div>
+  <div style="overflow-x:auto;margin-bottom:24px">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;overflow:hidden">
+      <thead><tr style="background:var(--paper-2)">
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Nom</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Ville</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Plan</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Inscription</th>
+        <th style="padding:10px;text-align:center;font-size:12px;color:var(--ink-soft)">Commandes</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Statut</th>
+      </tr></thead>
+      <tbody>${pharmaciesRows||`<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--ink-soft)">Aucune pharmacie enregistrée en local.</td></tr>`}</tbody>
+    </table>
+  </div>
+
+  <!-- Table commandes -->
+  <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px">📦 Commandes récentes <span style="font-size:12px;background:var(--ink);color:var(--paper);border-radius:30px;padding:2px 9px">${totalOrders}</span></div>
+  <div style="overflow-x:auto;margin-bottom:24px">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;overflow:hidden">
+      <thead><tr style="background:var(--paper-2)">
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">ID</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Pharmacie</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Montant</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Statut</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Date</th>
+      </tr></thead>
+      <tbody>${ordersRows||`<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--ink-soft)">Aucune commande enregistrée.</td></tr>`}</tbody>
+    </table>
+  </div>
+
+  <!-- Clubs & Pros -->
+  <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px">🏆 Clubs &amp; Professionnels de santé</div>
+  <div style="background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px;margin-bottom:24px;font-size:13.5px;color:var(--ink-soft)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+      <div><b style="color:var(--ink)">Clubs inscrits :</b> ${totalClubs}</div>
+      <div><b style="color:var(--ink)">Professionnels validés :</b> ${totalPros}</div>
+    </div>
+    <div style="margin-top:10px;font-size:12px">Les données détaillées clubs/pros seront disponibles une fois Supabase configuré.</div>
+  </div>
+
+  <!-- Messagerie admin -->
+  <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px">📢 Envoyer un message</div>
+  <div style="background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px;margin-bottom:24px">
+    <div style="margin-bottom:10px">
+      <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Destinataires</label>
+      <div class="chips" data-group="adminMsgDest" style="margin-bottom:10px">
+        <button class="chip sel" data-v="all_pharmacies" onclick="adminSelectDest(this)">💊 Toutes les pharmacies</button>
+        <button class="chip" data-v="all_clubs" onclick="adminSelectDest(this)">🏆 Tous les clubs</button>
+        <button class="chip" data-v="specific" onclick="adminSelectDest(this)">👤 Utilisateur spécifique</button>
+      </div>
+      <div id="adminMsgEmailRow" style="display:none;margin-bottom:8px">
+        <input type="email" id="adminMsgEmail" placeholder="Email de l'utilisateur" style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px">
+      </div>
+      <textarea id="adminMsgText" placeholder="Votre message…" rows="3" style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px;resize:vertical"></textarea>
+    </div>
+    <button onclick="sendAdminMessage()" style="font-family:inherit;font-weight:700;font-size:14px;padding:10px 20px;border-radius:10px;border:1.5px solid var(--ok);background:var(--ok);color:white;cursor:pointer">📤 Envoyer le message</button>
+    ${adminMessages.length?`<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;margin-bottom:8px">Historique (${adminMessages.length})</div>${adminMessages.slice(-5).reverse().map(m=>`<div style="background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px;font-size:13px"><b>${esc(m.dest)}</b> · ${esc(m.date)}<br>${esc(m.text)}</div>`).join('')}</div>`:''}
+  </div>`;
+
+  // Render promo codes section
+  renderPromoCodes();
+
+  }catch(err){
+    console.error('[Admin] renderAdminDashboard error:',err);
+    el.innerHTML=`<div style="padding:24px;color:var(--err);background:#fff1f1;border-radius:12px;border:1.5px solid var(--err)">
+      <b>Erreur lors du chargement du tableau de bord admin.</b><br>
+      <code style="font-size:12px">${esc(String(err))}</code>
+    </div>`;
+  }
+}
+
+let _adminMsgDest='all_pharmacies';
+function adminSelectDest(btn){
+  _adminMsgDest=btn.dataset.v||'all_pharmacies';
+  document.querySelectorAll('.chips[data-group="adminMsgDest"] .chip').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const emailRow=document.getElementById('adminMsgEmailRow');
+  if(emailRow) emailRow.style.display=_adminMsgDest==='specific'?'block':'none';
+}
+function sendAdminMessage(){
+  const text=(document.getElementById('adminMsgText')?.value||'').trim();
+  if(!text){alert('Rédigez un message avant d\'envoyer.');return;}
+  const email=_adminMsgDest==='specific'?(document.getElementById('adminMsgEmail')?.value||'').trim():'';
+  if(_adminMsgDest==='specific'&&!email){alert('Renseignez l\'email du destinataire.');return;}
+  let msgs=[]; try{msgs=JSON.parse(localStorage.getItem(LS_ADMIN_MESSAGES)||'[]');}catch(e){}
+  msgs.push({dest:_adminMsgDest==='specific'?email:_adminMsgDest,text,date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})});
+  try{localStorage.setItem(LS_ADMIN_MESSAGES,JSON.stringify(msgs));}catch(e){}
+  alert('✅ Message enregistré.');
+  document.getElementById('adminMsgText').value='';
+  renderAdminDashboard();
+}
+function exportAdminCSV(){
+  const allKeys=Object.keys(localStorage);
+  let pharmacies=[]; try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');if(ph.nom||ph.email)pharmacies=[ph];}catch(e){}
+  allKeys.forEach(k=>{if(k.startsWith('livraisante_pharmacy_')){try{const v=JSON.parse(localStorage.getItem(k)||'null');if(v?.nom||v?.email)pharmacies.push(v);}catch(e){}}});
+  // Deduplicate
+  const seen=new Set(); pharmacies=pharmacies.filter(p=>{const k=p.email||p.nom;if(!k||seen.has(k))return false;seen.add(k);return true;});
+  const header='Nom,Email,Plan,Nb commandes\n';
+  const rows=pharmacies.map(p=>{
+    const nb=Object.values(ORDERS||{}).filter(o=>o.pharmacyId===p.id||o.pharmacie===p.nom).length;
+    return [p.nom||'',p.email||'',p.plan||'free',nb].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
+  }).join('\n');
+  const blob=new Blob(['﻿'+header+rows],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='pharmacies_livraisante.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+/* ===================================================================
+   CODES PROMO — GESTION ADMIN
+=================================================================== */
+const PROMO_CODES_KEY='LS_PROMO_CODES';
+
+function getPromoCodes(){
+  try{ return JSON.parse(localStorage.getItem(PROMO_CODES_KEY)||'[]'); }catch(e){ return []; }
+}
+function savePromoCodes(codes){
+  try{ localStorage.setItem(PROMO_CODES_KEY,JSON.stringify(codes)); }catch(e){}
+}
+function generatePromoCode(length=8){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+function createPromoCode(options){
+  const codes=getPromoCodes();
+  const newCode={
+    code:(options.code||generatePromoCode()).toUpperCase().replace(/\s/g,''),
+    type:options.type||'percent',
+    value:parseFloat(options.value)||10,
+    maxUses:parseInt(options.maxUses)||100,
+    usedCount:0,
+    target:options.target||'all',
+    expiresAt:options.expiresAt||'',
+    createdAt:new Date().toISOString(),
+    active:true
+  };
+  // Check for duplicate code
+  if(codes.some(c=>c.code===newCode.code)){
+    showToast('Ce code existe déjà. Choisissez un autre code.','var(--err)');
+    return null;
+  }
+  codes.push(newCode);
+  savePromoCodes(codes);
+  return newCode;
+}
+function togglePromoCode(code,active){
+  const codes=getPromoCodes();
+  const idx=codes.findIndex(c=>c.code===code);
+  if(idx>-1){ codes[idx].active=active; savePromoCodes(codes); }
+}
+function deletePromoCode(code){
+  const codes=getPromoCodes().filter(c=>c.code!==code);
+  savePromoCodes(codes);
+}
+function applyPromoCode(code,role){
+  const codes=getPromoCodes();
+  const promo=codes.find(c=>c.code===code.toUpperCase()&&c.active);
+  if(!promo) return {error:'Code invalide ou expiré'};
+  if(promo.maxUses>0&&promo.usedCount>=promo.maxUses) return {error:'Code épuisé'};
+  if(promo.expiresAt&&new Date(promo.expiresAt)<new Date()) return {error:'Code expiré'};
+  if(promo.target!=='all'&&promo.target!==role) return {error:'Code non applicable'};
+  const idx=codes.findIndex(c=>c.code===promo.code);
+  codes[idx].usedCount++;
+  savePromoCodes(codes);
+  return {promo};
+}
+function copyPromoCode(code){
+  navigator.clipboard?.writeText(code).then(()=>showToast('Code copié !','var(--ok)')).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('Code copié !','var(--ok)');
+  });
+}
+
+function refreshPromoCodeInput(){
+  const inp=document.getElementById('promoCodeInput');
+  if(inp) inp.value=generatePromoCode();
+}
+
+function submitCreatePromoCode(){
+  const code=(document.getElementById('promoCodeInput')?.value||'').trim();
+  const type=document.querySelector('.chips[data-group="promoType"] .chip.sel')?.dataset.v||'percent';
+  const value=document.getElementById('promoValueInput')?.value||'10';
+  const maxUses=document.getElementById('promoMaxUsesInput')?.value||'100';
+  const target=document.getElementById('promoTargetSelect')?.value||'all';
+  const expiresAt=document.getElementById('promoExpiresInput')?.value||'';
+  if(!code){showToast('Entrez un code promo.','var(--err)');return;}
+  if(!value||isNaN(parseFloat(value))){showToast('Entrez une valeur numérique.','var(--err)');return;}
+  const result=createPromoCode({code,type,value,maxUses,target,expiresAt});
+  if(result){
+    showToast(`Code ${result.code} créé !`,'var(--ok)');
+    renderPromoCodes();
+    // Reset form
+    refreshPromoCodeInput();
+    const vi=document.getElementById('promoValueInput'); if(vi) vi.value='10';
+    const mi=document.getElementById('promoMaxUsesInput'); if(mi) mi.value='100';
+    const ei=document.getElementById('promoExpiresInput'); if(ei) ei.value='';
+  }
+}
+
+function renderPromoCodes(){
+  const container=document.getElementById('adminDashboardContent');
+  if(!container) return;
+
+  // Remove existing promo section if present (for re-render)
+  const existing=document.getElementById('adminPromoSection');
+  if(existing) existing.remove();
+
+  const codes=getPromoCodes();
+
+  function promoStatusBadge(p){
+    if(p.maxUses>0&&p.usedCount>=p.maxUses) return '<span style="font-size:11px;font-weight:700;background:#fee2e2;color:var(--err);border-radius:30px;padding:3px 9px">Épuisé</span>';
+    if(p.expiresAt&&new Date(p.expiresAt)<new Date()) return '<span style="font-size:11px;font-weight:700;background:#f3f4f6;color:var(--ink-soft);border-radius:30px;padding:3px 9px">Expiré</span>';
+    if(!p.active) return '<span style="font-size:11px;font-weight:700;background:#f3f4f6;color:var(--ink-soft);border-radius:30px;padding:3px 9px">Inactif</span>';
+    return '<span style="font-size:11px;font-weight:700;background:#dcfce7;color:var(--ok);border-radius:30px;padding:3px 9px">Actif</span>';
+  }
+
+  function promoProgressBar(p){
+    if(p.maxUses<=0) return '<div style="font-size:11px;color:var(--ink-soft)">Illimité</div>';
+    const pct=Math.round((p.usedCount/p.maxUses)*100);
+    const barColor=pct>80?'var(--err)':pct>50?'var(--warn)':'var(--ok)';
+    return `<div style="font-size:11px;color:var(--ink-soft);margin-bottom:3px">${p.usedCount}/${p.maxUses}</div>
+      <div style="background:var(--paper-2);border-radius:30px;height:5px;overflow:hidden;width:80px">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:30px;transition:.3s"></div>
+      </div>`;
+  }
+
+  function targetLabel(t){
+    return {all:'Tous',pharmacie:'Pharmacies',patient:'Patients',livreur:'Livreurs'}[t]||t;
+  }
+
+  const codesRows=codes.length?codes.map((p,i)=>`<tr style="border-top:1px solid var(--line)">
+    <td style="padding:10px 10px">
+      <span style="font-family:monospace;font-weight:700;font-size:14px;letter-spacing:.05em">${esc(p.code)}</span>
+      <button onclick="copyPromoCode('${esc(p.code)}')" title="Copier" style="border:none;background:transparent;cursor:pointer;font-size:14px;padding:0 4px;vertical-align:middle">📋</button>
+    </td>
+    <td style="padding:10px 10px">${p.type==='percent'?p.value+'%':p.value+'€'}</td>
+    <td style="padding:10px 10px">${promoProgressBar(p)}</td>
+    <td style="padding:10px 10px">${esc(targetLabel(p.target))}</td>
+    <td style="padding:10px 10px">${p.expiresAt?esc(new Date(p.expiresAt).toLocaleDateString('fr-FR')):'—'}</td>
+    <td style="padding:10px 10px">${promoStatusBadge(p)}</td>
+    <td style="padding:10px 10px;white-space:nowrap">
+      <button onclick="togglePromoCode('${esc(p.code)}',${!p.active});renderPromoCodes()" title="${p.active?'Désactiver':'Activer'}" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--paper-2);cursor:pointer;margin-right:4px">${p.active?'⏸ Désact.':'▶ Activer'}</button>
+      <button onclick="if(confirm('Supprimer ce code ?')){deletePromoCode('${esc(p.code)}');renderPromoCodes();}" title="Supprimer" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid #fee2e2;background:#fee2e2;color:var(--err);cursor:pointer">🗑</button>
+    </td>
+  </tr>`).join('')
+  :`<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--ink-soft)">Aucun code promo créé.</td></tr>`;
+
+  const section=document.createElement('div');
+  section.id='adminPromoSection';
+  section.innerHTML=`
+  <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px">🏷️ Codes Promo <span style="font-size:12px;background:var(--ink);color:var(--paper);border-radius:30px;padding:2px 9px">${codes.length}</span></div>
+
+  <!-- Formulaire création -->
+  <div style="background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">Créer un code promo</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px">
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Code</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="promoCodeInput" value="${generatePromoCode()}" placeholder="Ex. LIVR25" maxlength="16"
+            style="flex:1;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:.06em;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px;text-transform:uppercase"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+          <button onclick="refreshPromoCodeInput()" title="Générer un nouveau code" style="padding:9px 11px;border-radius:10px;border:1.5px solid var(--line-strong);background:var(--paper-2);cursor:pointer;font-size:16px">🔄</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Type de remise</label>
+        <div class="chips" data-group="promoType" style="flex-wrap:nowrap;gap:6px">
+          <button class="chip sel" data-v="percent" onclick="document.querySelectorAll('.chips[data-group=\\'promoType\\'] .chip').forEach(b=>b.classList.remove('sel'));this.classList.add('sel')">% Remise</button>
+          <button class="chip" data-v="fixed" onclick="document.querySelectorAll('.chips[data-group=\\'promoType\\'] .chip').forEach(b=>b.classList.remove('sel'));this.classList.add('sel')">€ Fixe</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Valeur</label>
+        <input type="number" id="promoValueInput" value="10" min="1" placeholder="Ex. 25"
+          style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px">
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Utilisations max <span style="font-weight:400;color:var(--ink-soft)">(0 = illimité)</span></label>
+        <input type="number" id="promoMaxUsesInput" value="100" min="0" placeholder="Ex. 100"
+          style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px">
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Cible</label>
+        <select id="promoTargetSelect" style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px;background:white">
+          <option value="all">Tous</option>
+          <option value="pharmacie">Pharmacies</option>
+          <option value="patient">Patients</option>
+          <option value="livreur">Livreurs</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:4px">Date d'expiration <span style="font-weight:400;color:var(--ink-soft)">(optionnel)</span></label>
+        <input type="date" id="promoExpiresInput"
+          style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid var(--line-strong);border-radius:10px">
+      </div>
+
+    </div>
+    <button onclick="submitCreatePromoCode()" style="font-family:inherit;font-weight:700;font-size:14px;padding:10px 20px;border-radius:10px;border:1.5px solid var(--ok);background:var(--ok);color:white;cursor:pointer">✅ Créer le code</button>
+  </div>
+
+  <!-- Tableau des codes existants -->
+  <div style="overflow-x:auto;margin-bottom:24px">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;overflow:hidden">
+      <thead><tr style="background:var(--paper-2)">
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Code</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Remise</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Utilisations</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Cible</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Expiration</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Statut</th>
+        <th style="padding:10px;text-align:left;font-size:12px;color:var(--ink-soft)">Actions</th>
+      </tr></thead>
+      <tbody>${codesRows}</tbody>
+    </table>
+  </div>`;
+
+  container.appendChild(section);
 }
 
 async function doLogout(){
@@ -6016,10 +6676,39 @@ async function doRegister(){
     return;
   }
 
+  // Extra validation for health pro
+  if(role==='professionnel_sante'){
+    const rpps=(document.getElementById('regRPPS')?.value||'').trim();
+    const profession=document.getElementById('regProfession')?.value||'';
+    if(!profession){if(errEl){errEl.style.display='block';errEl.textContent='Veuillez choisir votre profession.';}return;}
+    if(!/^\d{11}$/.test(rpps)){if(errEl){errEl.style.display='block';errEl.textContent='Le numéro RPPS doit contenir exactement 11 chiffres.';}return;}
+  }
+
   // ── Supabase auth ────────────────────────────────────────────
   if(window.LS_SB?.SB_READY){
     const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role});
     if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}return;}
+    // Create health pro record if needed
+    if(role==='professionnel_sante'){
+      const rpps=(document.getElementById('regRPPS')?.value||'').trim();
+      const profession=document.getElementById('regProfession')?.value||'';
+      const clubId=document.getElementById('regClubHP')?.value||null;
+      // Delay slightly for profile to be created via trigger
+      setTimeout(async()=>{
+        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null});
+      },1500);
+    }
+    // Create club record if needed
+    if(role==='club'){
+      const nom=(document.getElementById('regClubNom')?.value||'').trim();
+      const ville=(document.getElementById('regClubVille')?.value||'').trim();
+      const federation=(document.getElementById('regClubFed')?.value||'').trim();
+      const siret=(document.getElementById('regClubSiret')?.value||'').trim();
+      const contactEmail=(document.getElementById('regClubEmail')?.value||'').trim();
+      setTimeout(async()=>{
+        await window.LS_SB.sbUpsertClub(user.id,{nom,ville,federation,siret:siret||null,contact_email:contactEmail});
+      },1500);
+    }
     showToast('Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
     enterRole('loginScreen');
     return;
@@ -6088,16 +6777,481 @@ function initRegisterForm(){
   if(medDiv&&CHRONIC_MEDS){
     medDiv.innerHTML=CHRONIC_MEDS.map(m=>`<button class="chip" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')+'<button class="chip" data-v="aucun" onclick="clearRegMeds(this)" style="font-size:12px">Aucun</button>';
   }
-  // Role toggle hides/shows patient fields
+  // Populate professions dropdown
+  const profSel=document.getElementById('regProfession');
+  if(profSel&&typeof PROFESSIONS_ORDRE!=='undefined'){
+    profSel.innerHTML='<option value="">-- Choisir votre profession --</option>'+PROFESSIONS_ORDRE.map(p=>`<option value="${p}">${p}</option>`).join('');
+  }
+  // Populate clubs dropdown
+  populateClubsDropdown();
+
+  // Role toggle hides/shows contextual fields
   document.querySelectorAll('[data-group="regRole"] .chip').forEach(c=>{
     c.addEventListener('click',()=>{
       const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
       const pf=document.getElementById('regPatientFields');
+      const hpf=document.getElementById('regHealthProFields');
+      const clf=document.getElementById('regClubFields');
       if(pf) pf.style.display=role==='patient'?'block':'none';
+      if(hpf) hpf.style.display=role==='professionnel_sante'?'block':'none';
+      if(clf) clf.style.display=role==='club'?'block':'none';
     });
   });
 }
 function clearRegMeds(btn){document.querySelectorAll('#regMeds .chip').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
+
+/* ---- Populate clubs dropdown ---- */
+async function populateClubsDropdown(){
+  const sel=document.getElementById('regClubHP'); if(!sel) return;
+  if(window.LS_SB?.SB_READY){
+    const sb=window.LS_SB.getSB(); if(!sb) return;
+    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
+    if(data&&data.length){
+      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
+    }
+  }
+}
+
+/* ---- RPPS validation ---- */
+document.addEventListener('input',function(e){
+  if(e.target.id==='regRPPS'){
+    const v=e.target.value.replace(/\D/g,'');
+    e.target.value=v;
+    const msg=document.getElementById('rppsMsg');
+    if(msg){
+      if(v.length===0){msg.textContent='';msg.className='field-msg';}
+      else if(v.length===11){msg.textContent='✓ Format valide';msg.className='field-msg ok';}
+      else{msg.textContent=`${v.length}/11 chiffres`;msg.className='field-msg err';}
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD — PROFESSIONNEL DE SANTÉ
+═══════════════════════════════════════════════════════════ */
+async function renderHealthProDashboard(){
+  const el=document.getElementById('healthProContent'); if(!el) return;
+  if(!currentUser){enterRole('loginScreen');return;}
+
+  el.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--ink-soft)">Chargement…</div>';
+
+  let proData=null;
+  if(window.LS_SB?.SB_READY){
+    proData=await window.LS_SB.sbGetHealthPro(currentUser.id);
+  }
+
+  // If no record yet (first login before data was created), show setup prompt
+  if(!proData){
+    el.innerHTML=`
+    <div class="profile-section">
+      <h3>🩺 Configuration de votre profil professionnel</h3>
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:16px">Vos informations n'ont pas encore été enregistrées. Complétez votre profil pour être rattaché à un club.</p>
+      <div class="form-group"><label class="form-label">Profession</label>
+        <select id="hpProfessionEdit" style="font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%">
+          <option value="">-- Choisir --</option>
+          ${PROFESSIONS_ORDRE.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Numéro RPPS <span class="opt">(11 chiffres)</span></label>
+        <input type="text" id="hpRppsEdit" maxlength="11" inputmode="numeric" placeholder="10001234567">
+      </div>
+      <div class="form-group"><label class="form-label">Club de rattachement</label>
+        <select id="hpClubEdit" style="font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%">
+          <option value="">-- Sélectionner un club --</option>
+        </select>
+      </div>
+      <button class="btn primary" style="font-size:15px;padding:12px 22px" onclick="saveHealthProProfile()">Enregistrer mon profil →</button>
+      <div id="hpSaveMsg" style="font-size:13px;margin-top:8px"></div>
+    </div>`;
+    populateHpClubDropdown();
+    return;
+  }
+
+  const statusColor=proData.rejected?'var(--err)':proData.validated_by_club?'var(--ok)':'var(--warn)';
+  const statusText=proData.rejected?'❌ Refusé par le club':proData.validated_by_club?'✅ Validé par le club':'⏳ En attente de validation';
+  const statusBg=proData.rejected?'#fcebe9':proData.validated_by_club?'#d7f0db':'#fffbe6';
+
+  let appointmentsHtml='';
+  if(proData.validated_by_club && window.LS_SB?.SB_READY){
+    const appts=await window.LS_SB.sbGetAppointments(currentUser.id,'professionnel_sante');
+    if(appts.length){
+      appointmentsHtml=appts.map(a=>{
+        const dt=new Date(a.scheduled_at);
+        const dateStr=dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+        const timeStr=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+        const statusColors={pending:'var(--warn)',confirmed:'var(--ok)',cancelled:'var(--err)',done:'var(--ink-soft)'};
+        const statusLabels={pending:'En attente',confirmed:'Confirmé',cancelled:'Annulé',done:'Terminé'};
+        return `<div class="ocard">
+          <div class="otop">
+            <div class="oid">${dateStr} à ${timeStr}<small>${esc(a.profiles?.prenom||'')} ${esc(a.profiles?.nom||'')}</small></div>
+            <span class="ostatus" style="background:${statusColors[a.status]}20;color:${statusColors[a.status]}">${statusLabels[a.status]||a.status}</span>
+          </div>
+          ${a.motif?`<div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px">Motif : ${esc(a.motif)}</div>`:''}
+          <div class="oactions">
+            ${a.status==='pending'?`<button onclick="confirmAppt('${a.id}')">✓ Confirmer</button><button class="danger" onclick="cancelAppt('${a.id}')">✕ Annuler</button>`:''}
+            ${a.status==='confirmed'?`<button onclick="doneAppt('${a.id}')">✓ Terminé</button><button class="danger" onclick="cancelAppt('${a.id}')">✕ Annuler</button>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      appointmentsHtml='<div class="dash-empty">Aucun rendez-vous pour le moment</div>';
+    }
+  }
+
+  el.innerHTML=`
+  <!-- Statut -->
+  <div style="background:${statusBg};border:1.5px solid ${statusColor};border-radius:14px;padding:16px 18px;margin-bottom:18px">
+    <div style="font-weight:800;font-size:16px;color:${statusColor};margin-bottom:4px">${statusText}</div>
+    ${!proData.validated_by_club&&!proData.rejected?`<div style="font-size:13px;color:var(--ink-soft)">Le club <b>${esc(proData.clubs?.nom||'')}</b> doit valider votre présence avant que vous puissiez proposer des rendez-vous.</div>`:''}
+    ${proData.rejected?`<div style="font-size:13px;color:var(--err)">Votre demande a été refusée par le club. Contactez l'administration du club.</div>`:''}
+  </div>
+
+  <!-- Infos pro -->
+  <div class="profile-section">
+    <h3>🩺 Mes informations professionnelles</h3>
+    <div class="pfield"><span class="pk">Profession</span><span class="pv">${esc(proData.profession)}</span></div>
+    <div class="pfield"><span class="pk">N° RPPS</span><span class="pv" style="font-family:monospace">${esc(proData.rpps)}</span></div>
+    <div class="pfield"><span class="pk">Club</span><span class="pv">${esc(proData.clubs?.nom||'—')}${proData.clubs?.ville?' ('+esc(proData.clubs.ville)+')':''}</span></div>
+  </div>
+
+  ${proData.validated_by_club?`
+  <!-- Rendez-vous -->
+  <div class="dash-sec-title">📅 Rendez-vous <span class="cnt" id="apptCount"></span></div>
+  <div id="apptList">${appointmentsHtml}</div>
+
+  <!-- Ajouter un créneau (simplifié) -->
+  <div class="profile-section" style="margin-top:16px">
+    <h3>➕ Proposer un créneau</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Date</label>
+        <input type="date" id="newSlotDate" style="width:100%;padding:10px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Heure</label>
+        <input type="time" id="newSlotTime" style="width:100%;padding:10px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motif / Type de consultation <span class="opt">(facultatif)</span></label>
+      <input type="text" id="newSlotMotif" placeholder="Ex. Bilan musculaire, consultation prévention…">
+    </div>
+    <button class="btn primary" style="font-size:14px;padding:10px 20px" onclick="addProSlot()">Proposer ce créneau →</button>
+    <div id="slotMsg" style="font-size:13px;margin-top:8px"></div>
+  </div>
+  `:''}`;
+}
+
+async function populateHpClubDropdown(){
+  const sel=document.getElementById('hpClubEdit'); if(!sel) return;
+  if(window.LS_SB?.SB_READY){
+    const sb=window.LS_SB.getSB(); if(!sb) return;
+    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
+    if(data&&data.length){
+      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
+    }
+  }
+}
+
+async function saveHealthProProfile(){
+  if(!window.LS_SB?.SB_READY){showToast('Mode démo : Supabase requis','var(--warn)');return;}
+  const profession=document.getElementById('hpProfessionEdit')?.value||'';
+  const rpps=(document.getElementById('hpRppsEdit')?.value||'').trim();
+  const clubId=document.getElementById('hpClubEdit')?.value||null;
+  const msg=document.getElementById('hpSaveMsg');
+  if(!profession||!/^\d{11}$/.test(rpps)){
+    if(msg){msg.style.color='var(--err)';msg.textContent='Veuillez remplir la profession et un RPPS valide (11 chiffres).';}
+    return;
+  }
+  const {error}=await window.LS_SB.sbUpsertHealthPro(currentUser.id,{profession,rpps,club_id:clubId||null});
+  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
+  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Profil enregistré !';}
+  setTimeout(()=>renderHealthProDashboard(),800);
+}
+
+async function addProSlot(){
+  if(!currentUser||!window.LS_SB?.SB_READY){showToast('Connexion requise','var(--warn)');return;}
+  const date=document.getElementById('newSlotDate')?.value;
+  const time=document.getElementById('newSlotTime')?.value;
+  const motif=document.getElementById('newSlotMotif')?.value||'';
+  const msg=document.getElementById('slotMsg');
+  if(!date||!time){if(msg){msg.style.color='var(--err)';msg.textContent='Veuillez choisir une date et une heure.';}return;}
+  const pro=await window.LS_SB.sbGetHealthPro(currentUser.id);
+  if(!pro){if(msg){msg.style.color='var(--err)';msg.textContent='Profil professionnel introuvable.';}return;}
+  const scheduled_at=new Date(date+'T'+time).toISOString();
+  const {error}=await window.LS_SB.sbInsertAppointment({pro_id:pro.id,club_id:pro.club_id,scheduled_at,motif,status:'pending'});
+  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
+  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Créneau proposé !';}
+  document.getElementById('newSlotDate').value='';
+  document.getElementById('newSlotTime').value='';
+  document.getElementById('newSlotMotif').value='';
+  setTimeout(()=>renderHealthProDashboard(),600);
+}
+
+async function confirmAppt(id){
+  if(!window.LS_SB?.SB_READY) return;
+  await window.LS_SB.sbUpdateAppointment(id,{status:'confirmed'});
+  renderHealthProDashboard();
+}
+async function cancelAppt(id){
+  if(!window.LS_SB?.SB_READY) return;
+  await window.LS_SB.sbUpdateAppointment(id,{status:'cancelled'});
+  renderHealthProDashboard();
+}
+async function doneAppt(id){
+  if(!window.LS_SB?.SB_READY) return;
+  await window.LS_SB.sbUpdateAppointment(id,{status:'done'});
+  renderHealthProDashboard();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD — CLUB SPORTIF
+═══════════════════════════════════════════════════════════ */
+async function renderClubDashboard(){
+  const el=document.getElementById('clubContent'); if(!el) return;
+  if(!currentUser){enterRole('loginScreen');return;}
+
+  el.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--ink-soft)">Chargement…</div>';
+
+  let clubData=null, members=[], pros=[];
+  if(window.LS_SB?.SB_READY){
+    clubData=await window.LS_SB.sbGetClub(currentUser.id);
+    if(clubData){
+      members=await window.LS_SB.sbGetClubMembers(clubData.id);
+      pros=await window.LS_SB.sbGetClubHealthPros(clubData.id);
+    }
+  }
+
+  if(!clubData){
+    el.innerHTML=`
+    <div class="profile-section">
+      <h3>🏆 Créer le profil de votre club</h3>
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:16px">Renseignez les informations de votre club pour gérer vos membres et professionnels de santé.</p>
+      <div class="form-group"><label class="form-label">Nom du club</label><input type="text" id="clubNomEdit" placeholder="Ex. AS Lyon Football"></div>
+      <div class="form-group"><label class="form-label">Ville</label><input type="text" id="clubVilleEdit" placeholder="Ex. Lyon"></div>
+      <div class="form-group"><label class="form-label">Fédération <span class="opt">(facultatif)</span></label><input type="text" id="clubFedEdit" placeholder="Ex. FFF"></div>
+      <div class="form-group"><label class="form-label">SIRET <span class="opt">(facultatif)</span></label><input type="text" id="clubSiretEdit" maxlength="14" inputmode="numeric" placeholder="12345678900001"></div>
+      <div class="form-group"><label class="form-label">Email de contact <span class="opt">(facultatif)</span></label><input type="email" id="clubEmailEdit" placeholder="contact@monclub.fr"></div>
+      <button class="btn primary" style="font-size:15px;padding:12px 22px" onclick="saveClubProfile()">Enregistrer →</button>
+      <div id="clubSaveMsg" style="font-size:13px;margin-top:8px"></div>
+    </div>`;
+    return;
+  }
+
+  // Sort pros: pending first, then validated, then rejected
+  const pendingPros=pros.filter(p=>!p.validated_by_club&&!p.rejected);
+  const validatedPros=pros.filter(p=>p.validated_by_club);
+  const rejectedPros=pros.filter(p=>p.rejected);
+
+  const pendingMembers=members.filter(m=>!m.validated);
+  const validatedMembers=members.filter(m=>m.validated);
+
+  el.innerHTML=`
+  <!-- Infos club -->
+  <div class="profile-section" style="margin-bottom:18px">
+    <h3>🏆 ${esc(clubData.nom)} <button onclick="editClubInfo()" style="font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer">Modifier</button></h3>
+    <div class="pfield"><span class="pk">Ville</span><span class="pv">${esc(clubData.ville||'—')}</span></div>
+    <div class="pfield"><span class="pk">Fédération</span><span class="pv">${esc(clubData.federation||'—')}</span></div>
+    <div class="pfield"><span class="pk">SIRET</span><span class="pv" style="font-family:monospace">${esc(clubData.siret||'—')}</span></div>
+    <div class="pfield"><span class="pk">Email</span><span class="pv">${esc(clubData.contact_email||'—')}</span></div>
+    <div id="clubEditPanel" class="edit-inline">
+      <div class="form-group"><label class="form-label">Nom du club</label><input type="text" id="clubNomEdit2" value="${esc(clubData.nom)}"></div>
+      <div class="form-group"><label class="form-label">Ville</label><input type="text" id="clubVilleEdit2" value="${esc(clubData.ville||'')}"></div>
+      <div class="form-group"><label class="form-label">Fédération</label><input type="text" id="clubFedEdit2" value="${esc(clubData.federation||'')}"></div>
+      <div class="form-group"><label class="form-label">SIRET</label><input type="text" id="clubSiretEdit2" value="${esc(clubData.siret||'')}" maxlength="14"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="clubEmailEdit2" value="${esc(clubData.contact_email||'')}"></div>
+      <button class="btn primary" style="font-size:14px;padding:10px 20px" onclick="saveClubEdit()">Enregistrer</button>
+      <div id="clubEditMsg" style="font-size:13px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Professionnels de santé en attente -->
+  <div class="dash-sec-title">🩺 Professionnels de santé en attente <span class="cnt">${pendingPros.length}</span></div>
+  ${pendingPros.length?pendingPros.map(p=>`
+  <div class="ocard">
+    <div class="otop">
+      <div class="oid">${esc(p.profiles?.prenom||'')} ${esc(p.profiles?.nom||'')}
+        <small>${esc(p.profession)}</small>
+        <small style="font-family:monospace;color:var(--ink-soft)">RPPS : ${esc(p.rpps)}</small>
+      </div>
+      <span class="ostatus validee">En attente</span>
+    </div>
+    <div class="oactions">
+      <button onclick="validatePro('${p.id}',true)" style="background:var(--ok);border-color:var(--ok)">✓ Valider</button>
+      <button class="danger" onclick="validatePro('${p.id}',false)">✕ Refuser</button>
+    </div>
+  </div>`).join(''):'<div class="dash-empty">Aucune demande en attente</div>'}
+
+  <!-- Professionnels validés -->
+  <div class="dash-sec-title">✅ Professionnels validés <span class="cnt">${validatedPros.length}</span></div>
+  ${validatedPros.length?validatedPros.map(p=>`
+  <div class="ocard">
+    <div class="otop">
+      <div class="oid">${esc(p.profiles?.prenom||'')} ${esc(p.profiles?.nom||'')}
+        <small>${esc(p.profession)} — RPPS : ${esc(p.rpps)}</small>
+      </div>
+      <span class="ostatus livree">Validé</span>
+    </div>
+    <div class="oactions">
+      <button class="danger alt" onclick="validatePro('${p.id}',false)">Révoquer</button>
+    </div>
+  </div>`).join(''):'<div class="dash-empty">Aucun professionnel validé</div>'}
+
+  <!-- Membres -->
+  <div class="dash-sec-title" style="margin-top:24px">👥 Membres en attente <span class="cnt">${pendingMembers.length}</span></div>
+  ${pendingMembers.length?pendingMembers.map(m=>`
+  <div class="ocard">
+    <div class="otop">
+      <div class="oid">${esc(m.profiles?.prenom||'')} ${esc(m.profiles?.nom||'')}
+        <small>${esc(m.profiles?.email||'')}${m.numero_licence?' · Licence : '+esc(m.numero_licence):''}</small>
+      </div>
+      <span class="ostatus nouvelle">En attente</span>
+    </div>
+    <div class="oactions">
+      <button onclick="validateMember('${m.id}',true)">✓ Valider</button>
+      <button class="danger" onclick="validateMember('${m.id}',false)">✕ Refuser</button>
+    </div>
+  </div>`).join(''):'<div class="dash-empty">Aucun membre en attente</div>'}
+
+  <div class="dash-sec-title">✅ Membres validés <span class="cnt">${validatedMembers.length}</span></div>
+  ${validatedMembers.length?validatedMembers.map(m=>`
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:14px">
+    <div><b>${esc(m.profiles?.prenom||'')} ${esc(m.profiles?.nom||'')}</b><div style="font-size:12px;color:var(--ink-soft)">${esc(m.profiles?.email||'')}</div></div>
+    <span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Membre</span>
+  </div>`).join(''):'<div class="dash-empty">Aucun membre validé</div>'}
+  `;
+}
+
+async function saveClubProfile(){
+  if(!window.LS_SB?.SB_READY){showToast('Mode démo : Supabase requis','var(--warn)');return;}
+  const nom=(document.getElementById('clubNomEdit')?.value||'').trim();
+  const ville=(document.getElementById('clubVilleEdit')?.value||'').trim();
+  const federation=(document.getElementById('clubFedEdit')?.value||'').trim();
+  const siret=(document.getElementById('clubSiretEdit')?.value||'').trim();
+  const contactEmail=(document.getElementById('clubEmailEdit')?.value||'').trim();
+  const msg=document.getElementById('clubSaveMsg');
+  if(!nom){if(msg){msg.style.color='var(--err)';msg.textContent='Le nom du club est requis.';}return;}
+  const {error}=await window.LS_SB.sbUpsertClub(currentUser.id,{nom,ville,federation,siret:siret||null,contact_email:contactEmail});
+  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
+  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Club enregistré !';}
+  setTimeout(()=>renderClubDashboard(),800);
+}
+
+function editClubInfo(){
+  const p=document.getElementById('clubEditPanel');
+  if(p) p.classList.toggle('on');
+}
+
+async function saveClubEdit(){
+  if(!window.LS_SB?.SB_READY) return;
+  const nom=(document.getElementById('clubNomEdit2')?.value||'').trim();
+  const ville=(document.getElementById('clubVilleEdit2')?.value||'').trim();
+  const federation=(document.getElementById('clubFedEdit2')?.value||'').trim();
+  const siret=(document.getElementById('clubSiretEdit2')?.value||'').trim();
+  const contactEmail=(document.getElementById('clubEmailEdit2')?.value||'').trim();
+  const msg=document.getElementById('clubEditMsg');
+  const {error}=await window.LS_SB.sbUpsertClub(currentUser.id,{nom,ville,federation,siret:siret||null,contact_email:contactEmail});
+  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
+  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Enregistré !';}
+  setTimeout(()=>renderClubDashboard(),600);
+}
+
+async function validatePro(proId, validated){
+  if(!window.LS_SB?.SB_READY) return;
+  const {error}=await window.LS_SB.sbValidateHealthPro(proId,validated);
+  if(error){showToast('Erreur : '+error,'var(--err)');return;}
+  showToast(validated?'✓ Professionnel validé':'Professionnel refusé',validated?'var(--ok)':'var(--err)');
+  renderClubDashboard();
+}
+
+async function validateMember(memberId, validated){
+  if(!window.LS_SB?.SB_READY) return;
+  const sb=window.LS_SB.getSB(); if(!sb) return;
+  const {error}=await sb.from('club_members').update({validated}).eq('id',memberId);
+  if(error){showToast('Erreur : '+error,'var(--err)');return;}
+  showToast(validated?'✓ Membre validé':'Membre refusé',validated?'var(--ok)':'var(--err)');
+  renderClubDashboard();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDEZ-VOUS PATIENT — Prendre RDV avec un pro du club
+═══════════════════════════════════════════════════════════ */
+async function renderPatientAppointments(containerEl){
+  if(!containerEl||!currentUser||!window.LS_SB?.SB_READY) return;
+  // Find patient's club membership
+  const sb=window.LS_SB.getSB(); if(!sb) return;
+  const {data:memberships}=await sb.from('club_members').select('club_id,validated,clubs(nom,ville)').eq('user_id',currentUser.id).eq('validated',true);
+  if(!memberships||!memberships.length){
+    containerEl.innerHTML='<div class="note">ℹ️ <div>Vous n\'êtes pas encore membre validé d\'un club sportif. Rejoignez un club pour accéder aux professionnels de santé partenaires.</div></div>';
+    return;
+  }
+  const membership=memberships[0];
+  const pros=await window.LS_SB.sbGetProsForMember(membership.club_id);
+  const myAppts=await window.LS_SB.sbGetAppointments(currentUser.id,'patient');
+
+  containerEl.innerHTML=`
+  <div style="background:linear-gradient(135deg,#1F6FEB15,#1F6FEB08);border:1.5px solid #1F6FEB30;border-radius:16px;padding:18px;margin-bottom:18px">
+    <div style="font-weight:800;font-size:17px;margin-bottom:4px;color:var(--kine)">🩺 Professionnels de santé — ${esc(membership.clubs?.nom||'Mon club')}</div>
+    <div style="font-size:13px;color:var(--ink-soft)">Prenez rendez-vous avec les professionnels de santé partenaires de votre club</div>
+  </div>
+
+  ${pros.length?`
+  <div class="dash-sec-title">Professionnels disponibles</div>
+  ${pros.map(p=>`
+  <div class="ocard" style="margin-bottom:12px">
+    <div class="otop">
+      <div class="oid">${esc(p.profiles?.prenom||'')} ${esc(p.profiles?.nom||'')}
+        <small>${esc(p.profession)}</small>
+      </div>
+    </div>
+    <div class="form-group" style="margin:8px 0 0">
+      <label class="form-label" style="font-size:12px">Date & heure du rendez-vous souhaité</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <input type="date" id="apptDate_${p.id}" style="padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+        <input type="time" id="apptTime_${p.id}" style="padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+      </div>
+      <input type="text" id="apptMotif_${p.id}" placeholder="Motif de consultation (facultatif)" style="width:100%;padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:8px">
+      <button onclick="bookAppointment('${p.id}','${membership.club_id}')" class="btn primary" style="font-size:13px;padding:9px 18px">Demander ce RDV →</button>
+      <div id="apptMsg_${p.id}" style="font-size:12px;margin-top:6px"></div>
+    </div>
+  </div>`).join('')}
+  `:'<div class="dash-empty">Aucun professionnel de santé disponible dans votre club pour le moment</div>'}
+
+  ${myAppts.length?`
+  <div class="dash-sec-title" style="margin-top:20px">📅 Mes rendez-vous</div>
+  ${myAppts.map(a=>{
+    const dt=new Date(a.scheduled_at);
+    const dateStr=dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const timeStr=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const statusColors={pending:'var(--warn)',confirmed:'var(--ok)',cancelled:'var(--err)',done:'var(--ink-soft)'};
+    const statusLabels={pending:'En attente',confirmed:'Confirmé ✓',cancelled:'Annulé',done:'Terminé'};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:14px">
+      <div>
+        <div style="font-weight:700">${dateStr} à ${timeStr}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">${esc(a.health_professionals?.profession||'')} · ${esc(a.health_professionals?.profiles?.prenom||'')} ${esc(a.health_professionals?.profiles?.nom||'')}</div>
+        ${a.motif?`<div style="font-size:12px;color:var(--ink-soft)">${esc(a.motif)}</div>`:''}
+      </div>
+      <span style="font-size:11px;font-weight:800;color:${statusColors[a.status]||'var(--ink-soft)'};white-space:nowrap">${statusLabels[a.status]||a.status}</span>
+    </div>`;
+  }).join('')}`:''}
+  `;
+}
+
+async function bookAppointment(proId, clubId){
+  if(!currentUser||!window.LS_SB?.SB_READY) return;
+  const date=document.getElementById('apptDate_'+proId)?.value;
+  const time=document.getElementById('apptTime_'+proId)?.value;
+  const motif=document.getElementById('apptMotif_'+proId)?.value||'';
+  const msg=document.getElementById('apptMsg_'+proId);
+  if(!date||!time){if(msg){msg.style.color='var(--err)';msg.textContent='Veuillez choisir une date et une heure.';}return;}
+  const scheduled_at=new Date(date+'T'+time).toISOString();
+  const {error}=await window.LS_SB.sbInsertAppointment({pro_id:proId,patient_id:currentUser.id,club_id:clubId,scheduled_at,motif,status:'pending'});
+  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
+  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Demande envoyée au professionnel !';}
+  document.getElementById('apptDate_'+proId).value='';
+  document.getElementById('apptTime_'+proId).value='';
+  document.getElementById('apptMotif_'+proId).value='';
+}
 
 /* ---- PROFIL SCREEN ---- */
 function renderProfile(){
@@ -6288,7 +7442,23 @@ function renderProfile(){
   html+=`<button class="btn ghost" style="width:100%;margin-top:14px;font-size:14px;border-color:var(--err);color:var(--err)" onclick="doLogout()">Se déconnecter</button>`;
   // Section abonnement + parrainage patient
   if(acc?.role==='patient') html+=renderPatientReferral();
+  // Section rendez-vous pour patients membres d'un club avec profil santé complété
+  if(acc?.role==='patient'){
+    const hp=acc.healthProfile||patientProfile||{};
+    const hasProfile=hp.ageRange||hp.age;
+    if(hasProfile){
+      html+=`<div class="profile-section" style="margin-top:16px"><h3>🩺 Rendez-vous santé</h3><div id="patientApptsContainer"><div style="color:var(--ink-soft);font-size:13px">Chargement…</div></div></div>`;
+    }
+  }
   document.getElementById('profileContent').innerHTML=html;
+  // Load patient appointments if health profile filled
+  if(acc?.role==='patient'){
+    const hp=acc.healthProfile||patientProfile||{};
+    if(hp.ageRange||hp.age){
+      const c=document.getElementById('patientApptsContainer');
+      if(c) renderPatientAppointments(c);
+    }
+  }
   // Wire edit chips
   document.querySelectorAll('[data-group="editPreg"] .chip').forEach(c=>c.addEventListener('click',e=>{
     document.querySelectorAll('[data-group="editPreg"] .chip').forEach(x=>x.classList.remove('sel')); e.target.classList.add('sel');
