@@ -867,7 +867,7 @@
 
       <!-- CTA principal -->
       <button onclick="enterApp('sante')" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:16px;background:#0D0E09;color:#C2F23E;border:none;border-radius:14px;cursor:pointer;box-shadow:3px 3px 0 #C2F23E">
-        Voir tous les 13 symptômes →
+        Voir tous les 16 symptômes →
       </button>
 
       <!-- Confiance -->
@@ -2041,6 +2041,51 @@ const PRODUCT_META={
   'Électrolytes (sodium, potassium)':{cat:'CA',labs:['Nutergia','NHCO','Forté Pharma','Cooper'],reco:null,ev:'B'},
   'Glucosamine / chondroïtine':{cat:'CA',labs:['Pileje','NHCO','Solgar'],reco:null,ev:'C'},
   'Probiotiques':{cat:'CA',labs:['Pileje','Nutergia'],reco:null,ev:'C'},
+  /* ── Digestif spécifiques ── */
+  'Méprobamate intestinal (antispasmodique doux)':{cat:'CA',labs:['Arkopharma','Pileje'],reco:null,ev:'C'},
+  'Huile essentielle de menthe poivrée (vv)':{cat:'CA',labs:['Pranarom','PureEssentiel'],reco:null,ev:'C'},
+  'Cumin / Carvi (extrait)':{cat:'CA',labs:['Arkopharma','Les 3 Chênes'],reco:null,ev:'C'},
+  'Carbonate de calcium (antiacide naturel)':{cat:'DM',labs:['Cooper','Gilbert'],reco:null,ev:'C'},
+  'Aloe vera (jus/extrait — usage digestif)':{cat:'CA',labs:['Lea Nature','Arkopharma'],reco:null,ev:'C'},
+  'Réglisse DGL (déglycyrrhizinée)':{cat:'CA',labs:['Solgar','Arkopharma'],reco:null,ev:'C'},
+  'Gingembre + Mélatonine (anti-nausée)':{cat:'CA',labs:['Arkopharma','Santé Verte'],reco:null,ev:'C'},
+  'Vitamine B6 (anti-nausée)':{cat:'CA',labs:['Arkopharma','Pileje','Solgar'],reco:null,ev:'C'},
+  /* ── 7 nouveaux protocoles ── */
+  'Vitamine C 500mg':{cat:'CA',labs:['Solgar','Arkopharma','Pileje'],reco:null,ev:'B'},
+  'Vitamine D3 1000 UI':{cat:'CA',labs:['Ixora','Pileje','Solgar'],reco:'HAS',ev:'A'},
+  'Zinc 15mg':{cat:'CA',labs:['Solgar','Pileje','Ixora'],reco:null,ev:'B'},
+  'Propolis extrait':{cat:'CA',labs:['Ballot-Flurin','Les 3 Chênes','Santé Verte'],reco:null,ev:'C'},
+  'Echinacea (Arkopharma)':{cat:'CA',labs:['Arkopharma','Santé Verte','Pileje'],reco:null,ev:'B'},
+  'Thé vert extrait':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Konjac gélules':{cat:'CA',labs:['Nutreov','Arkopharma','Les 3 Chênes'],reco:null,ev:'C'},
+  'Chrome 200µg':{cat:'CA',labs:['Solgar','Arkopharma','Ixora'],reco:null,ev:'C'},
+  'Artichaut + Radis noir':{cat:'CA',labs:['Pileje','Arkopharma','Nutergia'],reco:null,ev:'C'},
+  'CLA 1000mg':{cat:'CA',labs:['Nutreov','Solgar','Forté Pharma'],reco:null,ev:'C'},
+  'Bêta-carotène 6mg':{cat:'CA',labs:['Pileje','Solgar','Arkopharma'],reco:null,ev:'C'},
+  'Lycopène 10mg':{cat:'CA',labs:['Solgar','NHCO','Nutergia'],reco:null,ev:'C'},
+  'Astaxanthine 4mg':{cat:'CA',labs:['Solgar','NHCO','Nutergia'],reco:null,ev:'C'},
+  'Sélénium 200µg':{cat:'CA',labs:['Ixora','Solgar','Arkopharma'],reco:null,ev:'C'},
+  'Vitamine E 400 UI':{cat:'CA',labs:['Solgar','Arkopharma','NHCO'],reco:null,ev:'C'},
+  'Lutéine 20mg':{cat:'CA',labs:['Solgar','NHCO','Arkopharma'],reco:null,ev:'C'},
+  'Oméga-3 DHA 500mg':{cat:'CA',labs:['Pileje','Nutergia','Solgar'],reco:null,ev:'B'},
+  'Zinc + Cuivre':{cat:'CA',labs:['Solgar','Pileje','NHCO'],reco:null,ev:'C'},
+  'Riboflavine B2':{cat:'CA',labs:['Ixora','Arkopharma','Solgar'],reco:null,ev:'B'},
+  'Myrtille extrait':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Vigne rouge extrait':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Hamamélis':{cat:'CA',labs:['Pileje','Arkopharma','Weleda'],reco:null,ev:'C'},
+  'Rutine 500mg':{cat:'CA',labs:['Solgar','Arkopharma','NHCO'],reco:null,ev:'C'},
+  'Mélilot extrait':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Marronnier d\'Inde':{cat:'CA',labs:['Naturactive','Arkopharma','Les 3 Chênes'],reco:null,ev:'C'},
+  'Magnésium bisglycinate 300mg':{cat:'CA',labs:['Pileje','Nutergia','Solgar'],reco:null,ev:'B'},
+  'Ashwagandha 300mg':{cat:'CA',labs:['Solgar','Arkopharma','Nutergia'],reco:null,ev:'B'},
+  'Rhodiola rosea':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Griffonia 100mg':{cat:'CA',labs:['Nutreov','Arkopharma','Santé Verte'],reco:null,ev:'C'},
+  'L-Théanine 200mg':{cat:'CA',labs:['Solgar','NHCO','Nutergia'],reco:null,ev:'C'},
+  'Magnésium marin 300mg':{cat:'CA',labs:['Pileje','Nutergia','Arkopharma'],reco:null,ev:'B'},
+  'Vitex agnus-castus':{cat:'CA',labs:['Arkopharma','Santé Verte','Les 3 Chênes'],reco:null,ev:'C'},
+  'Safran 15mg':{cat:'CA',labs:['Ixora','Nutergia','Arkopharma'],reco:null,ev:'C'},
+  'Oméga-3 EPA/DHA':{cat:'CA',labs:['Pileje','Nutergia','Solgar'],reco:null,ev:'B'},
+  'Curcumine 500mg':{cat:'CA',labs:['Solgar','Pileje','Arkopharma'],reco:null,ev:'B'},
 };
 function metaOf(n){ return PRODUCT_META[n]||{cat:null,labs:[],reco:null}; }
 function recoRank(r){ return r?0:1; }
@@ -3430,6 +3475,218 @@ const PRODUCT_CATALOG={
     {lab:'Altheapharma',name:'Bicarbonate de soude alimentaire',dosage:'250g — qualité alimentaire',prix:3.90},
     {lab:'La Vie Claire',name:'Bicarbonate Alimentaire',dosage:'500g',prix:4.50},
   ],
+
+  /* ── Digestif (3 nouveaux) ── */
+  'Méprobamate intestinal (antispasmodique doux)':[
+    {lab:'Arkopharma',name:'Arkogélules Fenouil',dosage:'45 gélules — spasmes digestifs',prix:9.90},
+    {lab:'Pileje',name:'Confort Intestinal Pileje',dosage:'30 gélules',prix:13.90},
+  ],
+  'Huile essentielle de menthe poivrée (vv)':[
+    {lab:'Pranarom',name:'HE Menthe Poivrée BIO Pranarom',dosage:'10 mL',prix:7.90},
+    {lab:'PureEssentiel',name:'HE Menthe Poivrée PureEssentiel',dosage:'10 mL',prix:8.50},
+  ],
+  'Cumin / Carvi (extrait)':[
+    {lab:'Arkopharma',name:'Arkogélules Carvi',dosage:'45 gélules',prix:9.90},
+    {lab:'Les 3 Chênes',name:'Cumin-Carvi Les 3 Chênes',dosage:'60 gélules',prix:10.50},
+  ],
+  'Carbonate de calcium (antiacide naturel)':[
+    {lab:'Cooper',name:'Carbonate de Calcium Cooper',dosage:'60 comprimés à croquer',prix:6.90},
+    {lab:'Gilbert',name:'Calcium Carbonate Gilbert',dosage:'30 sachets',prix:7.50},
+  ],
+  'Aloe vera (jus/extrait — usage digestif)':[
+    {lab:'Lea Nature',name:'Jus Aloe Vera Bio Lea Nature',dosage:'500 mL',prix:12.90},
+    {lab:'Arkopharma',name:'Arko Aloe Vera',dosage:'30 gélules',prix:10.50},
+  ],
+  'Réglisse DGL (déglycyrrhizinée)':[
+    {lab:'Solgar',name:'DGL Réglisse Solgar',dosage:'100 comprimés à croquer',prix:14.90},
+    {lab:'Arkopharma',name:'Arkogélules Réglisse',dosage:'45 gélules',prix:9.90},
+  ],
+  'Gingembre + Mélatonine (anti-nausée)':[
+    {lab:'Arkopharma',name:'Arkogélules Gingembre Fort',dosage:'30 gélules',prix:12.90},
+    {lab:'Santé Verte',name:'Nausées Gingembre Santé Verte',dosage:'30 comprimés',prix:10.90},
+  ],
+  'Vitamine B6 (anti-nausée)':[
+    {lab:'Arkopharma',name:'Vitamine B6 Arkopharma',dosage:'60 gélules 10mg',prix:8.90},
+    {lab:'Pileje',name:'Vitamine B6 Pileje',dosage:'60 comprimés',prix:9.90},
+    {lab:'Solgar',name:'Vitamine B6 50mg Solgar',dosage:'100 comprimés',prix:11.90},
+  ],
+
+  /* ── 7 nouveaux protocoles ── */
+  'Vitamine C 500mg':[
+    {lab:'Solgar',name:'Vitamine C 500mg Solgar',dosage:'100 comprimés',prix:12.90},
+    {lab:'Arkopharma',name:'Vitamine C 500mg Arkopharma',dosage:'60 gélules',prix:9.90},
+    {lab:'Pileje',name:'Vitamine C Pileje 500mg',dosage:'60 comprimés',prix:11.90},
+  ],
+  'Vitamine D3 1000 UI':[
+    {lab:'Ixora',name:'Vitamine D3 1000 UI Ixora',dosage:'60 gélules',prix:10.90},
+    {lab:'Pileje',name:'D-Biane 1000UI Pileje',dosage:'60 comprimés',prix:9.90},
+    {lab:'Solgar',name:'Vitamine D3 1000UI Solgar',dosage:'100 gélules',prix:10.90},
+  ],
+  'Zinc 15mg':[
+    {lab:'Solgar',name:'Zinc 15mg Picolinate Solgar',dosage:'100 comprimés',prix:9.90},
+    {lab:'Pileje',name:'Zinc 15mg Pileje',dosage:'60 comprimés',prix:10.90},
+    {lab:'Ixora',name:'Zinc 15mg Ixora',dosage:'60 gélules',prix:9.50},
+  ],
+  'Propolis extrait':[
+    {lab:'Ballot-Flurin',name:'Propolis Rouge Ballot-Flurin',dosage:'40 gélules — extrait sec',prix:19.90},
+    {lab:'Les 3 Chênes',name:'Propolis Forte Les 3 Chênes',dosage:'60 gélules',prix:12.90},
+    {lab:'Santé Verte',name:'Propolis Verte Santé Verte',dosage:'45 gélules',prix:11.90},
+  ],
+  'Echinacea (Arkopharma)':[
+    {lab:'Arkopharma',name:'Arkogélules Échinacée',dosage:'45 gélules',prix:13.50},
+    {lab:'Santé Verte',name:'Échinacée Santé Verte',dosage:'20 ampoules',prix:11.90},
+    {lab:'Pileje',name:'Échinacée Pileje',dosage:'30 gélules',prix:12.90},
+  ],
+  'Thé vert extrait':[
+    {lab:'Arkopharma',name:'Arkogélules Thé Vert',dosage:'45 gélules',prix:10.90},
+    {lab:'Santé Verte',name:'Thé Vert Santé Verte',dosage:'60 gélules',prix:10.50},
+    {lab:'Les 3 Chênes',name:'Thé Vert Les 3 Chênes',dosage:'60 gélules',prix:11.50},
+  ],
+  'Konjac gélules':[
+    {lab:'Nutreov',name:'Konjac 700mg Nutreov',dosage:'60 gélules',prix:14.90},
+    {lab:'Arkopharma',name:'Arkogélules Konjac',dosage:'45 gélules',prix:12.90},
+    {lab:'Les 3 Chênes',name:'Konjac Les 3 Chênes',dosage:'60 gélules',prix:12.50},
+  ],
+  'Chrome 200µg':[
+    {lab:'Solgar',name:'Chrome Polynicotinate Solgar 200µg',dosage:'90 gélules',prix:11.90},
+    {lab:'Arkopharma',name:'Chrome 200µg Arkopharma',dosage:'60 gélules',prix:9.90},
+    {lab:'Ixora',name:'Chrome 200µg Ixora',dosage:'60 gélules',prix:9.50},
+  ],
+  'Artichaut + Radis noir':[
+    {lab:'Pileje',name:'Hepatobiane Pileje',dosage:'60 gélules — artichaut+radis noir',prix:14.90},
+    {lab:'Arkopharma',name:'Arkogélules Artichaut',dosage:'45 gélules',prix:10.90},
+    {lab:'Nutergia',name:'Ergydetox Artichaut',dosage:'60 gélules',prix:14.50},
+  ],
+  'CLA 1000mg':[
+    {lab:'Nutreov',name:'CLA 1000mg Nutreov',dosage:'60 gélules',prix:16.90},
+    {lab:'Solgar',name:'CLA 1000mg Solgar',dosage:'60 gélules',prix:17.90},
+    {lab:'Forté Pharma',name:'CLA Sport Forté Pharma',dosage:'60 gélules',prix:15.90},
+  ],
+  'Bêta-carotène 6mg':[
+    {lab:'Pileje',name:'Bêta-carotène 6mg Pileje',dosage:'60 gélules',prix:11.90},
+    {lab:'Solgar',name:'Natural Beta Carotene Solgar 6mg',dosage:'180 gélules',prix:14.90},
+    {lab:'Arkopharma',name:'Bêta-Carotène Arkopharma',dosage:'45 gélules',prix:10.90},
+  ],
+  'Lycopène 10mg':[
+    {lab:'Solgar',name:'Lycopène 10mg Solgar',dosage:'60 gélules',prix:14.90},
+    {lab:'NHCO',name:'Lycopène 10mg NHCO',dosage:'30 gélules',prix:16.90},
+    {lab:'Nutergia',name:'Ergylyco 10mg',dosage:'60 gélules',prix:14.50},
+  ],
+  'Astaxanthine 4mg':[
+    {lab:'Solgar',name:'Astaxanthine 4mg Solgar',dosage:'30 gélules',prix:19.90},
+    {lab:'NHCO',name:'Astaxanthine 4mg NHCO',dosage:'30 gélules',prix:18.90},
+    {lab:'Nutergia',name:'Ergyastax 4mg',dosage:'30 gélules',prix:17.90},
+  ],
+  'Sélénium 200µg':[
+    {lab:'Ixora',name:'Sélénium 200µg Ixora',dosage:'60 gélules',prix:9.50},
+    {lab:'Solgar',name:'Sélénium 200µg Solgar',dosage:'100 comprimés',prix:10.90},
+    {lab:'Arkopharma',name:'Sélénium 200µg Arkopharma',dosage:'60 gélules',prix:9.90},
+  ],
+  'Vitamine E 400 UI':[
+    {lab:'Solgar',name:'Vitamine E 400UI Solgar',dosage:'50 gélules',prix:16.90},
+    {lab:'Arkopharma',name:'Vitamine E 400UI Arkopharma',dosage:'30 gélules',prix:13.90},
+    {lab:'NHCO',name:'Vitamine E Naturelle NHCO',dosage:'30 gélules',prix:15.90},
+  ],
+  'Lutéine 20mg':[
+    {lab:'Solgar',name:'Lutéine 20mg Solgar',dosage:'60 gélules',prix:18.90},
+    {lab:'NHCO',name:'Lutéine 20mg NHCO',dosage:'30 gélules',prix:17.90},
+    {lab:'Arkopharma',name:'Lutéine 20mg Arkopharma',dosage:'30 gélules',prix:15.90},
+  ],
+  'Oméga-3 DHA 500mg':[
+    {lab:'Pileje',name:'Oméganut DHA 500mg Pileje',dosage:'60 gélules',prix:16.90},
+    {lab:'Nutergia',name:'Ergyomega DHA',dosage:'60 gélules',prix:15.90},
+    {lab:'Solgar',name:'Oméga-3 DHA 500mg Solgar',dosage:'100 gélules',prix:19.90},
+  ],
+  'Zinc + Cuivre':[
+    {lab:'Solgar',name:'Zinc + Cuivre Solgar',dosage:'100 comprimés',prix:10.90},
+    {lab:'Pileje',name:'Zinc + Cuivre Pileje',dosage:'60 gélules',prix:11.90},
+    {lab:'NHCO',name:'Zinc-Cuivre NHCO',dosage:'30 gélules',prix:13.90},
+  ],
+  'Riboflavine B2':[
+    {lab:'Ixora',name:'Riboflavine B2 Ixora',dosage:'60 gélules',prix:9.50},
+    {lab:'Arkopharma',name:'Vitamine B2 400mg Arkopharma',dosage:'60 gélules',prix:11.90},
+    {lab:'Solgar',name:'Riboflavine Solgar 100mg',dosage:'100 gélules',prix:13.90},
+  ],
+  'Myrtille extrait':[
+    {lab:'Arkopharma',name:'Arkogélules Myrtille',dosage:'45 gélules',prix:12.90},
+    {lab:'Santé Verte',name:'Myrtille Santé Verte',dosage:'60 gélules',prix:11.90},
+    {lab:'Les 3 Chênes',name:'Myrtille Les 3 Chênes',dosage:'60 gélules',prix:12.50},
+  ],
+  'Vigne rouge extrait':[
+    {lab:'Arkopharma',name:'Arkogélules Vigne Rouge',dosage:'45 gélules',prix:11.90},
+    {lab:'Santé Verte',name:'Vigne Rouge Santé Verte',dosage:'60 gélules',prix:10.90},
+    {lab:'Les 3 Chênes',name:'Vigne Rouge Les 3 Chênes',dosage:'60 gélules',prix:11.50},
+  ],
+  'Hamamélis':[
+    {lab:'Pileje',name:'Hamamélis Pileje',dosage:'30 gélules',prix:12.90},
+    {lab:'Arkopharma',name:'Arkogélules Hamamélis',dosage:'45 gélules',prix:10.90},
+    {lab:'Weleda',name:'Hamamélis Extrait Weleda',dosage:'30 gélules',prix:11.50},
+  ],
+  'Rutine 500mg':[
+    {lab:'Solgar',name:'Rutine 500mg Solgar',dosage:'100 comprimés',prix:12.90},
+    {lab:'Arkopharma',name:'Rutine 500mg Arkopharma',dosage:'60 gélules',prix:10.90},
+    {lab:'NHCO',name:'Rutine NHCO',dosage:'30 gélules',prix:13.90},
+  ],
+  'Mélilot extrait':[
+    {lab:'Arkopharma',name:'Arkogélules Mélilot',dosage:'45 gélules',prix:10.90},
+    {lab:'Santé Verte',name:'Mélilot Santé Verte',dosage:'60 gélules',prix:10.50},
+    {lab:'Les 3 Chênes',name:'Mélilot Les 3 Chênes',dosage:'60 gélules',prix:11.50},
+  ],
+  'Marronnier d\'Inde':[
+    {lab:'Naturactive',name:'Marronnier d\'Inde Naturactive',dosage:'30 gélules',prix:9.90},
+    {lab:'Arkopharma',name:'Arkogélules Marronnier d\'Inde',dosage:'45 gélules',prix:10.90},
+    {lab:'Les 3 Chênes',name:'Marronnier d\'Inde Les 3 Chênes',dosage:'60 gélules',prix:11.50},
+  ],
+  'Magnésium bisglycinate 300mg':[
+    {lab:'Pileje',name:'Magnésium Bisglycinate 300mg Pileje',dosage:'60 gélules',prix:13.90},
+    {lab:'Nutergia',name:'Ergymag Bisglycinate',dosage:'90 gélules',prix:14.90},
+    {lab:'Solgar',name:'Magnésium Bisglycinate Solgar',dosage:'120 gélules',prix:16.90},
+  ],
+  'Ashwagandha 300mg':[
+    {lab:'Solgar',name:'Ashwagandha 300mg Solgar',dosage:'60 gélules',prix:18.90},
+    {lab:'Arkopharma',name:'Arkogélules Ashwagandha',dosage:'45 gélules',prix:14.90},
+    {lab:'Nutergia',name:'Ergyashwagandha 300mg',dosage:'60 gélules',prix:15.90},
+  ],
+  'Rhodiola rosea':[
+    {lab:'Arkopharma',name:'Arkogélules Rhodiole',dosage:'45 gélules',prix:14.90},
+    {lab:'Santé Verte',name:'Rhodiola Rosea Santé Verte',dosage:'60 gélules',prix:13.90},
+    {lab:'Les 3 Chênes',name:'Rhodiola Les 3 Chênes',dosage:'60 gélules',prix:14.50},
+  ],
+  'Griffonia 100mg':[
+    {lab:'Nutreov',name:'Griffonia 100mg Nutreov',dosage:'30 gélules',prix:16.90},
+    {lab:'Arkopharma',name:'Arkogélules Griffonia',dosage:'45 gélules',prix:13.90},
+    {lab:'Santé Verte',name:'Griffonia 5-HTP Santé Verte',dosage:'30 gélules',prix:14.50},
+  ],
+  'L-Théanine 200mg':[
+    {lab:'Solgar',name:'L-Théanine 150mg Solgar',dosage:'60 gélules',prix:19.90},
+    {lab:'NHCO',name:'L-Théanine 200mg NHCO',dosage:'30 gélules',prix:18.90},
+    {lab:'Nutergia',name:'Ergytheanine 200mg',dosage:'60 gélules',prix:17.90},
+  ],
+  'Magnésium marin 300mg':[
+    {lab:'Pileje',name:'Magnésium Marin 300mg Pileje',dosage:'60 gélules',prix:12.90},
+    {lab:'Nutergia',name:'Ergymag Marin 300mg',dosage:'90 gélules',prix:13.90},
+    {lab:'Arkopharma',name:'Magnésium Marin Arkopharma 300mg',dosage:'60 gélules',prix:10.90},
+  ],
+  'Vitex agnus-castus':[
+    {lab:'Arkopharma',name:'Arkogélules Gattilier (Vitex)',dosage:'45 gélules',prix:12.90},
+    {lab:'Santé Verte',name:'Gattilier Vitex Santé Verte',dosage:'60 gélules',prix:12.50},
+    {lab:'Les 3 Chênes',name:'Gattilier Les 3 Chênes',dosage:'60 gélules',prix:13.50},
+  ],
+  'Safran 15mg':[
+    {lab:'Ixora',name:'Safran 15mg Ixora',dosage:'30 gélules',prix:14.90},
+    {lab:'Nutergia',name:'Ergysafran 15mg',dosage:'30 gélules',prix:15.90},
+    {lab:'Arkopharma',name:'Arkogélules Safran',dosage:'30 gélules',prix:13.90},
+  ],
+  'Oméga-3 EPA/DHA':[
+    {lab:'Pileje',name:'Oméganut EPA/DHA Pileje',dosage:'60 gélules · EPA 450/DHA 300mg',prix:15.90},
+    {lab:'Nutergia',name:'Ergyomega EPA/DHA',dosage:'60 gélules',prix:15.90},
+    {lab:'Solgar',name:'Oméga-3 Triple Force Solgar',dosage:'100 gélules',prix:21.90},
+  ],
+  'Curcumine 500mg':[
+    {lab:'Solgar',name:'Curcumine Full Spectrum 500mg Solgar',dosage:'60 gélules',prix:22.90},
+    {lab:'Pileje',name:'Curcumaxx C3 500mg Pileje',dosage:'60 gélules',prix:14.90},
+    {lab:'Arkopharma',name:'Curcuma 500mg Arkopharma',dosage:'45 gélules',prix:13.50},
+  ],
 };
 
 /* Corrélations croisées entre symptômes */
@@ -3574,6 +3831,127 @@ const AILMENTS=[
      {n:'D-mannose',c:'Complément alimentaire',note:'Sucre naturel qui piège la bactérie E. coli (responsable de 80% des cystites) et l\'élimine dans les urines. À prendre dès les premiers signes.'},
      {n:'Probiotiques gynécologiques',c:'Complément alimentaire',note:'Des Lactobacillus spécifiques pour protéger la flore urinaire. Très utile en prévention des cystites récidivantes.',reco:'OMEDIT'},
      {n:'Bicarbonate de sodium alimentaire',c:'Complément alimentaire',note:'Alcalinise les urines et rend l\'environnement moins favorable aux bactéries. Réduit aussi les brûlures. 1 cuillère à café dans un grand verre d\'eau.'}
+   ]},
+
+  {id:'ventre',ic:'🤢',name:'Douleurs abdominales',
+   desc:'Crampes intestinales, ballonnements, spasmes, ventre tendu',
+   advice:['Appliquez une bouillotte chaude sur le ventre — la chaleur relâche les spasmes.','Mangez lentement, en petites quantités, et évitez les choux et légumineuses.','Réduisez le café, alcool et sodas pendant quelques jours.','Marchez 15 minutes après le repas pour favoriser le transit.'],
+   red:['Douleur intense et soudaine qui ne passe pas en 30 minutes','Fièvre associée aux douleurs de ventre','Ventre rigide et très dur','Sang dans les selles ou vomissements avec du sang'],
+   prods:[
+     {n:'Méprobamate intestinal (antispasmodique doux)',c:'Complément alimentaire',note:'Aide à relâcher les crampes et spasmes intestinaux. À prendre au moment des douleurs.'},
+     {n:'Probiotiques digestifs',c:'Complément alimentaire',note:'Rééquilibre la flore intestinale pour réduire les ballonnements et inconforts chroniques.'},
+     {n:'Huile essentielle de menthe poivrée (vv)',c:'Complément alimentaire',note:'Reconnue pour calmer les spasmes intestinaux. 1 goutte dans une cuillère de miel ou sur un sucre.'},
+     {n:'Cumin / Carvi (extrait)',c:'Complément alimentaire',note:'Plantes carminatives qui réduisent les gaz et ballonnements. Idéal après les repas.'},
+     {n:'Charbon végétal actif',c:'Complément alimentaire',note:'Absorbe les gaz responsables des ballonnements et de la distension abdominale.'}
+   ]},
+
+  {id:'gastrique',ic:'🔥',name:'Brûlures gastriques',
+   desc:'Remontées acides, pyrosis, brûlures d\'estomac, acidité',
+   advice:['Ne vous allongez pas dans les 2h qui suivent le repas.','Évitez les aliments acides : tomates, agrumes, alcool, café, chocolat.','Mangez en petites quantités plus fréquemment plutôt que de grands repas.','Surélevez légèrement la tête du lit si les brûlures surviennent la nuit.'],
+   red:['Douleur dans la poitrine qui remonte dans le bras — peut être cardiaque, urgence','Vomissements avec du sang ou selles très noires','Difficulté à avaler','Brûlures qui ne s\'améliorent pas après 7 jours'],
+   prods:[
+     {n:'Aloe vera (jus/extrait — usage digestif)',c:'Complément alimentaire',note:'Apaise et protège la muqueuse gastrique. À prendre 20 minutes avant les repas pour un effet optimal.'},
+     {n:'Réglisse DGL (déglycyrrhizinée)',c:'Complément alimentaire',note:'Protège la muqueuse gastrique sans les effets secondaires de la réglisse ordinaire. À croquer avant les repas.'},
+     {n:'Carbonate de calcium (antiacide naturel)',c:'Dispositif médical',note:'Neutralise l\'acidité gastrique rapidement. À croquer au moment des brûlures. Ne pas dépasser 3 jours consécutifs sans avis.'},
+     {n:'Probiotiques digestifs',c:'Complément alimentaire',note:'Aide à rééquilibrer l\'écosystème gastrique. Utile en cure de 4 semaines pour les brûlures chroniques.'},
+     {n:'Gingembre (extrait standardisé)',c:'Complément alimentaire',note:'Améliore la vidange gastrique et réduit l\'acidité. Éviter en cas de traitement anticoagulant.'}
+   ]},
+
+  {id:'vomissement',ic:'🤮',name:'Nausées / Vomissements',
+   desc:'Nausées, haut-le-cœur, vomissements, mal des transports',
+   advice:['Hydratez-vous par petites gorgées d\'eau fraîche ou de soda plat froid.','Mangez des aliments neutres : riz blanc, pain grillé, banane.','Reposez-vous à l\'horizontal si possible et évitez les odeurs fortes.','Attendez 1h après avoir vomi avant de manger.'],
+   red:['Vomissements répétés depuis plus de 24h avec impossibilité de s\'hydrater','Sang dans les vomissements','Fièvre élevée associée','Signes de déshydratation : bouche très sèche, pas d\'urines depuis 8h','Vomissements chez un nourrisson ou une personne âgée'],
+   prods:[
+     {n:'Gingembre (extrait standardisé)',c:'Complément alimentaire',note:'La plante anti-nausée la plus documentée. Efficace pour nausées de grossesse (avis médical), transports, chimio.'},
+     {n:'Vitamine B6 (anti-nausée)',c:'Complément alimentaire',note:'Reconnue officiellement pour réduire les nausées, notamment pendant la grossesse. À associer au gingembre.'},
+     {n:'Solution de réhydratation orale (SRO)',c:'Dispositif médical',note:'Priorité absolue si vous avez vomi plusieurs fois : les SRO compensent les sels minéraux et l\'eau perdus.'},
+     {n:'Gingembre + Mélatonine (anti-nausée)',c:'Complément alimentaire',note:'Formules combinées pratiques, adaptées au mal des transports et aux nausées légères.'},
+     {n:'Probiotiques digestifs',c:'Complément alimentaire',note:'Utile si les nausées sont d\'origine gastro-intestinale infectieuse pour accélérer la récupération.'}
+   ]},
+
+  /* ── 7 nouveaux protocoles ── */
+  {id:'prevention_hivernale',ic:'🛡️',name:'Cure de prévention hivernale',
+   desc:'Renforcer les défenses immunitaires à l\'approche de l\'hiver',
+   advice:['Démarrez la cure 4 à 6 semaines avant l\'hiver ou dès les premiers refroidissements.','Associez une hygiène de vie saine : sommeil, alimentation variée, exercice modéré.','Lavez-vous régulièrement les mains, aérez votre domicile quotidiennement.','Consultez votre pharmacien pour adapter les doses à votre profil.'],
+   red:['Fièvre persistante malgré la cure','Symptômes qui durent plus de 7 jours','Maladie auto-immune ou immunosuppresseurs — l\'échinacée est contre-indiquée'],
+   prods:[
+     {n:'Vitamine C 500mg',c:'Complément alimentaire',note:'Indispensable au bon fonctionnement du système immunitaire. À prendre matin et soir pendant la cure.',lab:'Solgar',dosage:'500mg · 100 comprimés',prix:12.90},
+     {n:'Vitamine D3 1000 UI',c:'Complément alimentaire',note:'Souvent déficitaire en hiver. Essentielle pour l\'immunité et la solidité osseuse. À prendre le matin avec un repas gras.',lab:'Ixora',dosage:'60 gélules',prix:10.90},
+     {n:'Zinc 15mg',c:'Complément alimentaire',note:'Oligo-élément clé de la défense immunitaire. À prendre en dehors des repas riches en fibres.',lab:'Solgar',dosage:'100 comprimés',prix:9.90},
+     {n:'Propolis extrait',c:'Complément alimentaire',note:'Résine naturelle de la ruche aux propriétés reconnues. Déconseillée si allergie aux produits des abeilles.',lab:'Ballot-Flurin',dosage:'40 gélules',prix:19.90},
+     {n:'Echinacea (Arkopharma)',c:'Complément alimentaire',note:'Stimule la réponse immunitaire. En cure de 10 jours, à répéter selon les épisodes. Ne pas dépasser 8 semaines consécutives.',lab:'Arkopharma',dosage:'45 gélules',prix:13.50}
+   ]},
+
+  {id:'cure_minceur',ic:'⚖️',name:'Cure minceur & équilibre',
+   desc:'Soutien au rééquilibrage alimentaire, gestion de l\'appétit',
+   advice:['Associez impérativement à une alimentation équilibrée et une activité physique régulière.','Buvez au moins 1,5 litre d\'eau par jour — les produits minceur augmentent les besoins hydriques.','Ne sautez jamais de repas. Prenez les gélules 30 minutes avant les repas.','La cure doit durer au minimum 4 semaines pour observer des effets.'],
+   red:['Trouble du comportement alimentaire (anorexie, boulimie) — ne pas utiliser','Grossesse ou allaitement','Pathologie thyroïdienne — consulter avant'],
+   prods:[
+     {n:'Thé vert extrait',c:'Complément alimentaire',note:'Riche en EGCG, favorise la thermogenèse légère et l\'élimination. À associer à l\'activité physique.',lab:'Arkopharma',dosage:'45 gélules',prix:10.90},
+     {n:'Konjac gélules',c:'Complément alimentaire',note:'Fibres qui gonflent dans l\'estomac et procurent une sensation de satiété. À prendre avec un grand verre d\'eau.',lab:'Nutreov',dosage:'60 gélules',prix:14.90},
+     {n:'Chrome 200µg',c:'Complément alimentaire',note:'Aide à réguler la glycémie et à réduire les envies de sucre. Résultats progressifs sur 4 à 8 semaines.',lab:'Solgar',dosage:'90 gélules',prix:11.90},
+     {n:'Artichaut + Radis noir',c:'Complément alimentaire',note:'Soutient le foie et favorise l\'élimination hépatique. Utile en début de cure pour "nettoyer" l\'organisme.',lab:'Pileje',dosage:'60 gélules',prix:14.90},
+     {n:'CLA 1000mg',c:'Complément alimentaire',note:'Acide gras conjugué qui aide au maintien de la masse musculaire lors d\'une restriction calorique.',lab:'Nutreov',dosage:'60 gélules',prix:16.90}
+   ]},
+
+  {id:'solaire',ic:'☀️',name:'Préparation cutanée solaire',
+   desc:'Préparer la peau au soleil, favoriser le bronzage, protéger les cellules',
+   advice:['Commencez la cure 4 semaines avant l\'exposition pour une efficacité maximale.','La cure NE remplace pas la protection solaire (crème SPF) — les deux sont complémentaires.','Continuez la cure pendant toute la durée d\'exposition.','Hydratez la peau après l\'exposition avec un soin apaisant.'],
+   red:['Antécédent de mélanome ou cancer cutané — consulter un dermatologue','Grossesse — certains caroténoïdes sont contre-indiqués à forte dose','Traitement par rétinoïdes'],
+   prods:[
+     {n:'Bêta-carotène 6mg',c:'Complément alimentaire',note:'Précurseur de la vitamine A, stimule la production de mélanine pour un bronzage durable. Ne pas fumer (interaction reconnue).',lab:'Pileje',dosage:'60 gélules',prix:11.90},
+     {n:'Lycopène 10mg',c:'Complément alimentaire',note:'Puissant antioxydant qui protège la peau contre les radicaux libres générés par les UV.',lab:'Solgar',dosage:'60 gélules',prix:14.90},
+     {n:'Astaxanthine 4mg',c:'Complément alimentaire',note:'L\'un des antioxydants les plus puissants connus, protège la peau contre le photo-vieillissement.',lab:'Solgar',dosage:'30 gélules',prix:19.90},
+     {n:'Sélénium 200µg',c:'Complément alimentaire',note:'Oligo-élément antioxydant qui protège les cellules cutanées. Ne pas dépasser 200µg/jour toutes sources confondues.',lab:'Ixora',dosage:'60 gélules',prix:9.50},
+     {n:'Vitamine E 400 UI',c:'Complément alimentaire',note:'Vitamnie liposoluble qui protège les membranes cellulaires de l\'oxydation due aux UV.',lab:'Solgar',dosage:'50 gélules',prix:16.90}
+   ]},
+
+  {id:'yeux_secs',ic:'👁️',name:'Yeux secs / Irrités',
+   desc:'Sécheresse oculaire, yeux qui picotent, sensibles aux écrans',
+   advice:['Limitez le temps d\'écran et appliquez la règle 20-20-20 : toutes les 20 min, regardez à 20 pieds pendant 20 secondes.','Augmentez l\'humidité de votre environnement (humidificateur).','Évitez les environnements climatisés ou les courants d\'air.','Portez des lunettes de soleil à l\'extérieur pour protéger vos yeux des UV et du vent.'],
+   red:['Douleur oculaire intense et soudaine','Vision floue permanente','Rougeur avec sécrétions jaunes ou vertes — peut indiquer une conjonctivite bactérienne','Sensibilité extrême à la lumière'],
+   prods:[
+     {n:'Lutéine 20mg',c:'Complément alimentaire',note:'Protège la macula contre la dégénérescence. Recommandée en cure de 3 mois chez les personnes exposées aux écrans.',lab:'Solgar',dosage:'60 gélules',prix:18.90},
+     {n:'Oméga-3 DHA 500mg',c:'Complément alimentaire',note:'Constituant essentiel de la rétine. Réduit l\'inflammation et améliore la qualité du film lacrymal.',lab:'Pileje',dosage:'60 gélules',prix:16.90},
+     {n:'Zinc + Cuivre',c:'Complément alimentaire',note:'Le zinc est essentiel au métabolisme de la vitamine A dans la rétine. Toujours associer cuivre si zinc prolongé.',lab:'Solgar',dosage:'100 comprimés',prix:10.90},
+     {n:'Riboflavine B2',c:'Complément alimentaire',note:'La vitamine B2 contribue à maintenir une vision normale. Déficit fréquent en cas de fatigue oculaire.',lab:'Ixora',dosage:'60 gélules',prix:9.50},
+     {n:'Myrtille extrait',c:'Complément alimentaire',note:'Riche en anthocyanes qui protègent les capillaires de la rétine et améliorent la vision nocturne.',lab:'Arkopharma',dosage:'45 gélules',prix:12.90}
+   ]},
+
+  {id:'jambes_lourdes',ic:'🦵',name:'Jambes lourdes & retour veineux',
+   desc:'Jambes qui gonflent, sensation de lourdeur, varices débutantes',
+   advice:['Évitez les longues stations debout ou assises — bougez régulièrement.','Surélevez les jambes de 15 à 20 cm pendant le repos.','Portez des bas de contention gradués si vous êtes en position debout prolongée.','Douches froides sur les jambes en fin de journée pour tonifier les veines.','Marchez ou nagez : la contraction musculaire favorise le retour veineux.'],
+   red:['Douleur au mollet avec chaleur et rougeur — risque de phlébite, urgence','Gonflement unilatéral soudain d\'une jambe','Plaies ou ulcères variqueux sur les jambes'],
+   prods:[
+     {n:'Vigne rouge extrait',c:'Complément alimentaire',note:'Riche en OPC qui renforcent les parois veineuses et réduisent la perméabilité capillaire.',lab:'Arkopharma',dosage:'45 gélules',prix:11.90},
+     {n:'Hamamélis',c:'Complément alimentaire',note:'Plante vasoconstrictrice douce qui tonifie les veines. Utile en cure de 4 semaines.',lab:'Pileje',dosage:'30 gélules',prix:12.90},
+     {n:'Rutine 500mg',c:'Complément alimentaire',note:'Flavonoïde qui protège les capillaires et réduit l\'œdème. Associée à la vitamine C pour meilleure efficacité.',lab:'Solgar',dosage:'100 comprimés',prix:12.90},
+     {n:'Mélilot extrait',c:'Complément alimentaire',note:'Reconnu pour soulager les jambes lourdes et les hémorroïdes. En cure de 3 semaines, à renouveler.',lab:'Arkopharma',dosage:'45 gélules',prix:10.90},
+     {n:'Marronnier d\'Inde',c:'Complément alimentaire',note:'L\'aescine du marronnier renforce les parois veineuses et réduit l\'œdème des membres inférieurs.',lab:'Naturactive',dosage:'30 gélules',prix:9.90}
+   ]},
+
+  {id:'stress_passager',ic:'🧠',name:'Stress passager (examen, compétition)',
+   desc:'Stress aigu, anxiété ponctuelle, tension nerveuse, performance',
+   advice:['Anticipez : commencez la cure 2 semaines avant l\'événement pour les adaptogènes.','Pratiquez la cohérence cardiaque (5 min, 3x/jour) ou la respiration profonde.','Assurez-vous de dormir au moins 7-8h — le manque de sommeil amplifie le stress.','Évitez la caféine excessive les 48h avant l\'événement.'],
+   red:['Crises de panique répétées ou anxiété persistante depuis plus de 2 semaines — consulter un médecin','Dépression ou idées suicidaires','Trouble anxieux généralisé — prise en charge spécialisée nécessaire'],
+   prods:[
+     {n:'Magnésium bisglycinate 300mg',c:'Complément alimentaire',note:'Forme très bien assimilée. Réduit la nervosité, les palpitations et les tensions liées au stress. À prendre le soir.',lab:'Pileje',dosage:'60 gélules',prix:13.90},
+     {n:'Ashwagandha 300mg',c:'Complément alimentaire',note:'Adaptogène reconnu qui régule le cortisol (hormone du stress). Effets visibles après 2 semaines de cure.',lab:'Solgar',dosage:'60 gélules',prix:18.90},
+     {n:'Rhodiola rosea',c:'Complément alimentaire',note:'Améliore la résistance au stress et les performances cognitives en situation de surcharge. Prendre le matin.',lab:'Arkopharma',dosage:'45 gélules',prix:14.90},
+     {n:'Griffonia 100mg',c:'Complément alimentaire',note:'Précurseur du 5-HTP (sérotonine). Aide à réduire l\'anxiété et améliore l\'humeur. Ne pas associer aux ISRS.',lab:'Nutreov',dosage:'30 gélules',prix:16.90},
+     {n:'L-Théanine 200mg',c:'Complément alimentaire',note:'Acide aminé naturel du thé vert. Favorise un état de relaxation sans somnolence — idéal avant un examen.',lab:'Solgar',dosage:'60 gélules',prix:19.90}
+   ]},
+
+  {id:'regles_douloureuses',ic:'🌸',name:'Règles douloureuses',
+   desc:'Dysménorrhée, crampes pelviennes, douleurs abdominales menstruelles',
+   advice:['Appliquez une bouillotte chaude sur le bas-ventre — la chaleur soulage les spasmes utérins.','Un bain chaud peut aider à détendre les muscles pelviens.','Marchez légèrement : l\'activité douce améliore la circulation pelvienne.','Tenez un journal menstruel pour identifier les patterns et en parler à votre médecin.'],
+   red:['Douleurs très intenses invalidantes depuis plusieurs cycles — penser à l\'endométriose','Saignements anormalement abondants','Fièvre associée aux règles','Douleurs qui ne répondent pas aux antalgiques usuels'],
+   prods:[
+     {n:'Magnésium marin 300mg',c:'Complément alimentaire',note:'Réduit les spasmes et crampes musculaires. À prendre en continu tout le mois, pas uniquement pendant les règles.',lab:'Pileje',dosage:'60 gélules',prix:12.90},
+     {n:'Vitex agnus-castus',c:'Complément alimentaire',note:'Régule les hormones féminines (LH/FSH). Efficacité démontrée sur les syndromes prémenstruels. Cure de 3 mois.',lab:'Arkopharma',dosage:'45 gélules',prix:12.90},
+     {n:'Safran 15mg',c:'Complément alimentaire',note:'Reconnu pour améliorer l\'humeur et réduire les douleurs du syndrome prémenstruel. À prendre tout le mois.',lab:'Ixora',dosage:'30 gélules',prix:14.90},
+     {n:'Oméga-3 EPA/DHA',c:'Complément alimentaire',note:'Les EPA réduisent la production de prostaglandines pro-inflammatoires responsables des crampes.',lab:'Pileje',dosage:'60 gélules · EPA 450/DHA 300mg',prix:15.90},
+     {n:'Curcumine 500mg',c:'Complément alimentaire',note:'Anti-inflammatoire naturel puissant. À prendre avec de la pipérine (poivre noir) pour une meilleure absorption.',lab:'Solgar',dosage:'60 gélules',prix:22.90}
    ]}
 ];
 
@@ -3837,6 +4215,9 @@ const AILMENT_COLORS={
   rhume:      {bg:'#DBEAFE',border:'#2563EB',text:'#1E40AF',bar:'#2563EB',light:'#EFF6FF',name:'Rhume / Grippe'},
   gorge:      {bg:'#FFEDD5',border:'#EA580C',text:'#9A3412',bar:'#EA580C',light:'#FFF7ED',name:'Gorge'},
   digestion:  {bg:'#FEF9C3',border:'#CA8A04',text:'#854D0E',bar:'#EAB308',light:'#FEFCE8',name:'Digestion'},
+  ventre:     {bg:'#FEF9C3',border:'#CA8A04',text:'#854D0E',bar:'#EAB308',light:'#FEFCE8',name:'Douleurs abdominales'},
+  gastrique:  {bg:'#FFF7ED',border:'#EA580C',text:'#7C2D12',bar:'#EA580C',light:'#FFF7ED',name:'Brûlures gastriques'},
+  vomissement:{bg:'#CCFBF1',border:'#0D9488',text:'#134E4A',bar:'#14B8A6',light:'#F0FDFA',name:'Nausées / Vomissements'},
   diarrhee:   {bg:'#CCFBF1',border:'#0D9488',text:'#134E4A',bar:'#14B8A6',light:'#F0FDFA',name:'Diarrhée'},
   plaie:      {bg:'#FEE2E2',border:'#DC2626',text:'#991B1B',bar:'#EF4444',light:'#FFF5F5',name:'Plaie / Coupure'},
   piqure:     {bg:'#FEF3C7',border:'#D97706',text:'#92400E',bar:'#F59E0B',light:'#FFFBEB',name:'Piqûre / Morsure'},
@@ -3846,6 +4227,14 @@ const AILMENT_COLORS={
   dos:        {bg:'#FEF3C7',border:'#B45309',text:'#78350F',bar:'#D97706',light:'#FFFBEB',name:'Mal de dos'},
   peau:       {bg:'#FFF0ED',border:'#C2410C',text:'#7C2D12',bar:'#EA580C',light:'#FFF7F5',name:'Problèmes de peau'},
   cystite:    {bg:'#E0F2FE',border:'#0369A1',text:'#0C4A6E',bar:'#0891B2',light:'#F0F9FF',name:'Cystite'},
+  /* ── 7 nouveaux protocoles ── */
+  prevention_hivernale:{bg:'#DBEAFE',border:'#1D4ED8',text:'#1E3A8A',bar:'#2563EB',light:'#EFF6FF',name:'Prévention hivernale'},
+  cure_minceur:        {bg:'#DCFCE7',border:'#15803D',text:'#14532D',bar:'#22C55E',light:'#F0FDF4',name:'Cure minceur'},
+  solaire:             {bg:'#FEF9C3',border:'#CA8A04',text:'#854D0E',bar:'#EAB308',light:'#FEFCE8',name:'Préparation solaire'},
+  yeux_secs:           {bg:'#E0E7FF',border:'#4F46E5',text:'#312E81',bar:'#6366F1',light:'#EEF2FF',name:'Yeux secs'},
+  jambes_lourdes:      {bg:'#FCE7F3',border:'#9D174D',text:'#831843',bar:'#DB2777',light:'#FDF2F8',name:'Jambes lourdes'},
+  stress_passager:     {bg:'#F5F3FF',border:'#7C3AED',text:'#4C1D95',bar:'#7C3AED',light:'#F5F3FF',name:'Stress passager'},
+  regles_douloureuses: {bg:'#FFF1F2',border:'#BE123C',text:'#881337',bar:'#F43F5E',light:'#FFF1F2',name:'Règles douloureuses'},
 };
 
 let currentConseilPage=0;
@@ -3922,6 +4311,9 @@ function getSortedSubstances(ail){
   return subs;
 }
 
+/* Badge AMA — tous les CA/DM de notre base sont non dopants */
+const AMA_BADGE=`<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:30px;display:inline-block;margin-top:3px">✓ Non dopant AMA</span>`;
+
 /* Rendu d'un item accordéon */
 function renderAccItem(ailId, sub, col){
   const sk=subKey(sub.n);
@@ -3938,6 +4330,8 @@ function renderAccItem(ailId, sub, col){
   // Badge priorité pharmacien
   const badge=isPrioLab?`<span class="acc-badge" style="background:${bgColor}20;color:${col.text}">⭐ Prioritaire</span>`:
                sub.reco?`<span class="acc-badge" style="background:${bgColor}15;color:${col.text}">Reco ${sub.reco}</span>`:'';
+  // Badge AMA (tous les compléments et DM de notre base sont non dopants)
+  const amaBadge=AMA_BADGE;
 
   // ─── INDISPONIBLE ────────────────────────────────────────
   if(!available){
@@ -3961,6 +4355,7 @@ function renderAccItem(ailId, sub, col){
         <div class="acc-sel-check">✓</div>
         <div style="flex:1;min-width:0">
           <div class="acc-sel-name">${sub.n}</div>
+          ${amaBadge}
           <div style="font-size:12.5px;margin-top:2px;display:flex;gap:8px;align-items:center">
             <span style="color:var(--ink-soft)">${sel.prod.lab} · ${sel.prod.dosage}</span>
             <span style="font-weight:800;color:var(--ok)">€${prix}</span>
@@ -3990,6 +4385,7 @@ function renderAccItem(ailId, sub, col){
         <div class="acc-icon-wrap" style="background:${bgColor}20">${icon}</div>
         <div class="acc-texts">
           <div class="acc-title">${sub.n}</div>
+          ${amaBadge}
           <div class="acc-desc">${sub.note.substring(0,70)}…</div>
         </div>
         ${badge}
@@ -4008,6 +4404,7 @@ function renderAccItem(ailId, sub, col){
       <div class="acc-icon-wrap" style="background:#f5f5f3">${icon}</div>
       <div class="acc-texts">
         <div class="acc-title">${sub.n}</div>
+        ${amaBadge}
         <div class="acc-desc">${sub.note.substring(0,70)}…</div>
       </div>
       ${badge}
@@ -5874,7 +6271,17 @@ const CROSS_SELL_RULES={
   rhume: {icon:'🤧',label:'Rhume',suggest:['Échinacée (extrait standardisé)','Propolis','Vitamine C + Zinc','Huile essentielle eucalyptus / thym']},
   gorge: {icon:'🦠',label:'Gorge',suggest:['Propolis spray (voie locale)','Zinc + miel (pastilles adoucissantes)','Spray adoucissant gorge']},
   digestion:{icon:'🫃',label:'Digestion',suggest:['Probiotiques digestifs','Gingembre (extrait standardisé)','Charbon végétal actif','Enzymes digestives']},
+  ventre:  {icon:'🤢',label:'Douleurs abdominales',suggest:['Méprobamate intestinal (antispasmodique doux)','Probiotiques digestifs','Charbon végétal actif','Huile essentielle de menthe poivrée (vv)','Cumin / Carvi (extrait)']},
+  gastrique:{icon:'🔥',label:'Brûlures gastriques',suggest:['Aloe vera (jus/extrait — usage digestif)','Réglisse DGL (déglycyrrhizinée)','Carbonate de calcium (antiacide naturel)','Probiotiques digestifs']},
+  vomissement:{icon:'🤮',label:'Nausées / Vomissements',suggest:['Gingembre (extrait standardisé)','Vitamine B6 (anti-nausée)','Solution de réhydratation orale (SRO)']},
   diarrhee:{icon:'💧',label:'Diarrhée',suggest:['Solution de réhydratation orale (SRO)','Probiotiques digestifs','Zinc']},
+  prevention_hivernale:{icon:'🛡️',label:'Prévention hivernale',suggest:['Vitamine C 500mg','Vitamine D3 1000 UI','Zinc 15mg','Propolis extrait','Echinacea (Arkopharma)']},
+  cure_minceur:{icon:'⚖️',label:'Cure minceur',suggest:['Thé vert extrait','Konjac gélules','Chrome 200µg','Artichaut + Radis noir']},
+  solaire:{icon:'☀️',label:'Préparation solaire',suggest:['Bêta-carotène 6mg','Lycopène 10mg','Astaxanthine 4mg','Sélénium 200µg']},
+  yeux_secs:{icon:'👁️',label:'Yeux secs',suggest:['Lutéine 20mg','Oméga-3 DHA 500mg','Myrtille extrait']},
+  jambes_lourdes:{icon:'🦵',label:'Jambes lourdes',suggest:['Vigne rouge extrait','Rutine 500mg','Marronnier d\'Inde','Mélilot extrait']},
+  stress_passager:{icon:'🧠',label:'Stress passager',suggest:['Magnésium bisglycinate 300mg','Ashwagandha 300mg','L-Théanine 200mg','Rhodiola rosea']},
+  regles_douloureuses:{icon:'🌸',label:'Règles douloureuses',suggest:['Magnésium marin 300mg','Safran 15mg','Oméga-3 EPA/DHA','Curcumine 500mg']},
   plaie: {icon:'🩹',label:'Plaie',suggest:['Solution saline (lavage de plaie)','Gel aloe vera','Pansements / compresses stériles']},
   piqure:{icon:'🦟',label:'Piqûre',suggest:['Roll-on apaisant post-piqûre (HE)','Extracteur de venin','Vitamine C + Zinc']},
   courbatures:{icon:'💪',label:'Courbatures',suggest:['Magnésium','Compresse froide / chaud-froid','Curcumine','Oméga‑3 (EPA/DHA)']},
@@ -5941,6 +6348,7 @@ function renderCrossSell(ailmentIds){
         return `<div class="cs-card ${inCart?'added':''}" id="csc-${pKey}">
           <div class="cs-icon">${icon}</div>
           <div class="cs-name">${prod.name}</div>
+          ${AMA_BADGE}
           <div class="cs-lab">${prod.lab} · ${prod.dosage}</div>
           <div class="cs-benefit">${getCsBenefit(sub)}</div>
           ${warn.level?`<div style="font-size:10.5px;color:var(--warn);font-weight:700">⚠ ${warn.ansm||'Précaution'}</div>`:''}
