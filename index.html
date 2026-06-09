@@ -4087,29 +4087,12 @@ async function renderDonationClubOptions(){
   const club=await getPatientClub();
   if(!club){el.style.display='none';return;}
   el.style.display='block';
-  const assoc=getCurrentAssoc();
-  const donation=donationAmount(cartTotal(deliveryMode));
-  const half=(donation/2).toFixed(2);
-  el.innerHTML=`
-    <div style="font-size:12px;font-weight:700;color:var(--pharma);margin-bottom:8px">🏆 Vous êtes licencié(e) à <b>${esc(club.nom)}</b> — choisissez le bénéficiaire :</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='assoc'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='assoc'?'#f5f3ff':'var(--paper-2)'}">
-        <input type="radio" name="donTarget" value="assoc" ${donationTarget==='assoc'?'checked':''} onchange="setDonationTarget('assoc')" style="accent-color:var(--pharma)">
-        <span>${assoc.icon} ${esc(assoc.name)} <span style="font-size:11px;color:var(--ink-soft)">(+€${donation.toFixed(2)})</span></span>
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='club'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='club'?'#f5f3ff':'var(--paper-2)'}">
-        <input type="radio" name="donTarget" value="club" ${donationTarget==='club'?'checked':''} onchange="setDonationTarget('club')" style="accent-color:var(--pharma)">
-        <span>🏆 ${esc(club.nom)} <span style="font-size:11px;color:var(--ink-soft)">(+€${donation.toFixed(2)})</span></span>
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid ${donationTarget==='both'?'var(--pharma)':'var(--line)'};border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;background:${donationTarget==='both'?'#f5f3ff':'var(--paper-2)'}">
-        <input type="radio" name="donTarget" value="both" ${donationTarget==='both'?'checked':''} onchange="setDonationTarget('both')" style="accent-color:var(--pharma)">
-        <span>🤝 Les deux · 50/50 <span style="font-size:11px;color:var(--ink-soft)">(${assoc.icon} €${half} + 🏆 €${half})</span></span>
-      </label>
-    </div>`;
-  // Alimenter la cagnotte du club si target = club ou both
-  if(club?.id && (donationTarget==='club'||donationTarget==='both')){
-    // Juste un aperçu — l'enregistrement réel se fait à la validation de commande
-  }
+  const fee=getDeliveryFee();
+  const contrib=clubContributionAmount(fee);
+  el.innerHTML=`<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-radius:10px;padding:10px 12px;font-size:12px">
+    <div style="font-weight:700;color:var(--pharma);margin-bottom:3px">🏆 Licencié(e) ${esc(club.nom)}</div>
+    <div style="color:var(--ink-soft)">Livraisanté reverse automatiquement <b>${contrib.toFixed(2)} €</b> à votre club sur cette commande (50% de la commission plateforme). Votre don solidaire personnel va à l'association du mois.</div>
+  </div>`;
 }
 
 function removeFromCartAndRefresh(key){
@@ -4730,24 +4713,18 @@ function placeOrderSante(){
   const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
   const assocObj=donationEnabled?getCurrentAssoc():null;
   const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
-  // Construire l'objet don selon la cible choisie
+  // Le don patient va toujours à l'association du mois
   let donInfo=null;
   if(assocObj && donAmt>0){
-    if(donationTarget==='assoc'){
-      donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};
-    } else if(donationTarget==='club'){
-      donInfo={assoc:null,icon:'🏆',amount:donAmt.toFixed(2),clubShare:donAmt.toFixed(2),assocShare:0};
-    } else { // both
-      const half=(donAmt/2).toFixed(2);
-      donInfo={assoc:assocObj.name,icon:'🤝',amount:donAmt.toFixed(2),clubShare:half,assocShare:half};
+    donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};
+  }
+  // B2B2C : reverser 50% de la commission plateforme au club du licencié (automatique, indépendant du don)
+  getPatientClub().then(club=>{
+    if(club?.id){
+      const fee=getDeliveryFee();
+      addCagnotteContribution(club.id, 'order-'+Date.now(), fee);
     }
-  }
-  // Alimenter la cagnotte club si applicable
-  if((donationTarget==='club'||donationTarget==='both') && donAmt>0){
-    getPatientClub().then(club=>{
-      if(club?.id) addCagnotteContribution(club.id, 'order-'+Date.now());
-    });
-  }
+  });
   createOrder({items, kind:deliveryMode==='cnc'?'click-collect':'santé',
     patient:{name:document.getElementById('santeName')?.value.trim()||'Patient',pos:santePos,addr,donation:donInfo},
     trackId:'santeOrderTrack', btn:document.getElementById('santeOrderBtn')});
@@ -6779,42 +6756,107 @@ function groupByMonth(orders){
   });
   return Object.values(map).sort((a,b)=>b.key.localeCompare(a.key));
 }
-function renderInvoiceMonth(m, showDownload=true){
+function renderInvoiceMonth(m, showDownload=true, entityType='', entityLabel=''){
+  const platformComm=m.totalDelivery*0.20;
+  const clubShare=platformComm*0.50;
   return `<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;text-transform:capitalize">${esc(m.label)}</div>
-      ${showDownload?`<button onclick="downloadInvoicePDF(${JSON.stringify(m).replace(/"/g,'&quot;')})" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--paper-2);cursor:pointer">⬇ Télécharger</button>`:''}
+      ${showDownload?`<button onclick="downloadInvoicePDF(${JSON.stringify(m).replace(/"/g,'&quot;')},'${entityLabel}','${entityType}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--paper-2);cursor:pointer">📄 PDF</button>`:''}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:10px">
       <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
         <div style="font-weight:800;font-size:18px">${m.count}</div>
         <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Livraisons</div>
       </div>
       <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-weight:800;font-size:18px">${m.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-weight:800;font-size:16px">${m.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
         <div style="font-size:11px;color:var(--ink-soft);font-weight:600">CA total</div>
       </div>
       <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-weight:800;font-size:18px">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-weight:800;font-size:16px">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
         <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Frais livraison</div>
+      </div>
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:16px;color:#16a34a">${platformComm.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Commission (20%)</div>
       </div>
     </div>
     <div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:8px">${m.orders.slice(0,5).map(o=>`<span style="display:inline-block;background:var(--paper-2);border-radius:6px;padding:2px 8px;margin:2px;font-family:monospace">${esc(o.id?.slice(0,8)||'—')}</span>`).join('')}${m.orders.length>5?`<span style="font-size:11px;color:var(--ink-soft)"> +${m.orders.length-5} autres</span>`:''}</div>
   </div>`;
 }
-function downloadInvoicePDF(m){
-  const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Facture ${m.label} — Livraisanté</title>
-  <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#0D0E09}h1{font-size:24px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px 12px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5;font-weight:700}tfoot td{font-weight:700;background:#f9f9f9}.logo{font-size:28px;font-weight:900;margin-bottom:4px}</style></head>
-  <body><div class="logo">🌿 Livraisanté</div><div style="color:#888;margin-bottom:24px">livraisante.fr</div>
-  <h1>Facture — ${m.label}</h1>
-  <p>Édité le ${new Date().toLocaleDateString('fr-FR')}</p>
-  <table><thead><tr><th>#</th><th>Commande</th><th>CA</th><th>Livraison</th></tr></thead>
-  <tbody>${m.orders.map((o,i)=>`<tr><td>${i+1}</td><td style="font-family:monospace">${o.id?.slice(0,12)||'—'}</td><td>${parseFloat(o.total_price||0).toFixed(2)} €</td><td>${parseFloat(o.delivery_fee||0).toFixed(2)} €</td></tr>`).join('')}</tbody>
-  <tfoot><tr><td colspan="2">Total</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td></tr></tfoot></table>
-  <p style="margin-top:30px;font-size:12px;color:#888">Livraisanté SAS — livraisante.fr — Document généré automatiquement</p>
-  </body></html>`;
-  const blob=new Blob([html],{type:'text/html'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`facture-livraisante-${m.key}.html`; a.click();
+function downloadInvoicePDF(m, entityLabel='', entityType=''){
+  const num=`LV-${m.key}-${String(Date.now()).slice(-4)}`;
+  const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const platformCommission=m.orders.reduce((s,o)=>s+(parseFloat(o.delivery_fee||0)*0.20),0);
+  const clubContrib=platformCommission*0.50;
+  const win=window.open('','_blank','width=860,height=750');
+  if(!win){alert('Autorisez les popups pour générer le PDF.');return;}
+  win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+  <title>Facture ${m.label} — Livraisanté</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;max-width:760px;margin:32px auto 60px;color:#0D0E09;font-size:14px;padding:0 20px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0D0E09;padding-bottom:18px;margin-bottom:24px}
+    .logo{font-size:26px;font-weight:900;letter-spacing:-1px}
+    .logo span{color:#7CB518}
+    .meta{text-align:right;font-size:12px;color:#666}
+    .meta strong{font-size:20px;color:#0D0E09;display:block;margin-bottom:4px}
+    h2{font-size:16px;font-weight:700;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid #eee;text-transform:uppercase;letter-spacing:.5px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .kpi{background:#f8f8f6;border-radius:10px;padding:14px;text-align:center}
+    .kpi .val{font-size:22px;font-weight:900;color:#0D0E09}
+    .kpi .lbl{font-size:11px;color:#888;font-weight:600;margin-top:3px}
+    .kpi.green .val{color:#16a34a}
+    table{width:100%;border-collapse:collapse;font-size:12.5px}
+    th{background:#0D0E09;color:white;padding:9px 10px;text-align:left;font-weight:700}
+    td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+    tr:nth-child(even) td{background:#fafaf8}
+    tfoot td{font-weight:700;background:#f0f0ee;padding:10px}
+    .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+    .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:16px}
+    .b2b2c{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-top:20px}
+    .b2b2c .ttl{font-weight:700;color:#16a34a;margin-bottom:6px}
+    @media print{body{margin:0;max-width:100%}.no-print{display:none}@page{margin:18mm}}
+  </style></head>
+  <body>
+  <div class="no-print" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;display:flex;align-items:center;justify-content:space-between">
+    <span>📄 Cliquez sur <b>Imprimer</b> puis choisissez <b>Enregistrer en PDF</b></span>
+    <button onclick="window.print()" style="font-family:inherit;font-weight:700;font-size:13px;padding:8px 18px;background:#16a34a;color:white;border:none;border-radius:8px;cursor:pointer">🖨 Imprimer / PDF</button>
+  </div>
+  <div class="header">
+    <div>
+      <div class="logo">Livrais<span>anté</span></div>
+      <div style="font-size:12px;color:#888;margin-top:4px">livraisante.fr · livraison de médicaments</div>
+      ${entityLabel?`<div style="font-size:12px;margin-top:6px"><b>${entityType}</b> : ${entityLabel}</div>`:''}
+    </div>
+    <div class="meta">
+      <strong>FACTURE MENSUELLE</strong>
+      N° ${num}<br>
+      Période : ${m.label}<br>
+      Édité le ${today}
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="val">${m.count}</div><div class="lbl">Livraisons</div></div>
+    <div class="kpi"><div class="val">${m.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">CA total</div></div>
+    <div class="kpi"><div class="val">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">Frais livraison</div></div>
+    <div class="kpi green"><div class="val">${platformCommission.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">Commission plateforme (20%)</div></div>
+  </div>
+  <h2>Détail des commandes</h2>
+  <table><thead><tr><th>#</th><th>Réf commande</th><th>Date</th><th>CA (€)</th><th>Livraison (€)</th><th>Commission (€)</th></tr></thead>
+  <tbody>${m.orders.map((o,i)=>{
+    const fee=parseFloat(o.delivery_fee||0);
+    const comm=(fee*0.20).toFixed(2);
+    const d=o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'—';
+    return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${(o.id||'—').slice(0,16)}</td><td>${d}</td><td>${parseFloat(o.total_price||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
+  }).join('')}</tbody>
+  <tfoot><tr><td colspan="3" style="font-weight:700">TOTAL</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td><td>${platformCommission.toFixed(2)} €</td></tr></tfoot></table>
+  ${clubContrib>0?`<div class="b2b2c"><div class="ttl">🏆 Reversement clubs (modèle B2B2C)</div><div style="font-size:12px;color:#15803d">50% de la commission plateforme reversés aux clubs de leurs membres licenciés : <b>${clubContrib.toFixed(2)} €</b> estimés ce mois.</div></div>`:''}
+  <div class="footer">Livraisanté SAS · livraisante.fr · Document généré automatiquement · Non valable comme facture officielle sans signature</div>
+  </body></html>`);
+  win.document.close();
+  win.focus();
 }
 async function renderPharmacyInvoicesSection(containerId){
   const el=document.getElementById(containerId); if(!el) return;
@@ -6846,19 +6888,28 @@ async function renderDriverInvoicesSection(containerId){
   </div>`).join('');
 }
 
-/* ===== CAGNOTTE CLUBS ===== */
-const CAGNOTTE_CONTRIBUTION=0.50;
+/* ===== CAGNOTTE CLUBS — B2B2C =====
+   Commission plateforme : 20% des frais de livraison
+   Reversement club      : 50% de la commission (= 10% des frais)
+================================================= */
+const PLATFORM_FEE_RATE=0.20;   // Part Livraisanté sur les frais de livraison
+const CLUB_SHARE_RATE=0.50;      // Part reversée au club depuis la commission
+
+function clubContributionAmount(deliveryFee){
+  return Math.round(deliveryFee*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
+}
 function getCagnotte(clubId){
   try{return JSON.parse(localStorage.getItem(`livraisante_cagnotte_${clubId}`)||'{"balance":0,"history":[]}');}catch(e){return{balance:0,history:[]};}
 }
 function saveCagnotte(clubId,data){
   try{localStorage.setItem(`livraisante_cagnotte_${clubId}`,JSON.stringify(data));}catch(e){}
 }
-function addCagnotteContribution(clubId, orderId){
+function addCagnotteContribution(clubId, orderId, deliveryFee){
+  const amount=deliveryFee>0?clubContributionAmount(deliveryFee):0.10; // fallback 0.10€ minimum
   const c=getCagnotte(clubId);
   if(c.history.some(h=>h.orderId===orderId)) return;
-  c.balance=Math.round((c.balance+CAGNOTTE_CONTRIBUTION)*100)/100;
-  c.history.push({orderId,amount:CAGNOTTE_CONTRIBUTION,date:new Date().toISOString()});
+  c.balance=Math.round((c.balance+amount)*100)/100;
+  c.history.push({orderId,amount,date:new Date().toISOString()});
   saveCagnotte(clubId,c);
 }
 function verseCagnotte(clubId){
@@ -6884,7 +6935,7 @@ async function renderCagnotteClub(el, clubId, clubNom){
       <div style="font-size:26px">🎁</div>
       <div>
         <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px">Cagnotte Livraisanté</div>
-        <div style="font-size:12px;color:var(--ink-soft)">0,50 € versé par commande de vos membres</div>
+        <div style="font-size:12px;color:var(--ink-soft)">50% de la commission Livraisanté reversés par commande de vos membres</div>
       </div>
     </div>
     <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:36px;color:var(--pharma);margin-bottom:4px">${c.balance.toFixed(2)} €</div>
@@ -6900,7 +6951,7 @@ async function renderAdminCagnottes(){
   if(sb){const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');clubs=data||[];}
   if(!clubs.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucun club inscrit.</div>';return;}
   el.innerHTML=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🎁 Cagnottes des clubs</div>
-  <div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Les cagnottes s'accumulent automatiquement (0,50 € / commande d'un membre). Le don annuel est versé une fois par an.</div>`+
+  <div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Modèle B2B2C : Livraisanté reverse automatiquement 50% de sa commission (20% du frais de livraison) au club de chaque licencié qui commande. Le cumul est versé comme don annuel par l'admin.</div>`+
   clubs.map(club=>{
     const c=getCagnotte(club.id);
     const thisYear=new Date().getFullYear();
@@ -6923,22 +6974,76 @@ async function renderAdminCagnottes(){
     </div>`;
   }).join('');
 }
+let _adminFacturesMonth='';
 async function loadAdminFactures(){
   const el=document.getElementById('adminFacturesContent'); if(!el) return;
   el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement…</div>';
   const {pharmacies,drivers}=await loadAllInvoicesAdmin();
-  let html=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🧾 Factures pharmacies</div>`;
-  if(!pharmacies.length) html+='<div style="color:var(--ink-soft);font-size:14px;margin-bottom:20px">Aucune livraison.</div>';
-  pharmacies.forEach(ph=>{
-    html+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:8px">Pharmacie : <span style="font-family:monospace">${esc(ph.id.slice(0,12))}</span></div>`;
-    ph.months.forEach(m=>{html+=renderInvoiceMonth(m,false);});
+
+  // Collect all months
+  const monthSet=new Set();
+  [...pharmacies,...drivers].forEach(e=>e.months.forEach(m=>monthSet.add(m.key)));
+  const allMonths=[...monthSet].sort().reverse();
+  if(!_adminFacturesMonth&&allMonths.length) _adminFacturesMonth=allMonths[0];
+
+  const monthOptions=allMonths.map(k=>{
+    const label=new Date(k+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    return `<option value="${k}" ${k===_adminFacturesMonth?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+  }).join('');
+
+  // Filter to selected month
+  const filteredPh=pharmacies.map(ph=>({...ph,months:ph.months.filter(m=>!_adminFacturesMonth||m.key===_adminFacturesMonth)})).filter(ph=>ph.months.length);
+  const filteredDr=drivers.map(dr=>({...dr,months:dr.months.filter(m=>!_adminFacturesMonth||m.key===_adminFacturesMonth)})).filter(dr=>dr.months.length);
+
+  // Global summary for selected month
+  const allOrdersMonth=[...pharmacies,...drivers].flatMap(e=>e.months.filter(m=>m.key===_adminFacturesMonth).flatMap(m=>m.orders));
+  const globalMonth={
+    key:_adminFacturesMonth,
+    label:_adminFacturesMonth?new Date(_adminFacturesMonth+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'—',
+    orders:allOrdersMonth,
+    count:allOrdersMonth.length,
+    totalCA:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.total_price||0),0),
+    totalDelivery:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.delivery_fee||0),0)
+  };
+
+  let html=`
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px">🧾 Factures mensuelles</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <select onchange="_adminFacturesMonth=this.value;loadAdminFactures()" style="font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-2);color:var(--ink)">
+        ${allMonths.length?monthOptions:'<option>Aucun mois</option>'}
+      </select>
+      ${globalMonth.count>0?`<button onclick="downloadInvoicePDF(${JSON.stringify(globalMonth).replace(/"/g,'&quot;')},'Toutes entités','Récap global')" style="font-family:inherit;font-size:13px;font-weight:700;padding:8px 16px;border:none;border-radius:10px;background:var(--pharma);color:white;cursor:pointer">📄 Facture globale PDF</button>`:''}
+    </div>
+  </div>`;
+
+  if(globalMonth.count>0){
+    const platformComm=globalMonth.totalDelivery*0.20;
+    const clubContrib=platformComm*0.50;
+    html+=`<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;margin-bottom:10px">📊 Récap du mois — ${esc(globalMonth.label.charAt(0).toUpperCase()+globalMonth.label.slice(1))}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.count}</div><div style="font-size:11px;color:#666">Livraisons</div></div>
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0})}</div><div style="font-size:11px;color:#666">CA total</div></div>
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Frais livraison</div></div>
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px;color:#16a34a">${platformComm.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Commission (20%)</div></div>
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px;color:var(--pharma)">${clubContrib.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Part clubs B2B2C</div></div>
+      </div>
+    </div>`;
+  }
+
+  html+=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--ink-soft)">🏥 Par pharmacie</div>`;
+  if(!filteredPh.length) html+='<div style="color:var(--ink-soft);font-size:13px;margin-bottom:16px">Aucune livraison sur ce mois.</div>';
+  filteredPh.forEach(ph=>{
+    html+=`<div style="margin-bottom:16px"><div style="font-weight:700;font-size:12px;color:var(--ink-soft);margin-bottom:6px">Pharmacie ID : <span style="font-family:monospace">${esc(ph.id.slice(0,16))}</span></div>`;
+    ph.months.forEach(m=>{html+=renderInvoiceMonth(m,true,'Pharmacie',ph.id.slice(0,12));});
     html+='</div>';
   });
-  html+=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin:18px 0 14px">🛵 Factures livreurs</div>`;
-  if(!drivers.length) html+='<div style="color:var(--ink-soft);font-size:14px">Aucune livraison.</div>';
-  drivers.forEach(dr=>{
-    html+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:8px">Livreur : <span style="font-family:monospace">${esc(dr.id.slice(0,12))}</span></div>`;
-    dr.months.forEach(m=>{html+=renderInvoiceMonth(m,false);});
+  html+=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;margin:16px 0 10px;color:var(--ink-soft)">🛵 Par livreur</div>`;
+  if(!filteredDr.length) html+='<div style="color:var(--ink-soft);font-size:13px">Aucune course sur ce mois.</div>';
+  filteredDr.forEach(dr=>{
+    html+=`<div style="margin-bottom:16px"><div style="font-weight:700;font-size:12px;color:var(--ink-soft);margin-bottom:6px">Livreur ID : <span style="font-family:monospace">${esc(dr.id.slice(0,16))}</span></div>`;
+    dr.months.forEach(m=>{html+=renderInvoiceMonth(m,true,'Livreur',dr.id.slice(0,12));});
     html+='</div>';
   });
   el.innerHTML=html;
