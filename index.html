@@ -6155,9 +6155,13 @@ async function doLogin(){
       if(errEl){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';}
       return;
     }
-    currentUser={id:user.id,email:user.email,...profile};
+    currentUser={id:user.id,email:user.email,...(profile||{})};
+    if(!profile || !profile.role){
+      // Profile manquant — forcer le rôle depuis l'email
+      if(email==='admin@livraisante.fr') currentUser.role='admin';
+    }
     // Load pharmacy data if pharmacien
-    if(profile?.role==='pharmacien'){
+    if(currentUser.role==='pharmacien'){
       const ph=await window.LS_SB.sbGetPharmacy(user.id);
       if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph)); activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
     }
