@@ -6092,6 +6092,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   renderSportGrid();
   updateAccountChip();
   renderHeader();
+
+  // ── Accès admin direct via hash (temporaire debug) ───────────
+  const hashAdmin = window.location.hash === '#admin-lv2026';
+  if(hashAdmin){
+    currentUser={id:'admin-direct',email:'admin@livraisante.fr',role:'admin'};
+    renderHeader(); renderBottomNav();
+    enterRole('admin');
+    return;
+  }
+
   // Routage au démarrage
   if(currentUser){
     if(currentUser.role==='admin') enterRole('admin');
