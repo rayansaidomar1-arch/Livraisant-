@@ -3175,9 +3175,10 @@ function renderPro(){
       </div>
     </div>`;
   document.getElementById('proContent').innerHTML =
-    trialWidget() + renderArrivalNotifications() + priorityWidget() + labPanel + conversionWidget() + breakEvenWidget() + basketConfigWidget() + sec('À traiter',aTraiter)+sec('En cours',enCours)+sec('Historique',closes);
+    trialWidget() + renderArrivalNotifications() + priorityWidget() + labPanel + conversionWidget() + breakEvenWidget() + basketConfigWidget() + `<div id="proFacturesSection" style="margin-bottom:20px"></div>` + sec('À traiter',aTraiter)+sec('En cours',enCours)+sec('Historique',closes);
   // Render priority widget content after DOM is ready
   renderPriorityWidget();
+  renderPharmacyInvoicesSection('proFacturesSection');
 }
 
 /* ---- LIVREUR ---- */
@@ -3203,8 +3204,10 @@ function renderLivreur(){
   const sec=(t,arr)=>`<div class="dash-sec-title">${t} <span class="cnt">${arr.length}</span></div>`+(arr.length?arr.map(card).join(''):'<div class="dash-empty">Aucune commande.</div>');
   document.getElementById('livContent').innerHTML =
     renderDriverReferral()+
+    `<div id="livreurFacturesSection" style="margin-bottom:20px"></div>`+
     `<div style="text-align:right;margin:0 0 18px"><button class="btn ghost" style="font-size:13px" onclick="enterRole('driverSignup')">🛵 Mon dossier livreur</button></div>`+
     sec('Disponibles',dispo)+sec('Mes livraisons en cours',mes)+sec('Livrées',faites);
+  renderDriverInvoicesSection('livreurFacturesSection');
 }
 
 /* ===================================================================
@@ -6146,6 +6149,8 @@ function renderAdminDashboard(){
     <button class="chip sel" onclick="adminTab(this,'tabPromos')">🎟 Codes promo</button>
     <button class="chip" onclick="adminTab(this,'tabMessages')">📣 Messages</button>
     <button class="chip" onclick="adminTab(this,'tabClubs')">🏋️ Clubs</button>
+    <button class="chip" onclick="adminTab(this,'tabFactures')">🧾 Factures</button>
+    <button class="chip" onclick="adminTab(this,'tabCagnottes')">🎁 Cagnottes</button>
     <button class="chip" onclick="adminTab(this,'tabExport')">📥 Export</button>
   </div>
 
@@ -6173,6 +6178,16 @@ function renderAdminDashboard(){
   <div id="tabClubs" class="admin-tab" style="display:none">
     <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🏋️ Clubs inscrits</div>
     <div id="adminClubsList"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
+  </div>
+
+  <!-- TAB: FACTURES ADMIN -->
+  <div id="tabFactures" class="admin-tab" style="display:none">
+    <div id="adminFacturesContent"><div style="color:var(--ink-soft);font-size:14px">Cliquez sur l'onglet pour charger.</div></div>
+  </div>
+
+  <!-- TAB: CAGNOTTES -->
+  <div id="tabCagnottes" class="admin-tab" style="display:none">
+    <div id="adminCagnottesContent"></div>
   </div>
 
   <!-- TAB: EXPORT -->
@@ -6208,6 +6223,8 @@ function adminTab(btn,tabId){
   if(tab) tab.style.display='block';
   btn.classList.add('sel');
   if(tabId==='tabClubs') loadAdminClubs();
+  if(tabId==='tabFactures') loadAdminFactures();
+  if(tabId==='tabCagnottes') renderAdminCagnottes();
   if(tabId==='tabMessages') renderAdminMsgHistory();
 }
 
@@ -6236,6 +6253,224 @@ function renderAdminMsgHistory(){
   if(!msgs.length){el.innerHTML='';return;}
   el.innerHTML=`<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--ink-soft)">Messages envoyés (${msgs.length})</div>`+
     msgs.slice().reverse().map(m=>`<div style="padding:10px 12px;background:var(--paper-2);border-radius:10px;margin-bottom:8px;font-size:13px"><div style="font-weight:700">→ ${esc(m.dest)}</div><div style="margin:4px 0">${esc(m.text)}</div><div style="font-size:11px;color:var(--ink-soft)">${esc(m.date)}</div></div>`).join('');
+}
+
+/* ===== FACTURES MENSUELLES ===== */
+async function loadPharmacyInvoices(){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return [];
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  if(!phData.id) return [];
+  const {data}=await sb.from('orders').select('id,status,total_price,delivery_fee,created_at').eq('pharmacy_id',phData.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
+  return groupByMonth(data||[]);
+}
+async function loadDriverInvoices(){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return [];
+  if(!currentUser?.id) return [];
+  const {data}=await sb.from('orders').select('id,status,delivery_fee,created_at').eq('driver_id',currentUser.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
+  return groupByMonth(data||[]);
+}
+async function loadAllInvoicesAdmin(){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return {pharmacies:[],drivers:[]};
+  const [{data:phOrds},{data:drOrds}]=await Promise.all([
+    sb.from('orders').select('id,status,pharmacy_id,total_price,delivery_fee,created_at').in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000),
+    sb.from('orders').select('id,status,driver_id,delivery_fee,created_at').not('driver_id','is',null).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000)
+  ]);
+  const byPharma={};
+  (phOrds||[]).forEach(o=>{
+    const k=o.pharmacy_id||'unknown';
+    if(!byPharma[k])byPharma[k]=[];
+    byPharma[k].push(o);
+  });
+  const byDriver={};
+  (drOrds||[]).forEach(o=>{
+    const k=o.driver_id||'unknown';
+    if(!byDriver[k])byDriver[k]=[];
+    byDriver[k].push(o);
+  });
+  return {
+    pharmacies:Object.entries(byPharma).map(([id,orders])=>({id,months:groupByMonth(orders)})),
+    drivers:Object.entries(byDriver).map(([id,orders])=>({id,months:groupByMonth(orders)}))
+  };
+}
+function groupByMonth(orders){
+  const map={};
+  orders.forEach(o=>{
+    const d=new Date(o.created_at);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if(!map[key])map[key]={key,label:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),orders:[],totalCA:0,totalDelivery:0,count:0};
+    map[key].orders.push(o);
+    map[key].totalCA+=parseFloat(o.total_price||0);
+    map[key].totalDelivery+=parseFloat(o.delivery_fee||0);
+    map[key].count++;
+  });
+  return Object.values(map).sort((a,b)=>b.key.localeCompare(a.key));
+}
+function renderInvoiceMonth(m, showDownload=true){
+  return `<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;text-transform:capitalize">${esc(m.label)}</div>
+      ${showDownload?`<button onclick="downloadInvoicePDF(${JSON.stringify(m).replace(/"/g,'&quot;')})" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--paper-2);cursor:pointer">⬇ Télécharger</button>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:18px">${m.count}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Livraisons</div>
+      </div>
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:18px">${m.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">CA total</div>
+      </div>
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:18px">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Frais livraison</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:8px">${m.orders.slice(0,5).map(o=>`<span style="display:inline-block;background:var(--paper-2);border-radius:6px;padding:2px 8px;margin:2px;font-family:monospace">${esc(o.id?.slice(0,8)||'—')}</span>`).join('')}${m.orders.length>5?`<span style="font-size:11px;color:var(--ink-soft)"> +${m.orders.length-5} autres</span>`:''}</div>
+  </div>`;
+}
+function downloadInvoicePDF(m){
+  const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Facture ${m.label} — Livraisanté</title>
+  <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#0D0E09}h1{font-size:24px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px 12px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5;font-weight:700}tfoot td{font-weight:700;background:#f9f9f9}.logo{font-size:28px;font-weight:900;margin-bottom:4px}</style></head>
+  <body><div class="logo">🌿 Livraisanté</div><div style="color:#888;margin-bottom:24px">livraisante.fr</div>
+  <h1>Facture — ${m.label}</h1>
+  <p>Édité le ${new Date().toLocaleDateString('fr-FR')}</p>
+  <table><thead><tr><th>#</th><th>Commande</th><th>CA</th><th>Livraison</th></tr></thead>
+  <tbody>${m.orders.map((o,i)=>`<tr><td>${i+1}</td><td style="font-family:monospace">${o.id?.slice(0,12)||'—'}</td><td>${parseFloat(o.total_price||0).toFixed(2)} €</td><td>${parseFloat(o.delivery_fee||0).toFixed(2)} €</td></tr>`).join('')}</tbody>
+  <tfoot><tr><td colspan="2">Total</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td></tr></tfoot></table>
+  <p style="margin-top:30px;font-size:12px;color:#888">Livraisanté SAS — livraisante.fr — Document généré automatiquement</p>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`facture-livraisante-${m.key}.html`; a.click();
+}
+async function renderPharmacyInvoicesSection(containerId){
+  const el=document.getElementById(containerId); if(!el) return;
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement des factures…</div>';
+  const months=await loadPharmacyInvoices();
+  if(!months.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px;padding:16px 0">Aucune livraison facturée pour le moment.</div>';return;}
+  el.innerHTML=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🧾 Factures mensuelles</div>`+months.map(m=>renderInvoiceMonth(m)).join('');
+}
+async function renderDriverInvoicesSection(containerId){
+  const el=document.getElementById(containerId); if(!el) return;
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement…</div>';
+  const months=await loadDriverInvoices();
+  if(!months.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px;padding:16px 0">Aucune course facturée pour le moment.</div>';return;}
+  el.innerHTML=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🧾 Mes revenus mensuels</div>`+months.map(m=>`<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;text-transform:capitalize">${esc(m.label)}</div>
+      <button onclick="downloadInvoicePDF(${JSON.stringify({...m,totalCA:m.totalDelivery}).replace(/"/g,'&quot;')})" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:8px;background:var(--paper-2);cursor:pointer">⬇ Télécharger</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:18px">${m.count}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Livraisons</div>
+      </div>
+      <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-weight:800;font-size:18px">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Gains totaux</div>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+/* ===== CAGNOTTE CLUBS ===== */
+const CAGNOTTE_CONTRIBUTION=0.50;
+function getCagnotte(clubId){
+  try{return JSON.parse(localStorage.getItem(`livraisante_cagnotte_${clubId}`)||'{"balance":0,"history":[]}');}catch(e){return{balance:0,history:[]};}
+}
+function saveCagnotte(clubId,data){
+  try{localStorage.setItem(`livraisante_cagnotte_${clubId}`,JSON.stringify(data));}catch(e){}
+}
+function addCagnotteContribution(clubId, orderId){
+  const c=getCagnotte(clubId);
+  if(c.history.some(h=>h.orderId===orderId)) return;
+  c.balance=Math.round((c.balance+CAGNOTTE_CONTRIBUTION)*100)/100;
+  c.history.push({orderId,amount:CAGNOTTE_CONTRIBUTION,date:new Date().toISOString()});
+  saveCagnotte(clubId,c);
+}
+function verseCagnotte(clubId){
+  const c=getCagnotte(clubId);
+  if(c.balance<=0){showToast('Cagnotte vide','var(--warn)');return;}
+  const amount=c.balance;
+  c.versements=c.versements||[];
+  c.versements.push({amount,date:new Date().toISOString(),year:new Date().getFullYear()});
+  c.balance=0;
+  saveCagnotte(clubId,c);
+  showToast(`✅ Don de ${amount.toFixed(2)} € versé au club`,'var(--ok)');
+  renderAdminCagnottes();
+}
+async function renderCagnotteClub(el, clubId, clubNom){
+  if(!el) return;
+  const c=getCagnotte(clubId);
+  const lastVersement=c.versements?.slice(-1)[0];
+  const thisYear=new Date().getFullYear();
+  const alreadyVerseThisYear=lastVersement&&new Date(lastVersement.date).getFullYear()===thisYear;
+  el.innerHTML=`
+  <div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:1.5px solid #ddd6fe;border-radius:16px;padding:18px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="font-size:26px">🎁</div>
+      <div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px">Cagnotte Livraisanté</div>
+        <div style="font-size:12px;color:var(--ink-soft)">0,50 € versé par commande de vos membres</div>
+      </div>
+    </div>
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:36px;color:var(--pharma);margin-bottom:4px">${c.balance.toFixed(2)} €</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">${c.history.length} commande${c.history.length>1?'s':''} contribuante${c.history.length>1?'s':''}</div>
+    ${lastVersement?`<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid #ddd6fe;padding-top:10px">Dernier don versé : <b>${parseFloat(lastVersement.amount).toFixed(2)} €</b> en ${new Date(lastVersement.date).getFullYear()}</div>`:''}
+    ${alreadyVerseThisYear?`<div style="font-size:12px;color:var(--ok);font-weight:700;margin-top:6px">✅ Don ${thisYear} déjà versé</div>`:''}
+  </div>`;
+}
+async function renderAdminCagnottes(){
+  const el=document.getElementById('tabCagnottes'); if(!el) return;
+  const sb=window.LS_SB?.getSB();
+  let clubs=[];
+  if(sb){const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');clubs=data||[];}
+  if(!clubs.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucun club inscrit.</div>';return;}
+  el.innerHTML=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🎁 Cagnottes des clubs</div>
+  <div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Les cagnottes s'accumulent automatiquement (0,50 € / commande d'un membre). Le don annuel est versé une fois par an.</div>`+
+  clubs.map(club=>{
+    const c=getCagnotte(club.id);
+    const thisYear=new Date().getFullYear();
+    const lastV=c.versements?.slice(-1)[0];
+    const alreadyVerse=lastV&&new Date(lastV.date).getFullYear()===thisYear;
+    return `<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-weight:800;font-size:15px">${esc(club.nom||'—')}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">${esc(club.ville||'')} · ${c.history.length} commandes</div>
+        ${lastV?`<div style="font-size:11px;color:var(--ink-soft)">Dernier don : ${parseFloat(lastV.amount).toFixed(2)} € (${new Date(lastV.date).getFullYear()})</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:right">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;color:var(--pharma)">${c.balance.toFixed(2)} €</div>
+          <div style="font-size:11px;color:var(--ink-soft)">disponible</div>
+        </div>
+        ${alreadyVerse?`<div style="font-size:12px;color:var(--ok);font-weight:700;padding:8px 14px;background:#f0faf2;border-radius:10px">✅ Versé ${thisYear}</div>`:
+        `<button onclick="verseCagnotte('${club.id}')" style="font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:10px;border:none;background:var(--pharma);color:white;cursor:pointer${c.balance<=0?';opacity:.4;cursor:not-allowed':''}">🎁 Verser don</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function loadAdminFactures(){
+  const el=document.getElementById('adminFacturesContent'); if(!el) return;
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement…</div>';
+  const {pharmacies,drivers}=await loadAllInvoicesAdmin();
+  let html=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🧾 Factures pharmacies</div>`;
+  if(!pharmacies.length) html+='<div style="color:var(--ink-soft);font-size:14px;margin-bottom:20px">Aucune livraison.</div>';
+  pharmacies.forEach(ph=>{
+    html+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:8px">Pharmacie : <span style="font-family:monospace">${esc(ph.id.slice(0,12))}</span></div>`;
+    ph.months.forEach(m=>{html+=renderInvoiceMonth(m,false);});
+    html+='</div>';
+  });
+  html+=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin:18px 0 14px">🛵 Factures livreurs</div>`;
+  if(!drivers.length) html+='<div style="color:var(--ink-soft);font-size:14px">Aucune livraison.</div>';
+  drivers.forEach(dr=>{
+    html+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:8px">Livreur : <span style="font-family:monospace">${esc(dr.id.slice(0,12))}</span></div>`;
+    dr.months.forEach(m=>{html+=renderInvoiceMonth(m,false);});
+    html+='</div>';
+  });
+  el.innerHTML=html;
 }
 
 async function exportOrdersCSV(){
@@ -6683,6 +6918,7 @@ async function renderClubDashboard(){
       <div id="clubEditMsg" style="font-size:13px;margin-top:8px"></div>
     </div>
   </div>
+  <div id="clubCagnotteSection"></div>
   <div class="dash-sec-title">🩺 Professionnels de santé en attente <span class="cnt">${pendingPros.length}</span></div>
   ${pendingPros.length?pendingPros.map(p=>`
   <div class="ocard">
@@ -6732,6 +6968,7 @@ async function renderClubDashboard(){
     <span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Membre</span>
   </div>`).join(''):'<div class="dash-empty">Aucun membre validé</div>'}
   `;
+  if(clubData?.id) renderCagnotteClub(document.getElementById('clubCagnotteSection'), clubData.id, clubData.nom);
 }
 
 async function saveClubProfile(){
