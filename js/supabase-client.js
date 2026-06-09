@@ -171,4 +171,15 @@ async function sbInsertAppointment(appt){
   return { error: error?.message || null };
 }
 
-async function sbUp
+async function sbUpdateAppointment(apptId, updates){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('appointments').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', apptId);
+  return { error: error?.message || null };
+}
+
+window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
+  sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
+  sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements,
+  sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
+  sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
+  sbGetAppointments, sbInsertAppointment, sbUpdateAppointment };
