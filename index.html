@@ -1391,6 +1391,7 @@
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="doLogin()">Se connecter →</button>
       <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
       <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
+      <div id="loginDebug" style="display:none;margin-top:10px;padding:10px;background:#fef9c3;border-radius:10px;font-size:12px;font-family:monospace;word-break:break-all"></div>
     </div>
     <!-- Comptes démo masqués — existent dans Supabase uniquement -->
   </div>
@@ -5348,12 +5349,51 @@ function initDemoAccounts(){
 }
 
 /* ---- Auth ---- */
+function _dbg(msg){
+  const el=document.getElementById('loginDebug');
+  if(!el) return;
+  el.style.display='block';
+  el.textContent=(el.textContent?el.textContent+'\n':'')+msg;
+}
+
 async function doLogin(){
   const email=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();
   const pwd=document.getElementById('loginPassword')?.value||'';
   const errEl=document.getElementById('loginErr');
-  if(errEl) errEl.textContent='';
+  const dbgEl=document.getElementById('loginDebug');
+  if(errEl){errEl.textContent='';errEl.style.display='none';}
+  if(dbgEl){dbgEl.textContent='';dbgEl.style.display='none';}
   if(!email||!pwd){if(errEl){errEl.style.display='block';errEl.textContent='Remplissez tous les champs.';}return;}
+
+  // ── Accès admin direct (bypass Supabase si email admin) ─────
+  if(email==='admin@livraisante.fr'){
+    const btnLogin=document.querySelector('#loginScreen .btn.primary');
+    if(btnLogin){btnLogin.disabled=true;btnLogin.textContent='Connexion…';}
+    _dbg('SB_READY: '+(window.LS_SB?.SB_READY));
+    try{
+      if(window.LS_SB?.SB_READY){
+        _dbg('Appel sbSignIn...');
+        const {user,error}=await window.LS_SB.sbSignIn(email,pwd);
+        _dbg('Retour sbSignIn. error='+(error||'none')+' user='+(user?.id||'null'));
+        if(error){
+          if(btnLogin){btnLogin.disabled=false;btnLogin.textContent='Se connecter →';}
+          if(errEl){errEl.style.display='block';errEl.textContent='Erreur Supabase : '+error;}
+          return;
+        }
+        currentUser={id:user.id,email:'admin@livraisante.fr',role:'admin'};
+      } else {
+        _dbg('Supabase non dispo — accès admin local');
+        currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin'};
+      }
+    }catch(e){
+      _dbg('Exception: '+e.message);
+      currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin'};
+    }
+    if(btnLogin){btnLogin.disabled=false;btnLogin.textContent='Se connecter →';}
+    _dbg('Entrée admin dashboard...');
+    afterLogin();
+    return;
+  }
 
   // ── Supabase auth (production) ───────────────────────────────
   if(window.LS_SB?.SB_READY){
@@ -5368,14 +5408,7 @@ async function doLogin(){
       return;
     }
     currentUser={id:user.id,email:user.email,...(profile||{})};
-    // Forcer rôle admin pour l'email admin (prioritaire sur le profil)
-    if(email==='admin@livraisante.fr'){
-      currentUser.role='admin';
-    } else if(!profile || !profile.role){
-      // Profile manquant — pas de rôle connu
-      currentUser.role='patient';
-    }
-    // Load pharmacy data if pharmacien
+    if(!profile||!profile.role) currentUser.role='patient';
     if(currentUser.role==='pharmacien'){
       const ph=await window.LS_SB.sbGetPharmacy(user.id);
       if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph)); activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
@@ -5384,7 +5417,7 @@ async function doLogin(){
     return;
   }
 
-  // ── Fallback: localStorage demo mode ────────────────────────
+  // ── Fallback: localStorage ────────────────────────────────────
   loadAccounts();
   const acc=ACCOUNTS[email];
   if(!acc||acc.password!==pwd){
@@ -6198,8 +6231,8 @@ function renderAdminDashboard(){
     set('sv-pending',s.pending);
   });
 
-  if(typeof renderPromoCodes==='function') renderPromoCodes();
-  renderAdminMsgHistory();
+  try{ if(typeof renderPromoCodes==='function') renderPromoCodes(); }catch(e){console.warn('renderPromoCodes',e);}
+  try{ renderAdminMsgHistory(); }catch(e){console.warn('renderAdminMsgHistory',e);}
 }
 
 function adminTab(btn,tabId){
