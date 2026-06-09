@@ -6206,6 +6206,11 @@ function afterLogin(){
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPassword').value='';
   updateAccountChip(); renderHeader(); renderBottomNav();
+  // Debug temporaire
+  const r = currentUser?.role || 'undefined';
+  if(r === 'undefined' || !currentUser?.role) {
+    alert('Rôle non détecté. Email: ' + (currentUser?.email||'?'));
+  }
   if(currentUser.role==='admin') enterRole('admin');
   else if(currentUser.role==='pharmacien') enterRole('pro');
   else if(currentUser.role==='livreur') enterRole('livreur');
