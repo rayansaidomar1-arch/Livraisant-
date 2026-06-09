@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Livraisanté — Administration</title>
+<link rel="icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0D0E09;--lime:#C2F23E;--lime-d:#6E9A0A;
+  --white:#fff;--grey:#F2F2F0;--mid:#888880;
+  --ok:#16A34A;--err:#DC2626;--warn:#D97706;
+  --pharma:#7C3AED;--sport:#1F6FEB;
+  --serif:'Bricolage Grotesque',sans-serif;
+  --sans:'Hanken Grotesk',sans-serif;
+  --sidebar:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--grey);color:var(--ink);min-height:100vh}
+a{text-decoration:none;color:inherit}
+input,select,button{font-family:var(--sans)}
+
+/* ── LOGIN ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--ink)}
+.login-box{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.login-logo{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.login-logo svg{border-radius:12px;flex:0 0 auto}
+.login-logo div{font-family:var(--serif);font-weight:800;font-size:22px;letter-spacing:-.03em}
+.login-logo small{display:block;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);font-family:var(--sans)}
+.l-label{font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px}
+.l-input{width:100%;padding:12px 14px;border:2px solid #e5e5e5;border-radius:10px;font-size:15px;transition:.12s;margin-bottom:14px}
+.l-input:focus{outline:none;border-color:var(--ink)}
+.l-btn{width:100%;padding:14px;background:var(--ink);color:var(--white);border:none;border-radius:12px;font-family:var(--serif);font-weight:800;font-size:16px;cursor:pointer;box-shadow:3px 3px 0 var(--lime)}
+.l-err{background:#fcebe9;border:1.5px solid var(--err);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--err);font-weight:600;margin-bottom:12px;display:none}
+.l-note{font-size:12px;color:var(--mid);text-align:center;margin-top:16px}
+
+/* ── ADMIN LAYOUT ── */
+#adminApp{display:none;min-height:100vh;flex-direction:row}
+.sidebar{width:var(--sidebar);background:var(--ink);color:var(--white);padding:24px 0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sb-brand{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-brand h2{font-family:var(--serif);font-weight:800;font-size:18px;color:var(--white);letter-spacing:-.03em}
+.sb-brand span{display:block;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--lime);margin-top:4px}
+.sb-nav{padding:16px 0;flex:1}
+.sb-section{font-size:9px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:12px 20px 6px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:.12s;border-left:3px solid transparent}
+.sb-item:hover,.sb-item.on{background:rgba(255,255,255,.07);color:var(--white);border-left-color:var(--lime)}
+.sb-item .ic{font-size:16px;flex:0 0 auto}
+.sb-foot{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:10px;background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);border-radius:8px;color:#fca5a5;font-family:var(--sans);font-weight:700;font-size:13px;cursor:pointer}
+.main{margin-left:var(--sidebar);padding:32px;flex:1}
+.page-title{font-family:var(--serif);font-weight:800;font-size:28px;letter-spacing:-.04em;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+
+/* ── CARDS & GRIDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.kpi{background:var(--white);border:2px solid var(--ink);border-radius:16px;padding:20px;box-shadow:3px 3px 0 var(--lime)}
+.kpi .k-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--mid);margin-bottom:8px}
+.kpi .k-value{font-family:var(--serif);font-weight:800;font-size:36px;letter-spacing:-.04em;color:var(--ink);line-height:1}
+.kpi .k-sub{font-size:12px;color:var(--mid);margin-top:4px}
+.kpi.highlight{background:var(--ink);border-color:var(--ink);box-shadow:3px 3px 0 var(--lime)}
+.kpi.highlight .k-value{color:var(--lime)}
+.kpi.highlight .k-label,.kpi.highlight .k-sub{color:rgba(255,255,255,.5)}
+
+.card{background:var(--white);border:2px solid var(--ink);border-radius:16px;padding:24px;margin-bottom:20px}
+.card h3{font-family:var(--serif);font-weight:800;font-size:18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.table{width:100%;border-collapse:collapse;font-size:13.5px}
+.table th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);padding:8px 12px;border-bottom:2px solid var(--ink)}
+.table td{padding:10px 12px;border-bottom:1px solid #eee;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.b-lime{background:var(--lime);color:var(--ink)}
+.b-dark{background:var(--ink);color:var(--lime)}
+.b-ok{background:#d7f0db;color:var(--ok)}
+.b-err{background:#fcebe9;color:var(--err)}
+.b-warn{background:#fffbe6;color:var(--warn)}
+.b-pharma{background:#ede9fe;color:var(--pharma)}
+
+/* Charts (bars) */
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 50px;align-items:center;gap:10px;font-size:13px}
+.bar-track{height:12px;background:var(--grey);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.bar-val{font-weight:700;text-align:right;font-size:12px}
+
+/* Promo codes */
+.promo-form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.f-group{display:flex;flex-direction:column;gap:6px}
+.f-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--mid)}
+.f-input,.f-select{padding:10px 14px;border:2px solid #e5e5e5;border-radius:10px;font-size:14px;width:100%;transition:.12s}
+.f-input:focus,.f-select:focus{outline:none;border-color:var(--ink)}
+.gen-btn{background:var(--ink);color:var(--lime);border:2px solid var(--ink);border-radius:12px;padding:12px 24px;font-family:var(--serif);font-weight:800;font-size:15px;cursor:pointer;box-shadow:3px 3px 0 var(--lime);transition:.12s}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:5px 5px 0 var(--lime)}
+.code-tag{font-family:monospace;font-weight:800;font-size:18px;letter-spacing:4px;background:var(--lime);padding:6px 14px;border-radius:8px;color:var(--ink);border:1.5px solid var(--lime-d)}
+.copy-btn{font-size:12px;font-weight:700;padding:5px 10px;border:1.5px solid var(--ink);border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans)}
+.copy-btn:hover{background:var(--ink);color:var(--white)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--ink);margin-bottom:24px}
+.tab{padding:10px 20px;font-weight:700;font-size:13.5px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.12s}
+.tab.on{border-bottom-color:var(--lime);color:var(--ink)}
+.tab:not(.on){color:var(--mid)}
+
+/* Notification association */
+.assoc-month{display:flex;align-items:center;gap:16px;background:var(--grey);border-radius:12px;padding:16px}
+.assoc-month .icon{font-size:32px}
+
+@media(max-width:900px){
+  .sidebar{width:60px;padding:16px 0}
+  .sb-brand,.sb-section,.sb-item span,.sb-foot{display:none}
+  .sb-item{justify-content:center;padding:12px}
+  .main{margin-left:60px;padding:20px}
+  .grid2,.promo-form,.kpi-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 100 100" width="48" height="48" style="background:#0D0E09;border-radius:12px">
+        <rect x="38" y="6" width="24" height="88" rx="12" fill="white"/>
+        <rect x="6" y="38" width="32" height="24" rx="12" fill="white"/>
+        <rect x="38" y="38" width="28" height="24" fill="white"/>
+        <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+        <rect x="38" y="38" width="28" height="24" fill="white"/>
+      </svg>
+      <div>Livraisanté<small>Administration</small></div>
+    </div>
+    <div id="loginErr" class="l-err">Email ou mot de passe incorrect.</div>
+    <label class="l-label">Email administrateur</label>
+    <input type="email" id="loginEmail" class="l-input" placeholder="admin@livraisante.fr">
+    <label class="l-label">Mot de passe</label>
+    <input type="password" id="loginPassword" class="l-input" placeholder="••••••••" onkeypress="if(event.key==='Enter')doAdminLogin()">
+    <button class="l-btn" onclick="doAdminLogin()">Accéder au tableau de bord →</button>
+    <p class="l-note">Accès réservé — Livraisanté SAS</p>
+  </div>
+</div>
+
+<!-- ════════ ADMIN APP ════════ -->
+<div id="adminApp">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <h2>Livraisan<span style="color:var(--lime)">té</span></h2>
+      <span>Administration</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Principal</div>
+      <div class="sb-item on" onclick="showPage('dashboard')"><span class="ic">📊</span><span>Dashboard</span></div>
+      <div class="sb-item" onclick="showPage('users')"><span class="ic">👥</span><span>Utilisateurs</span></div>
+      <div class="sb-item" onclick="showPage('pharmacies')"><span class="ic">💊</span><span>Pharmacies</span></div>
+      <div class="sb-item" onclick="showPage('orders')"><span class="ic">📦</span><span>Commandes</span></div>
+      <div class="sb-section">Marketing</div>
+      <div class="sb-item" onclick="showPage('promo')"><span class="ic">🎁</span><span>Codes promo</span></div>
+      <div class="sb-item" onclick="showPage('association')"><span class="ic">🎗️</span><span>Association</span></div>
+      <div class="sb-section">Finance</div>
+      <div class="sb-item" onclick="showPage('monetique')"><span class="ic">💶</span><span>Monétique</span></div>
+      <div class="sb-item" onclick="showPage('invoices')"><span class="ic">🧾</span><span>Factures</span></div>
+      <div class="sb-section">Paiement</div>
+      <div class="sb-item" onclick="showPage('stripe')"><span class="ic">💳</span><span>Monétique Stripe</span></div>
+      <div class="sb-section">Système</div>
+      <div class="sb-item" onclick="showPage('system')"><span class="ic">⚙️</span><span>Système</span></div>
+    </nav>
+    <div class="sb-foot">
+      <button class="logout-btn" onclick="doAdminLogout()">⏻ Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main" id="mainContent"></main>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════════
+const ADMIN_CREDS=[
+  {email:'admin@livraisante.fr', password:'Admin2024!', name:'Super Admin'},
+  {email:'rayan@livraisante.fr', password:'Admin2024!', name:'Rayan Saidomar'},
+];
+let adminUser=null;
+
+function doAdminLogin(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pwd=document.getElementById('loginPassword').value;
+  const match=ADMIN_CREDS.find(c=>c.email===email&&c.password===pwd);
+  if(!match){
+    const e=document.getElementById('loginErr'); e.style.display='block';
+    setTimeout(()=>e.style.display='none',3000);
+    return;
+  }
+  adminUser=match;
+  document.getElementById('loginScreen').style.display='none';
+  const app=document.getElementById('adminApp'); app.style.display='flex';
+  showPage('dashboard');
+}
+function doAdminLogout(){
+  adminUser=null;
+  document.getElementById('adminApp').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPassword').value='';
+}
+
+// ════════════════════════════════════════════════════════════
+// DATA — lectures depuis localStorage de l'app principale
+// ════════════════════════════════════════════════════════════
+function getAccounts(){try{return JSON.parse(localStorage.getItem('livraisante_accounts_v2')||'{}');}catch(e){return {};}}
+function getOrders(){try{return JSON.parse(localStorage.getItem('livraisante_orders_v2')||'{}');}catch(e){return {};}}
+function getStats(){try{return JSON.parse(localStorage.getItem('livraisante_stats_v2')||'{}');}catch(e){return {};}}
+function getPromoCodes(){try{return JSON.parse(localStorage.getItem('livraisante_promo_codes')||'[]');}catch(e){return [];}}
+function savePromoCodes(codes){localStorage.setItem('livraisante_promo_codes',JSON.stringify(codes));}
+
+function computeKPIs(){
+  const accs=Object.values(getAccounts());
+  const patients=accs.filter(a=>a.role==='patient');
+  const pharmacies=accs.filter(a=>a.role==='pharmacien');
+  const drivers=accs.filter(a=>a.role==='livreur');
+  const orders=Object.values(getOrders());
+  const stats=getStats();
+  // MRR
+  const planPrices={free:0,ref:49,prio:99,alt:199};
+  const mrr=pharmacies.reduce((s,p)=>s+(planPrices[p.pharmacyInfo?.plan||'free']||0),0);
+  // Plan breakdown
+  const planBreak={free:0,ref:0,prio:0,alt:0};
+  pharmacies.forEach(p=>{const pl=p.pharmacyInfo?.plan||'free';planBreak[pl]=(planBreak[pl]||0)+1;});
+  // Orders this month
+  const monthStart=new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const ordersMonth=orders.filter(o=>o.createdAt>monthStart.getTime()).length;
+  return {patients,pharmacies,drivers,orders,stats,mrr,planBreak,ordersMonth};
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+function showPage(page){
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));
+  const map={dashboard:0,users:1,pharmacies:2,orders:3,promo:4,association:5,monetique:6,invoices:7,stripe:8,system:9};
+  const items=document.querySelectorAll('.sb-item');
+  if(items[map[page]]!==undefined) items[map[page]].classList.add('on');
+  const c=document.getElementById('mainContent');
+  switch(page){
+    case 'dashboard': c.innerHTML=pageDashboard(); break;
+    case 'users': c.innerHTML=pageUsers(); break;
+    case 'pharmacies': c.innerHTML=pagePharmacies(); break;
+    case 'orders': c.innerHTML=pageOrders(); break;
+    case 'promo': c.innerHTML=pagePromo(); initPromoEvents(); break;
+    case 'association': c.innerHTML=pageAssociation(); break;
+    case 'monetique': c.innerHTML=renderMonetique(); break;
+    case 'invoices': c.innerHTML=renderInvoices(); break;
+    case 'stripe': c.innerHTML=pageStripe(); initStripeAdminEvents(); break;
+    case 'system': c.innerHTML=pageSystem(); break;
+  }
+  window.scrollTo({top:0});
+}
+
+// ════════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════════
+function pageDashboard(){
+  const {patients,pharmacies,drivers,orders,stats,mrr,planBreak,ordersMonth}=computeKPIs();
+  const convRate=stats.consultations?Math.round((stats.orders||0)/stats.consultations*100):0;
+  const planColors={free:'#888',ref:'#16A34A',prio:'#7C3AED',alt:'#C2F23E'};
+  const planNames={free:'Essai gratuit',ref:'Démarrage',prio:'Développement',alt:'Premium'};
+  const maxPlan=Math.max(...Object.values(planBreak),1);
+  const topAilments=Object.entries(stats.byAilment||{})
+    .map(([id,v])=>({id,c:v.c||0})).sort((a,b)=>b.c-a.c).slice(0,5);
+  const ailNames={tete:'Maux de tête',rhume:'Rhume',gorge:'Gorge',digestion:'Digestion',
+    diarrhee:'Diarrhée',plaie:'Plaie',piqure:'Piqûre',courbatures:'Courbatures',
+    sommeil:'Sommeil',allergie:'Allergie'};
+  const maxAil=Math.max(...topAilments.map(a=>a.c),1);
+  const now=new Date();
+
+  return `
+  <div class="page-title">📊 Dashboard <span style="font-size:13px;font-weight:600;color:var(--mid);font-family:var(--sans)">${now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></div>
+
+  <div class="kpi-grid">
+    <div class="kpi highlight">
+      <div class="k-label">Patients inscrits</div>
+      <div class="k-value">${patients.length}</div>
+      <div class="k-sub">comptes actifs</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Pharmacies</div>
+      <div class="k-value">${pharmacies.length}</div>
+      <div class="k-sub">${planBreak.prio+planBreak.alt} abonnements payants</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Livreurs</div>
+      <div class="k-value">${drivers.length}</div>
+      <div class="k-sub">auto-entrepreneurs</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Commandes totales</div>
+      <div class="k-value">${orders.length}</div>
+      <div class="k-sub">${ordersMonth} ce mois</div>
+    </div>
+    <div class="kpi highlight">
+      <div class="k-label">MRR estimé</div>
+      <div class="k-value">€${mrr}</div>
+      <div class="k-sub">revenu mensuel récurrent</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Taux de conversion</div>
+      <div class="k-value">${convRate}%</div>
+      <div class="k-sub">${stats.consultations||0} consultations · ${stats.orders||0} cmd</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Pharmacies par plan</h3>
+      <div class="bar-chart">
+        ${Object.entries(planBreak).map(([pl,count])=>`
+          <div class="bar-row">
+            <span style="font-size:12px;font-weight:600">${planNames[pl]}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/Math.max(pharmacies.length,1)*100)}%;background:${planColors[pl]}"></div></div>
+            <span class="bar-val">${count}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Top consultations</h3>
+      <div class="bar-chart">
+        ${topAilments.length?topAilments.map(a=>`
+          <div class="bar-row">
+            <span style="font-size:12px;font-weight:600">${ailNames[a.id]||a.id}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(a.c/maxAil*100)}%;background:var(--ink)"></div></div>
+            <span class="bar-val">${a.c}</span>
+          </div>`).join('')
+        :'<div style="color:var(--mid);font-size:14px;padding:20px 0;text-align:center">Aucune donnée — naviguez dans l\'app pour en générer</div>'}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Raisons d'abandon <span style="font-size:12px;font-weight:600;color:var(--mid)">${stats.abandoned||0} total</span></h3>
+    <div class="bar-chart">
+      ${['prix','conseil','delai','stock','plus-tard','autre'].map(r=>{
+        const cnt=(stats.abandonReasons||{})[r]||0;
+        const tot=Object.values(stats.abandonReasons||{}).reduce((s,n)=>s+n,0)||1;
+        const labels={prix:'Prix trop élevé',conseil:'Conseil inadapté',delai:'Délai trop long',
+          stock:'Produit indispo',autre:'Autre','plus-tard':'Plus tard'};
+        return `<div class="bar-row">
+          <span style="font-size:12px;font-weight:600">${labels[r]}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/tot*100)}%;background:var(--err)"></div></div>
+          <span class="bar-val">${cnt}</span>
+        </div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILISATEURS
+// ════════════════════════════════════════════════════════════
+function pageUsers(){
+  const accs=Object.values(getAccounts());
+  const patients=accs.filter(a=>a.role==='patient');
+  return `
+  <div class="page-title">👥 Patients inscrits</div>
+  <div class="card">
+    <h3>${patients.length} compte${patients.length>1?'s':''} patient${patients.length>1?'s':''}</h3>
+    <table class="table">
+      <thead><tr><th>Prénom</th><th>Email</th><th>Profil santé</th><th>Cagnotte</th><th>Inscrit le</th></tr></thead>
+      <tbody>
+        ${patients.length?patients.map(p=>`<tr>
+          <td style="font-weight:700">${p.prenom||'—'}</td>
+          <td style="color:var(--mid)">${p.email}</td>
+          <td>${p.healthProfile?`
+            <span class="badge b-ok">${p.healthProfile.ageRange||'—'}</span>
+            ${p.healthProfile.pregnancy!=='non'&&p.healthProfile.pregnancy?`<span class="badge b-pharma" style="margin-left:4px">${p.healthProfile.pregnancy}</span>`:''}
+            ${(p.healthProfile.meds||[]).length?`<span class="badge b-warn" style="margin-left:4px">${p.healthProfile.meds.length} trait.</span>`:''}
+          `:'<span style="color:var(--mid);font-size:12px">—</span>'}</td>
+          <td style="font-weight:700;color:var(--ok)">€${(p.cagnotte?.total||0).toFixed(2)}</td>
+          <td style="color:var(--mid);font-size:12px">${p.id?'Récent':'—'}</td>
+        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--mid)">Aucun patient inscrit pour l\'instant</td></tr>'}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// PHARMACIES
+// ════════════════════════════════════════════════════════════
+function pagePharmacies(){
+  const accs=Object.values(getAccounts());
+  const pharmacies=accs.filter(a=>a.role==='pharmacien');
+  const planBadge={free:'b-warn',ref:'b-ok',prio:'b-pharma',alt:'b-dark'};
+  const planName={free:'Essai gratuit',ref:'Démarrage',prio:'Développement',alt:'Premium'};
+  return `
+  <div class="page-title">💊 Pharmacies partenaires</div>
+  <div class="card">
+    <h3>${pharmacies.length} officine${pharmacies.length>1?'s':''}</h3>
+    <table class="table">
+      <thead><tr><th>Officine</th><th>Ville</th><th>FINESS</th><th>Plan</th><th>MRR</th><th>Contact</th></tr></thead>
+      <tbody>
+        ${pharmacies.length?pharmacies.map(p=>{
+          const ph=p.pharmacyInfo||{};
+          const plan=ph.plan||'free';
+          const prices={free:0,ref:49,prio:99,alt:199};
+          return `<tr>
+            <td style="font-weight:700">${ph.nom||p.prenom||'—'}</td>
+            <td style="color:var(--mid);font-size:13px">${ph.ville||'—'}</td>
+            <td style="font-family:monospace;font-size:12px">${ph.finess||'—'}</td>
+            <td><span class="badge ${planBadge[plan]}">${planName[plan]}</span></td>
+            <td style="font-weight:700;color:var(--ok)">€${prices[plan]||0}/mois</td>
+            <td><a href="mailto:${p.email}" style="color:var(--pharma);font-size:12px">${p.email}</a></td>
+          </tr>`;}).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--mid)">Aucune pharmacie inscrite</td></tr>'}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Répartition par abonnement</h3>
+    ${['free','ref','prio','alt'].map(pl=>{
+      const count=pharmacies.filter(p=>(p.pharmacyInfo?.plan||'free')===pl).length;
+      const pct=pharmacies.length?Math.round(count/pharmacies.length*100):0;
+      return `<div class="bar-row" style="margin-bottom:10px">
+        <span style="font-size:13px;font-weight:600">${planName[pl]}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--ink)"></div></div>
+        <span class="bar-val">${count}</span>
+      </div>`;}).join('')}
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// COMMANDES
+// ════════════════════════════════════════════════════════════
+function pageOrders(){
+  const orders=Object.values(getOrders()).sort((a,b)=>b.createdAt-a.createdAt);
+  const statusLabel={nouvelle:'Nouvelle',validee:'Validée',prete:'Prête',en_livraison:'En livraison',livree:'Livrée',refusee:'Refusée'};
+  const statusBadge={nouvelle:'b-warn',validee:'b-ok',prete:'b-lime',en_livraison:'b-pharma',livree:'b-dark',refusee:'b-err'};
+  return `
+  <div class="page-title">📦 Toutes les commandes</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+    ${['nouvelle','validee','livree','refusee'].map(s=>`
+      <div class="kpi"><div class="k-label">${statusLabel[s]}</div><div class="k-value">${orders.filter(o=>o.status===s).length}</div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>${orders.length} commandes</h3>
+    <table class="table">
+      <thead><tr><th>ID</th><th>Patient</th><th>Type</th><th>Statut</th><th>Montant</th><th>Date</th></tr></thead>
+      <tbody>
+        ${orders.length?orders.slice(0,50).map(o=>`<tr>
+          <td style="font-family:monospace;font-size:12px;font-weight:700">${o.id}</td>
+          <td>${o.patient?.name||'—'}</td>
+          <td><span style="font-size:11px;background:var(--grey);padding:3px 7px;border-radius:4px">${o.kind||'santé'}</span></td>
+          <td><span class="badge ${statusBadge[o.status]||'b-warn'}">${statusLabel[o.status]||o.status}</span></td>
+          <td style="font-weight:700">—</td>
+          <td style="color:var(--mid);font-size:12px">${o.createdAt?new Date(o.createdAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}</td>
+        </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--mid)">Aucune commande</td></tr>'}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// CODES PROMO
+// ════════════════════════════════════════════════════════════
+function pagePromo(){
+  const codes=getPromoCodes();
+  return `
+  <div class="page-title">🎁 Codes promotionnels</div>
+  <div class="card">
+    <h3>Générer un nouveau code</h3>
+    <div class="promo-form">
+      <div class="f-group">
+        <label class="f-label">Préfixe personnalisé</label>
+        <input class="f-input" id="pfx" placeholder="Ex. PHARMA, WELCOME, ETE25" maxlength="8">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Type de réduction</label>
+        <select class="f-select" id="disc-type">
+          <option value="pct">Pourcentage (%)</option>
+          <option value="fixed">Montant fixe (€)</option>
+          <option value="trial">Extension d'essai (jours)</option>
+          <option value="free">1er mois offert</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Valeur</label>
+        <input class="f-input" id="disc-val" type="number" placeholder="Ex. 50" min="1" max="100">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Cible</label>
+        <select class="f-select" id="disc-target">
+          <option value="pharmacy">Pharmacies uniquement</option>
+          <option value="patient">Patients uniquement</option>
+          <option value="all">Tous les utilisateurs</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Utilisations max</label>
+        <select class="f-select" id="disc-uses">
+          <option value="1">1 utilisation</option>
+          <option value="10">10 utilisations</option>
+          <option value="50">50 utilisations</option>
+          <option value="100" selected>100 utilisations</option>
+          <option value="0">Illimité</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Expiration</label>
+        <select class="f-select" id="disc-exp">
+          <option value="7">7 jours</option>
+          <option value="30" selected>30 jours</option>
+          <option value="90">90 jours</option>
+          <option value="365">1 an</option>
+          <option value="0">Jamais</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <button class="gen-btn" onclick="generateCode()">⚡ Générer le code</button>
+      <div id="gen-result" style="display:flex;align-items:center;gap:10px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Codes actifs <span style="font-size:13px;font-weight:600;color:var(--mid)">${codes.filter(c=>c.active).length} actifs</span></h3>
+    <table class="table">
+      <thead><tr><th>Code</th><th>Réduction</th><th>Cible</th><th>Utilisations</th><th>Expire</th><th>Statut</th><th></th></tr></thead>
+      <tbody id="promo-table">
+        ${renderPromoRows(codes)}
+      </tbody>
+    </table>
+    ${!codes.length?'<div style="text-align:center;padding:30px;color:var(--mid)">Aucun code créé — générez votre premier code ci-dessus</div>':''}
+  </div>`;
+}
+function initPromoEvents(){}
+
+function generateCode(){
+  const pfx=(document.getElementById('pfx').value.toUpperCase().replace(/[^A-Z0-9]/g,'')||'LIVRAI').slice(0,8);
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const rnd=Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const code=pfx+rnd;
+  const type=document.getElementById('disc-type').value;
+  const val=parseInt(document.getElementById('disc-val').value)||20;
+  const target=document.getElementById('disc-target').value;
+  const maxUses=parseInt(document.getElementById('disc-uses').value);
+  const expDays=parseInt(document.getElementById('disc-exp').value);
+  const typeLabels={pct:`-${val}%`,fixed:`-€${val}`,trial:`+${val}j essai`,free:'1er mois offert'};
+  const newCode={
+    code, type, val, target, maxUses, used:0,
+    active:true,
+    createdAt:Date.now(),
+    expiresAt:expDays?Date.now()+expDays*86400000:null,
+    label:typeLabels[type]||`-${val}%`
+  };
+  const codes=getPromoCodes();
+  codes.unshift(newCode);
+  savePromoCodes(codes);
+  // Afficher le résultat
+  document.getElementById('gen-result').innerHTML=`
+    <span class="code-tag">${code}</span>
+    <button class="copy-btn" onclick="copyCode('${code}')">📋 Copier</button>
+    <span style="font-size:13px;color:var(--ok);font-weight:600">✓ Créé</span>`;
+  // Refresh table
+  const tbody=document.getElementById('promo-table');
+  if(tbody) tbody.innerHTML=renderPromoRows(codes);
+}
+
+function renderPromoRows(codes){
+  if(!codes.length) return '';
+  return codes.map(c=>{
+    const targetLabel={pharmacy:'Pharmacies',patient:'Patients',all:'Tous'}[c.target]||c.target;
+    const expired=c.expiresAt&&Date.now()>c.expiresAt;
+    const status=!c.active?'Désactivé':expired?'Expiré':'Actif';
+    const statusBadge={'Actif':'b-ok','Expiré':'b-err','Désactivé':'b-warn'}[status];
+    const expLabel=c.expiresAt?new Date(c.expiresAt).toLocaleDateString('fr-FR'):'Jamais';
+    return `<tr>
+      <td><span class="code-tag" style="font-size:13px;letter-spacing:2px">${c.code}</span></td>
+      <td style="font-weight:700">${c.label}</td>
+      <td><span class="badge b-pharma">${targetLabel}</span></td>
+      <td style="font-size:13px">${c.used}/${c.maxUses||'∞'}</td>
+      <td style="font-size:12px;color:var(--mid)">${expLabel}</td>
+      <td><span class="badge ${statusBadge}">${status}</span></td>
+      <td style="display:flex;gap:6px">
+        <button class="copy-btn" onclick="copyCode('${c.code}')">📋</button>
+        <button class="copy-btn" style="color:var(--err);border-color:var(--err)" onclick="toggleCode('${c.code}')">
+          ${c.active?'⏸':'▶'}
+        </button>
+      </td>
+    </tr>`;}).join('');
+}
+
+function copyCode(code){
+  navigator.clipboard.writeText(code).then(()=>{
+    // Visual feedback
+    const btns=[...document.querySelectorAll('.copy-btn')].filter(b=>b.textContent.includes('📋'));
+    btns.forEach(b=>{ if(b.closest('tr')?.textContent.includes(code)){b.textContent='✓';setTimeout(()=>b.textContent='📋',1500);}});
+  }).catch(()=>alert('Code: '+code));
+}
+
+function toggleCode(code){
+  const codes=getPromoCodes();
+  const c=codes.find(x=>x.code===code);
+  if(c) c.active=!c.active;
+  savePromoCodes(codes);
+  const tbody=document.getElementById('promo-table');
+  if(tbody) tbody.innerHTML=renderPromoRows(codes);
+}
+
+// ════════════════════════════════════════════════════════════
+// ASSOCIATION DU MOIS
+// ════════════════════════════════════════════════════════════
+const HEALTH_ASSOCS=[
+  {id:'ligue',name:'Ligue contre le cancer',icon:'🎗️',url:'https://www.ligue-cancer.net'},
+  {id:'afm',name:'AFM-Téléthon',icon:'💪',url:'https://www.afm-telethon.fr'},
+  {id:'msf',name:'Médecins Sans Frontières',icon:'🩺',url:'https://www.msf.fr'},
+  {id:'sidaction',name:'Sidaction',icon:'❤️',url:'https://www.sidaction.org'},
+  {id:'alzheimer',name:'France Alzheimer',icon:'🧠',url:'https://www.france-alzheimer.org'},
+  {id:'muco',name:'Vaincre la Mucoviscidose',icon:'🫁',url:'https://www.vaincrelamuco.org'},
+  {id:'parkinson',name:'Parkinson France',icon:'🤝',url:'https://www.parkinson.fr'},
+  {id:'cardio',name:'Fédération Française de Cardiologie',icon:'❤️‍🩹',url:'https://www.fedecardio.org'},
+  {id:'arc',name:'Fondation ARC',icon:'🔬',url:'https://www.fondation-arc.org'},
+  {id:'aides',name:'Aides',icon:'🌈',url:'https://www.aides.org'},
+];
+function pageAssociation(){
+  const month=new Date().getMonth();
+  const current=HEALTH_ASSOCS[month%HEALTH_ASSOCS.length];
+  const override=localStorage.getItem('livr_assoc_override');
+  const displayed=override?HEALTH_ASSOCS.find(a=>a.id===override)||current:current;
+  return `
+  <div class="page-title">🎗️ Association du mois</div>
+  <div class="card">
+    <h3>Association actuellement affichée dans l'app</h3>
+    <div class="assoc-month">
+      <div class="icon">${displayed.icon}</div>
+      <div>
+        <div style="font-weight:800;font-size:18px;margin-bottom:4px">${displayed.name}</div>
+        <a href="${displayed.url}" target="_blank" style="color:var(--pharma);font-size:13px">${displayed.url}</a>
+        ${override?'<div style="font-size:12px;color:var(--warn);margin-top:4px;font-weight:700">⚠ Override manuel actif</div>':'<div style="font-size:12px;color:var(--ok);margin-top:4px">✓ Rotation automatique (mois '+new Date().toLocaleDateString('fr-FR',{month:'long'})+')</div>'}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Calendrier annuel des rotations</h3>
+    <table class="table">
+      <thead><tr><th>Mois</th><th>Association</th><th></th></tr></thead>
+      <tbody>
+        ${HEALTH_ASSOCS.map((a,i)=>{
+          const m=new Date(2026,i,1).toLocaleDateString('fr-FR',{month:'long'});
+          const isCurrent=i===month%10;
+          return `<tr style="${isCurrent?'background:#f0faf2':''}">
+            <td style="font-weight:${isCurrent?'800':'400'}">${m.charAt(0).toUpperCase()+m.slice(1)}</td>
+            <td>${a.icon} ${a.name}</td>
+            <td><button onclick="overrideAssoc('${a.id}')" style="font-size:11px;font-weight:700;padding:4px 10px;border:1.5px solid var(--ink);border-radius:6px;background:transparent;cursor:pointer;font-family:inherit">Forcer</button></td>
+          </tr>`;}).join('')}
+      </tbody>
+    </table>
+    ${override?`<button onclick="clearOverride()" style="margin-top:12px;font-family:inherit;font-weight:700;font-size:13px;padding:10px 20px;border:1.5px solid var(--err);color:var(--err);border-radius:10px;background:transparent;cursor:pointer">Supprimer l'override — revenir au calendrier automatique</button>`:''}
+  </div>`;
+}
+function overrideAssoc(id){localStorage.setItem('livr_assoc_override',id);showPage('association');}
+function clearOverride(){localStorage.removeItem('livr_assoc_override');showPage('association');}
+
+// ════════════════════════════════════════════════════════════
+// SYSTÈME
+// ════════════════════════════════════════════════════════════
+function pageSystem(){
+  const lsSize=new Blob(Object.values(localStorage)).size;
+  const kb=(lsSize/1024).toFixed(1);
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith('livraisante'));
+  return `
+  <div class="page-title">⚙️ Système</div>
+  <div class="grid2">
+    <div class="card">
+      <h3>État de la base de données</h3>
+      <table class="table">
+        <tbody>
+          <tr><td>Storage utilisé</td><td style="font-weight:700">${kb} Ko</td></tr>
+          <tr><td>Clés Livraisanté</td><td style="font-weight:700">${keys.length}</td></tr>
+          <tr><td>Comptes</td><td style="font-weight:700">${Object.keys(getAccounts()).length}</td></tr>
+          <tr><td>Commandes</td><td style="font-weight:700">${Object.keys(getOrders()).length}</td></tr>
+          <tr><td>Codes promo</td><td style="font-weight:700">${getPromoCodes().length}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Informations app</h3>
+      <table class="table">
+        <tbody>
+          <tr><td>Version SW</td><td style="font-weight:700;font-family:monospace">livraisante-v26</td></tr>
+          <tr><td>Hébergement</td><td style="font-weight:700">GitHub Pages</td></tr>
+          <tr><td>URL production</td><td style="font-size:11px"><a href="https://rayansaidomar1-arch.github.io/livraisante/" target="_blank" style="color:var(--pharma)">livraisante.github.io</a></td></tr>
+          <tr><td>Type</td><td style="font-weight:700">PWA (Progressive Web App)</td></tr>
+          <tr><td>Dernière MAJ</td><td style="font-weight:700">${new Date().toLocaleDateString('fr-FR')}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Actions système</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button onclick="exportData()" style="font-family:inherit;font-weight:700;font-size:13px;padding:10px 18px;border:2px solid var(--ink);border-radius:10px;background:var(--ink);color:var(--white);cursor:pointer">📥 Exporter les données (JSON)</button>
+      <button onclick="if(confirm('Réinitialiser toutes les statistiques ?')){localStorage.removeItem('livraisante_stats_v2');showPage('system')}" style="font-family:inherit;font-weight:700;font-size:13px;padding:10px 18px;border:2px solid var(--warn);border-radius:10px;background:transparent;color:var(--warn);cursor:pointer">🔄 Reset statistiques</button>
+      <button onclick="if(confirm('⚠ Supprimer toutes les données de démo ?')){['livraisante_accounts_v2','livraisante_orders_v2','livraisante_stats_v2'].forEach(k=>localStorage.removeItem(k));showPage('system')}" style="font-family:inherit;font-weight:700;font-size:13px;padding:10px 18px;border:2px solid var(--err);border-radius:10px;background:transparent;color:var(--err);cursor:pointer">🗑️ Purger les données démo</button>
+    </div>
+    <div style="font-size:12px;color:var(--mid);margin-top:12px">⚠ En production, ces actions seraient protégées et loggées. Actuellement en mode localStorage (prototype).</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// PAGE MONÉTIQUE STRIPE
+// ════════════════════════════════════════════════════════════
+const STRIPE_CFG_KEY = 'livraisante_stripe_config';
+function getStripeCfg(){ try{ return JSON.parse(localStorage.getItem(STRIPE_CFG_KEY)||'{}'); }catch(e){ return {}; } }
+function saveStripeCfg(obj){ try{ localStorage.setItem(STRIPE_CFG_KEY,JSON.stringify(obj)); }catch(e){} }
+
+function pageStripe(){
+  const cfg = getStripeCfg();
+  const isLive = cfg.publishableKey?.startsWith('pk_live_');
+  const modeTag = cfg.publishableKey
+    ? (isLive
+        ? '<span style="background:#16A34A;color:white;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.08em">LIVE</span>'
+        : '<span style="background:#D97706;color:white;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.08em">TEST</span>')
+    : '<span style="background:#888;color:white;font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.08em">NON CONFIGURÉ</span>';
+
+  return `
+  <div class="page-title">💳 Monétique Stripe ${modeTag}</div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="k-label">Flux pharmacie</div><div class="k-value" style="font-size:22px">Produits</div><div class="k-sub">Virement vers compte Connect pharmacie</div></div>
+    <div class="kpi"><div class="k-label">Flux livreur</div><div class="k-value" style="font-size:22px">Livraison</div><div class="k-sub">Virement vers compte Connect livreur</div></div>
+    <div class="kpi highlight"><div class="k-label" style="color:rgba(255,255,255,.6)">Flux plateforme</div><div class="k-value" style="color:#C2F23E;font-size:22px">Commission</div><div class="k-sub" style="color:rgba(255,255,255,.5)">10% → compte Livraisanté</div></div>
+  </div>
+
+  <!-- Clés Stripe -->
+  <div class="card" style="margin-bottom:20px">
+    <h3>🔑 Clés API Stripe</h3>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:16px">La clé publiable est utilisée côté client (Stripe.js). La clé secrète ne doit <b>jamais</b> figurer dans le frontend — elle appartient à votre backend.</p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">Clé publiable (pk_test_… ou pk_live_…)</label>
+      <input id="sCfgPk" type="text" value="${cfg.publishableKey||''}" placeholder="pk_test_xxxxxxxxxxxxxxxxxxxx"
+        style="width:100%;padding:11px 13px;border:2px solid #e5e5e5;border-radius:10px;font-size:14px;font-family:monospace">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">URL de votre backend (création PaymentIntent)</label>
+      <input id="sCfgBackend" type="text" value="${cfg.backendUrl||''}" placeholder="https://api.livraisante.fr"
+        style="width:100%;padding:11px 13px;border:2px solid #e5e5e5;border-radius:10px;font-size:14px">
+      <div style="font-size:12px;color:var(--mid);margin-top:6px">Endpoint attendu : <code>POST /create-payment-intent</code> — retourne <code>{"clientSecret":"pi_…_secret_…"}</code></div>
+    </div>
+  </div>
+
+  <!-- Comptes Connect -->
+  <div class="card" style="margin-bottom:20px">
+    <h3>🔗 Comptes Stripe Connect (split automatique)</h3>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:16px">Chaque pharmacie et livreur doit avoir un compte Stripe Connect Express. L'ID est stocké dans leur profil.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">ID Connect pharmacie démo (acct_…)</label>
+        <input id="sCfgPharmacyAcct" type="text" value="${cfg.pharmacyConnectId||''}" placeholder="acct_xxxxxxxxxxxx"
+          style="width:100%;padding:11px 13px;border:2px solid #e5e5e5;border-radius:10px;font-size:14px;font-family:monospace">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">ID Connect livreur démo (acct_…)</label>
+        <input id="sCfgDriverAcct" type="text" value="${cfg.driverConnectId||''}" placeholder="acct_xxxxxxxxxxxx"
+          style="width:100%;padding:11px 13px;border:2px solid #e5e5e5;border-radius:10px;font-size:14px;font-family:monospace">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarification -->
+  <div class="card" style="margin-bottom:20px">
+    <h3>💰 Répartition des flux (lecture seule)</h3>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:14px">Définie dans le code source (<code>MARGE_PCT</code> et <code>DELIVERY_TIERS</code> dans index.html).</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px">
+      <thead><tr style="border-bottom:2px solid var(--ink)">
+        <th style="text-align:left;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mid)">Flux</th>
+        <th style="text-align:left;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mid)">Bénéficiaire</th>
+        <th style="text-align:left;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mid)">Montant</th>
+        <th style="text-align:left;padding:8px 0;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mid)">Mécanisme Stripe</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 0">🏥 Produits</td><td>Pharmacie</td><td>Prix base (100%)</td><td><code>transfer_data.destination</code></td></tr>
+        <tr style="border-bottom:1px solid #eee"><td style="padding:10px 0">🟢 Commission</td><td>Livraisanté</td><td>10% du panier</td><td><code>application_fee_amount</code></td></tr>
+        <tr><td style="padding:10px 0">🛵 Livraison</td><td>Livreur</td><td>1,90 – 9,90 € / km</td><td><code>transfer</code> séparé</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Backend requis -->
+  <div class="card" style="margin-bottom:20px;border-left:4px solid var(--warn)">
+    <h3>⚙️ Backend requis pour la production</h3>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:12px">Le frontend Stripe.js gère uniquement la saisie sécurisée de la carte. La logique de split nécessite un backend avec la clé secrète.</p>
+    <div style="font-size:13px;background:#f9f6e8;border-radius:10px;padding:14px;font-family:monospace;line-height:1.7;overflow-x:auto">
+// Exemple Node.js / Express<br>
+app.post('/create-payment-intent', async (req, res) => {<br>
+&nbsp;&nbsp;const { amount, pharmacyAccount, pharmacyAmount,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;driverAccount, driverAmount, platformFee } = req.body;<br>
+<br>
+&nbsp;&nbsp;<b>// Flux 1 : produits → pharmacie (Stripe Connect)</b><br>
+&nbsp;&nbsp;const intent = await stripe.paymentIntents.create({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;amount, currency: 'eur',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;transfer_data: { destination: pharmacyAccount,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount: pharmacyAmount },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;application_fee_amount: platformFee, <b>// Flux 3 → Livraisanté</b><br>
+&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;<b>// Flux 2 : livraison → livreur (Transfer séparé)</b><br>
+&nbsp;&nbsp;await stripe.transfers.create({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;amount: driverAmount, currency: 'eur',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;destination: driverAccount,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;source_transaction: intent.latest_charge,<br>
+&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;res.json({ clientSecret: intent.client_secret });<br>
+});
+    </div>
+  </div>
+
+  <div id="stripeSaveMsg" style="font-size:14px;color:var(--ok);font-weight:700;margin-bottom:12px;display:none">✓ Configuration enregistrée.</div>
+  <button id="stripeSaveBtn" style="font-family:inherit;font-weight:800;font-size:15px;padding:13px 28px;background:var(--ink);color:var(--white);border:none;border-radius:12px;cursor:pointer;box-shadow:3px 3px 0 var(--lime)">💾 Enregistrer la configuration</button>
+  <button style="font-family:inherit;font-weight:700;font-size:14px;padding:13px 20px;background:transparent;border:2px solid var(--ink);border-radius:12px;cursor:pointer;margin-left:10px" onclick="if(confirm('Effacer la configuration Stripe ?')){saveStripeCfg({});showPage('stripe')}">🗑️ Réinitialiser</button>
+  `;
+}
+
+function initStripeAdminEvents(){
+  document.getElementById('stripeSaveBtn')?.addEventListener('click', ()=>{
+    const pk      = document.getElementById('sCfgPk')?.value.trim();
+    const backend = document.getElementById('sCfgBackend')?.value.trim();
+    const pharma  = document.getElementById('sCfgPharmacyAcct')?.value.trim();
+    const driver  = document.getElementById('sCfgDriverAcct')?.value.trim();
+    if(pk && !pk.startsWith('pk_')){
+      alert('La clé publiable doit commencer par pk_test_ ou pk_live_'); return;
+    }
+    saveStripeCfg({ publishableKey:pk, backendUrl:backend,
+                    pharmacyConnectId:pharma, driverConnectId:driver });
+    const msg = document.getElementById('stripeSaveMsg');
+    if(msg){ msg.style.display='block'; setTimeout(()=>msg.style.display='none', 3000); }
+    // Recharge la page pour mettre à jour le badge mode
+    setTimeout(()=>showPage('stripe'), 500);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// MONÉTIQUE & FACTURES
+// ════════════════════════════════════════════════════════════
+const PLANS_MONTHLY_EQUIV=99;
+const MARGE_PCT_ADM=0.10;
+
+function renderMonetique(){
+  const orders=getOrders();
+  const all=Object.values(orders);
+  const now=new Date();
+  const startOfMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const startOfDay=new Date(now); startOfDay.setHours(0,0,0,0);
+
+  const thisMonth=all.filter(o=>new Date(o.createdAt)>=startOfMonth);
+  const settled=all.filter(o=>o.payment?.status==='settled');
+  const pending=all.filter(o=>o.status==='livree'&&o.payment?.status==='pending');
+
+  const sum=(arr,field)=>arr.reduce((s,o)=>s+(o.pricing?.[field]||0),0);
+
+  const caMonth=sum(thisMonth,'totalPatient');
+  const lsTotalMois=sum(thisMonth,'totalLS');
+  const pharmaMois=sum(settled.filter(o=>new Date(o.createdAt)>=startOfMonth),'ht');
+  const livreurMois=sum(settled.filter(o=>new Date(o.createdAt)>=startOfMonth),'livreur');
+
+  const pendingHT=sum(pending,'ht');
+  const pendingLiv=sum(pending,'livreur');
+
+  const days=[]; for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);days.push(d);}
+  const dailyRows=days.map(d=>{
+    const de=new Date(d);de.setHours(23,59,59,999);
+    const dayOrd=settled.filter(o=>new Date(o.createdAt)>=d&&new Date(o.createdAt)<=de);
+    const ls=sum(dayOrd,'totalLS');
+    return {label:d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}),count:dayOrd.length,ls};
+  });
+  const maxLS=Math.max(...dailyRows.map(r=>r.ls),1);
+
+  return `
+  <h1 class="page-title">💶 Monétique</h1>
+
+  <div class="kpi-grid">
+    <div class="kpi highlight"><div class="k-label">CA mensuel (TTC)</div><div class="k-value">€${caMonth.toFixed(0)}</div><div class="k-sub">Transactions patients</div></div>
+    <div class="kpi"><div class="k-label">Revenu LS ce mois</div><div class="k-value" style="color:var(--ok)">€${lsTotalMois.toFixed(0)}</div><div class="k-sub">Marges + frais livraison</div></div>
+    <div class="kpi"><div class="k-label">Réglé pharmacies</div><div class="k-value">€${pharmaMois.toFixed(0)}</div><div class="k-sub">Produits HT ce mois</div></div>
+    <div class="kpi"><div class="k-label">Réglé livreurs</div><div class="k-value">€${livreurMois.toFixed(0)}</div><div class="k-sub">Courses ce mois</div></div>
+  </div>
+
+  ${pending.length?`<div class="card" style="border-color:var(--warn)">
+    <h3>⏳ En attente de règlement <span style="font-size:13px;color:var(--warn);font-weight:600">${pending.length} commande(s)</span></h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:#fffbe6;border-radius:10px;padding:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--warn);margin-bottom:4px">Pharmacies</div><div style="font-size:24px;font-weight:900">€${pendingHT.toFixed(2)}</div><div style="font-size:12px;color:#888">HT à virer</div></div>
+      <div style="background:#fffbe6;border-radius:10px;padding:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--warn);margin-bottom:4px">Livreurs</div><div style="font-size:24px;font-weight:900">€${pendingLiv.toFixed(2)}</div><div style="font-size:12px;color:#888">à virer</div></div>
+      <div style="background:#f0faf2;border-radius:10px;padding:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ok);margin-bottom:4px">Livraisanté</div><div style="font-size:24px;font-weight:900">€${sum(pending,'totalLS').toFixed(2)}</div><div style="font-size:12px;color:#888">recettes en attente</div></div>
+    </div>
+    <button onclick="adminSettleAll()" style="font-family:inherit;font-weight:800;font-size:14px;padding:12px 24px;background:var(--ok);color:white;border:none;border-radius:12px;cursor:pointer">✅ Régler toutes les commandes en attente</button>
+  </div>`:''}
+
+  <div class="card">
+    <h3>📊 Revenu Livraisanté — 7 derniers jours</h3>
+    <div class="bar-chart">
+      ${dailyRows.map(r=>`<div class="bar-row">
+        <span style="font-size:12px">${r.label}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(r.ls/maxLS*100)}%;background:var(--ok)"></div></div>
+        <span class="bar-val">€${r.ls.toFixed(0)}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🧾 Relevé mensuel Livraisanté — ${now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}</h3>
+    <table class="table">
+      <thead><tr><th>Flux</th><th>Montant</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>Marges produits (10%)</td><td><b>€${sum(thisMonth,'marge').toFixed(2)}</b></td><td style="color:#888">${thisMonth.length} commandes</td></tr>
+        <tr><td>Part livraison (20% frais)</td><td><b>€${sum(thisMonth,'lsLiv').toFixed(2)}</b></td><td style="color:#888">sur frais de port collectés</td></tr>
+        <tr style="background:#f0faf2;font-weight:800"><td>Total Livraisanté HT</td><td>€${lsTotalMois.toFixed(2)}</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <button onclick="generateMonthlyStatement()" style="margin-top:12px;font-family:inherit;font-weight:700;font-size:13px;padding:10px 18px;background:#0D0E09;color:#C2F23E;border:none;border-radius:10px;cursor:pointer">📄 Générer le relevé PDF mensuel</button>
+  </div>`;
+}
+
+function renderInvoices(){
+  let settlements=[]; try{settlements=JSON.parse(localStorage.getItem('livraisante_settlements')||'[]');}catch(e){}
+  if(!settlements.length) return `<h1 class="page-title">🧾 Factures</h1><div class="card"><p style="color:#888;font-size:14px">Aucune facture générée pour le moment. Lancez un règlement journalier depuis le dashboard pharmacien ou la page Monétique.</p></div>`;
+  return `<h1 class="page-title">🧾 Factures émises</h1>
+  <div class="card">
+    <table class="table">
+      <thead><tr><th>N° Facture</th><th>Date</th><th>Type</th><th>Commandes</th><th>Pharmacie HT</th><th>Livreur</th><th>LS Recettes</th><th>Actions</th></tr></thead>
+      <tbody>
+      ${settlements.slice().reverse().map(s=>`<tr>
+        <td><code style="font-size:12px">${s.id}</code></td>
+        <td>${new Date(s.date).toLocaleDateString('fr-FR')}</td>
+        <td><span class="badge b-lime">Journalier</span></td>
+        <td>${s.orderCount}</td>
+        <td>€${(s.htPharmacie||0).toFixed(2)}</td>
+        <td>€${(s.htLivreur||0).toFixed(2)}</td>
+        <td>€${(s.lsRevenue||0).toFixed(2)}</td>
+        <td style="display:flex;gap:6px">
+          <button onclick="viewInvoice('pharma','${s.id}')" style="font-size:11px;font-weight:700;padding:5px 10px;border:1.5px solid #0D0E09;border-radius:6px;background:white;cursor:pointer">💊 Pharmacie</button>
+          <button onclick="viewInvoice('livreur','${s.id}')" style="font-size:11px;font-weight:700;padding:5px 10px;border:1.5px solid #0D0E09;border-radius:6px;background:white;cursor:pointer">🛵 Livreur</button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function adminSettleAll(){
+  const orders=getOrders();
+  const all=Object.values(orders);
+  const pending=all.filter(o=>o.status==='livree'&&o.payment?.status==='pending');
+  if(!pending.length){alert('Aucune commande en attente.');return;}
+  alert('Règlement admin lancé pour '+pending.length+' commande(s).\n\nEn production, cela déclencherait des virements Stripe Connect vers les comptes pharmacie et livreur.');
+  showPage('invoices');
+}
+
+function viewInvoice(type,id){
+  let settlements=[]; try{settlements=JSON.parse(localStorage.getItem('livraisante_settlements')||'[]');}catch(e){}
+  const s=settlements.find(x=>x.id===id);
+  if(!s){alert('Facture introuvable.');return;}
+  const html=type==='pharma'?s.htmlPharmacie:s.htmlLivreur;
+  if(!html){alert('Contenu de facture non disponible.');return;}
+  const w=window.open('','_blank'); if(w) w.document.write(html);
+}
+
+function generateMonthlyStatement(){
+  const orders=getOrders();
+  const now=new Date();
+  const startOfMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const thisMonth=Object.values(orders).filter(o=>new Date(o.createdAt)>=startOfMonth);
+  const totalHT=thisMonth.reduce((s,o)=>s+(o.pricing?.totalLS||0),0);
+  const tva=totalHT*0.20;
+  const ttc=totalHT+tva;
+  const monthName=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0D0E09;padding:40px;max-width:800px;margin:0 auto}
+  h1{font-size:28px;font-weight:900;margin-bottom:4px}
+  .sub{color:#888;font-size:14px;margin-bottom:32px}
+  table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  th{background:#0D0E09;color:white;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  td{padding:12px 14px;border-bottom:1px solid #f0f0f0;font-size:13.5px}
+  .total{font-size:18px;font-weight:900;text-align:right;margin-top:16px;padding-top:16px;border-top:2px solid #0D0E09}
+  .footer{font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ddd;padding-top:16px}
+  </style></head><body>
+  <h1>Relevé mensuel Livraisanté</h1>
+  <div class="sub">${monthName} · Livraisanté SAS · SIREN 902 797 760</div>
+  <table>
+    <thead><tr><th>Flux</th><th>Nb commandes</th><th>Montant HT</th></tr></thead>
+    <tbody>
+      <tr><td>Marges produits (10% sur prix HT)</td><td>${thisMonth.length}</td><td>€${thisMonth.reduce((s,o)=>s+(o.pricing?.marge||0),0).toFixed(2)}</td></tr>
+      <tr><td>Part frais de livraison (20%)</td><td>${thisMonth.filter(o=>(o.pricing?.lsLiv||0)>0).length}</td><td>€${thisMonth.reduce((s,o)=>s+(o.pricing?.lsLiv||0),0).toFixed(2)}</td></tr>
+      <tr style="font-weight:800"><td>Total HT</td><td>—</td><td>€${totalHT.toFixed(2)}</td></tr>
+      <tr><td>TVA 20% (services)</td><td>—</td><td>€${tva.toFixed(2)}</td></tr>
+      <tr style="font-weight:900;font-size:16px"><td>Total TTC</td><td>—</td><td>€${ttc.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  <div class="footer">Document généré automatiquement par Livraisanté SAS le ${now.toLocaleDateString('fr-FR')}.<br>Pour tout renseignement : finance@livraisante.fr</div>
+  </body></html>`;
+  const w=window.open('','_blank'); if(w) w.document.write(html);
+}
+
+function exportData(){
+  const data={
+    exportedAt:new Date().toISOString(),
+    accounts:getAccounts(),
+    orders:getOrders(),
+    stats:getStats(),
+    promoCodes:getPromoCodes(),
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`livraisante-export-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
