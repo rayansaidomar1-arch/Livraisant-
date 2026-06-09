@@ -507,6 +507,11 @@
   .login-logo p{font-size:14px;color:var(--ink-soft)}
   .login-box{background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:28px}
   .login-box h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;margin-bottom:20px}
+  .admin-stat-card{background:var(--paper-2);border:1.5px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .admin-stat-card .stat-icon{font-size:22px}
+  .admin-stat-card .stat-val{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;line-height:1.1}
+  .admin-stat-card .stat-label{font-size:11px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .admin-tab{animation:fadeIn .18s ease}
   .demo-block{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:20px}
   .demo-block h4{font-weight:800;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
   .demo-cred{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
@@ -6085,12 +6090,36 @@ window.addEventListener('DOMContentLoaded',()=>{
 =================================================================== */
 const LS_ADMIN_MESSAGES='livraisante_admin_messages';
 
+/* ===== SUPER ADMIN DASHBOARD ===== */
+async function loadAdminStats(){
+  const sb=window.LS_SB?.getSB();
+  const stats={pharmacies:0,clients:0,livreurs:0,clubs:0,healthPros:0,orders:0,revenue:0,pending:0};
+  if(!sb) return stats;
+  try{
+    const [{count:ph},{count:cl},{count:li},{count:cb},{count:hp},{data:ords}]=await Promise.all([
+      sb.from('pharmacies').select('*',{count:'exact',head:true}),
+      sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','patient'),
+      sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','livreur'),
+      sb.from('clubs').select('*',{count:'exact',head:true}),
+      sb.from('health_professionals').select('*',{count:'exact',head:true}),
+      sb.from('orders').select('total_price,status').limit(1000)
+    ]);
+    stats.pharmacies=ph||0; stats.clients=cl||0; stats.livreurs=li||0;
+    stats.clubs=cb||0; stats.healthPros=hp||0;
+    if(ords){
+      stats.orders=ords.length;
+      stats.revenue=ords.reduce((s,o)=>s+(parseFloat(o.total_price)||0),0);
+      stats.pending=ords.filter(o=>o.status==='en_attente'||o.status==='validee').length;
+    }
+  }catch(e){console.warn('admin stats',e);}
+  return stats;
+}
+
 function renderAdminDashboard(){
   const adminAppEl=document.getElementById('adminApp');
   if(adminAppEl) adminAppEl.style.display='block';
   const el=document.getElementById('adminDashboardContent');
   if(!el) return;
-  const promos = getPromoCodes ? getPromoCodes() : [];
   el.innerHTML=`
   <div style="padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
     <div style="display:flex;align-items:center;gap:12px">
@@ -6099,8 +6128,125 @@ function renderAdminDashboard(){
     </div>
     <button onclick="doLogout()" style="font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:10px;border:1.5px solid var(--line-strong);background:var(--paper-2);cursor:pointer">Déconnexion</button>
   </div>
-  <div id="adminPromoSection"></div>`;
-  if(typeof renderPromoCodes === 'function') renderPromoCodes();
+
+  <!-- KPI STATS -->
+  <div id="adminStatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:28px">
+    <div class="admin-stat-card" id="stat-pharmacies"><div class="stat-icon">🏥</div><div class="stat-val" id="sv-pharmacies">…</div><div class="stat-label">Pharmacies</div></div>
+    <div class="admin-stat-card" id="stat-clients"><div class="stat-icon">👤</div><div class="stat-val" id="sv-clients">…</div><div class="stat-label">Patients</div></div>
+    <div class="admin-stat-card" id="stat-livreurs"><div class="stat-icon">🛵</div><div class="stat-val" id="sv-livreurs">…</div><div class="stat-label">Livreurs</div></div>
+    <div class="admin-stat-card" id="stat-clubs"><div class="stat-icon">🏋️</div><div class="stat-val" id="sv-clubs">…</div><div class="stat-label">Clubs</div></div>
+    <div class="admin-stat-card" id="stat-pros"><div class="stat-icon">⚕️</div><div class="stat-val" id="sv-pros">…</div><div class="stat-label">Pros santé</div></div>
+    <div class="admin-stat-card" id="stat-orders"><div class="stat-icon">📦</div><div class="stat-val" id="sv-orders">…</div><div class="stat-label">Livraisons</div></div>
+    <div class="admin-stat-card" id="stat-revenue"><div class="stat-icon">💶</div><div class="stat-val" id="sv-revenue">…</div><div class="stat-label">CA total</div></div>
+    <div class="admin-stat-card" id="stat-pending"><div class="stat-icon">⏳</div><div class="stat-val" id="sv-pending">…</div><div class="stat-label">En cours</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="chips" style="margin-bottom:20px;flex-wrap:wrap">
+    <button class="chip sel" onclick="adminTab(this,'tabPromos')">🎟 Codes promo</button>
+    <button class="chip" onclick="adminTab(this,'tabMessages')">📣 Messages</button>
+    <button class="chip" onclick="adminTab(this,'tabClubs')">🏋️ Clubs</button>
+    <button class="chip" onclick="adminTab(this,'tabExport')">📥 Export</button>
+  </div>
+
+  <!-- TAB: PROMOS -->
+  <div id="tabPromos" class="admin-tab">
+    <div id="adminPromoSection"></div>
+  </div>
+
+  <!-- TAB: MESSAGES -->
+  <div id="tabMessages" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">📣 Envoyer un message</div>
+    <div class="chips" data-group="adminMsgDest" style="margin-bottom:12px;flex-wrap:wrap">
+      <button class="chip sel" data-v="all_pharmacies" onclick="adminSelectDest(this)">Toutes les pharmacies</button>
+      <button class="chip" data-v="all_patients" onclick="adminSelectDest(this)">Tous les patients</button>
+      <button class="chip" data-v="all_clubs" onclick="adminSelectDest(this)">Tous les clubs</button>
+      <button class="chip" data-v="specific" onclick="adminSelectDest(this)">Email spécifique</button>
+    </div>
+    <div id="adminMsgEmailRow" style="display:none;margin-bottom:10px"><input id="adminMsgEmail" type="email" placeholder="destinataire@email.fr" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:var(--paper-2)"></div>
+    <textarea id="adminMsgText" rows="4" placeholder="Rédigez votre message…" style="width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;background:var(--paper-2);resize:vertical;margin-bottom:10px"></textarea>
+    <button class="btn primary" onclick="sendAdminMessage()" style="font-size:14px;padding:10px 22px">Envoyer →</button>
+    <div id="adminMsgHistory" style="margin-top:20px"></div>
+  </div>
+
+  <!-- TAB: CLUBS -->
+  <div id="tabClubs" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🏋️ Clubs inscrits</div>
+    <div id="adminClubsList"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
+  </div>
+
+  <!-- TAB: EXPORT -->
+  <div id="tabExport" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">📥 Export données</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:320px">
+      <button class="btn" onclick="exportAdminCSV()" style="font-size:14px;text-align:left;padding:12px 16px">📊 Export pharmacies (CSV)</button>
+      <button class="btn" onclick="exportOrdersCSV()" style="font-size:14px;text-align:left;padding:12px 16px">📦 Export livraisons (CSV)</button>
+    </div>
+  </div>`;
+
+  // Charger stats async
+  loadAdminStats().then(s=>{
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    set('sv-pharmacies',s.pharmacies);
+    set('sv-clients',s.clients);
+    set('sv-livreurs',s.livreurs);
+    set('sv-clubs',s.clubs);
+    set('sv-pros',s.healthPros);
+    set('sv-orders',s.orders);
+    set('sv-revenue',s.revenue.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}));
+    set('sv-pending',s.pending);
+  });
+
+  if(typeof renderPromoCodes==='function') renderPromoCodes();
+  renderAdminMsgHistory();
+}
+
+function adminTab(btn,tabId){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.style.display='none');
+  document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('sel'));
+  const tab=document.getElementById(tabId);
+  if(tab) tab.style.display='block';
+  btn.classList.add('sel');
+  if(tabId==='tabClubs') loadAdminClubs();
+  if(tabId==='tabMessages') renderAdminMsgHistory();
+}
+
+async function loadAdminClubs(){
+  const el=document.getElementById('adminClubsList');
+  if(!el) return;
+  const sb=window.LS_SB?.getSB();
+  if(!sb){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Supabase non disponible.</div>';return;}
+  const {data,error}=await sb.from('clubs').select('*').order('created_at',{ascending:false}).limit(50);
+  if(error||!data?.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucun club inscrit.</div>';return;}
+  el.innerHTML=data.map(c=>`
+    <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:800;font-size:15px">${esc(c.nom||'—')}</div>
+        <div style="font-size:13px;color:var(--ink-soft)">${esc(c.ville||'')} · ${esc(c.federation||'')}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">${esc(c.contact_email||'')}</div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft)">${new Date(c.created_at).toLocaleDateString('fr-FR')}</div>
+    </div>`).join('');
+}
+
+function renderAdminMsgHistory(){
+  const el=document.getElementById('adminMsgHistory');
+  if(!el) return;
+  let msgs=[]; try{msgs=JSON.parse(localStorage.getItem(LS_ADMIN_MESSAGES)||'[]');}catch(e){}
+  if(!msgs.length){el.innerHTML='';return;}
+  el.innerHTML=`<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--ink-soft)">Messages envoyés (${msgs.length})</div>`+
+    msgs.slice().reverse().map(m=>`<div style="padding:10px 12px;background:var(--paper-2);border-radius:10px;margin-bottom:8px;font-size:13px"><div style="font-weight:700">→ ${esc(m.dest)}</div><div style="margin:4px 0">${esc(m.text)}</div><div style="font-size:11px;color:var(--ink-soft)">${esc(m.date)}</div></div>`).join('');
+}
+
+async function exportOrdersCSV(){
+  const sb=window.LS_SB?.getSB();
+  if(!sb){alert('Supabase requis.');return;}
+  const {data}=await sb.from('orders').select('*').order('created_at',{ascending:false}).limit(2000);
+  if(!data?.length){alert('Aucune livraison.');return;}
+  const cols=['id','pharmacy_id','patient_email','status','total_price','delivery_fee','created_at'];
+  const rows=[cols.join(';'),...data.map(o=>cols.map(c=>JSON.stringify(o[c]??'')).join(';'))];
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='livraisons.csv'; a.click();
 }
 
 let _adminMsgDest='all_pharmacies';
