@@ -6,9 +6,8 @@
 <title>Livraisanté — Santé du quotidien, livré</title>
 <meta name="description" content="Conseil pharmaceutique et livraison de compléments alimentaires validés par votre pharmacien.">
 <meta name="theme-color" content="#0D0E09">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Livraisanté">
 <meta property="og:title" content="Livraisanté — Santé du quotidien, livré">
 <meta property="og:description" content="Conseil pharmaceutique et livraison de compléments alimentaires validés par votre pharmacien.">
@@ -218,9 +217,6 @@
   .ph-item .d{font-weight:700;color:var(--kine);white-space:nowrap}
   .ph-item a{color:var(--ink);text-decoration:none}
   .geo-note{font-size:11.5px;color:var(--ink-soft);margin-top:12px}
-  .empty-zone-msg{text-align:center;padding:2rem;color:var(--ink-soft)}
-  .empty-zone-msg strong{color:#16a34a}
-  .empty-zone-msg p{margin-top:8px;font-size:14px}
 
   /* ===== HUB : choix d'interface ===== */
   .hub-hero{padding:18px 0 6px}
@@ -229,10 +225,10 @@
   .roles{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
   .role{text-align:left;background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:22px;cursor:pointer;transition:.16s;position:relative;overflow:hidden;font-family:inherit;color:var(--ink)}
   .role::before{content:"";position:absolute;top:0;left:0;right:0;height:7px}
-  .role.pat::before{background:var(--accent)} .role.pro::before{background:var(--pharma)} .role.liv::before{background:var(--prepa)} .role.hp::before{background:var(--kine)} .role.club::before{background:var(--ok)}
+  .role.pat::before{background:var(--accent)} .role.pro::before{background:var(--pharma)} .role.liv::before{background:var(--prepa)}
   .role:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(21,22,15,.12)}
   .role .ric{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:24px;color:#fff;margin-bottom:14px}
-  .role.pat .ric{background:var(--accent-deep)} .role.pro .ric{background:var(--pharma)} .role.liv .ric{background:var(--prepa)} .role.hp .ric{background:var(--kine)} .role.club .ric{background:var(--ok)}
+  .role.pat .ric{background:var(--accent-deep)} .role.pro .ric{background:var(--pharma)} .role.liv .ric{background:var(--prepa)}
   .role h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;margin-bottom:5px}
   .role p{font-size:13.5px;color:var(--ink-soft)}
   .role .go{margin-top:14px;font-weight:700;font-size:14px;color:var(--ink)}
@@ -1239,30 +1235,6 @@
   <div id="livContent"></div>
 </div>
 
-<!-- ===== PROFESSIONNEL DE SANTÉ ===== -->
-<div class="wrap" id="healthProApp" style="display:none">
-  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
-    <div class="dt" style="display:flex;align-items:center;gap:12px">
-      <div class="dmark" style="background:var(--kine)">🩺</div>
-      <div><b>Espace professionnel de santé</b><small>Rendez-vous &amp; patients du club</small></div>
-    </div>
-    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
-  </div>
-  <div id="healthProContent"></div>
-</div>
-
-<!-- ===== CLUB SPORTIF ===== -->
-<div class="wrap" id="clubApp" style="display:none">
-  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
-    <div class="dt" style="display:flex;align-items:center;gap:12px">
-      <div class="dmark" style="background:var(--ok)">🏆</div>
-      <div><b>Espace club sportif</b><small>Membres &amp; professionnels de santé</small></div>
-    </div>
-    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
-  </div>
-  <div id="clubContent"></div>
-</div>
-
 <!-- ===== INSCRIPTION LIVREUR ===== -->
 <div class="wrap" id="driverSignup" style="display:none">
   <div class="signup-topbar">
@@ -1615,6 +1587,30 @@
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px;margin-top:6px" onclick="doRegister()">Créer mon compte →</button>
     </div>
   </div>
+</div>
+
+<!-- ===== PROFESSIONNEL DE SANTÉ ===== -->
+<div class="wrap" id="healthProApp" style="display:none">
+  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
+    <div class="dt" style="display:flex;align-items:center;gap:12px">
+      <div class="dmark" style="background:var(--kine)">🩺</div>
+      <div><b>Espace professionnel de santé</b><small>Rendez-vous &amp; patients du club</small></div>
+    </div>
+    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
+  </div>
+  <div id="healthProContent"></div>
+</div>
+
+<!-- ===== CLUB SPORTIF ===== -->
+<div class="wrap" id="clubApp" style="display:none">
+  <div class="dash-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px">
+    <div class="dt" style="display:flex;align-items:center;gap:12px">
+      <div class="dmark" style="background:var(--ok)">🏆</div>
+      <div><b>Espace club sportif</b><small>Membres &amp; professionnels de santé</small></div>
+    </div>
+    <button class="switch" onclick="handleAccountClick()">⚙ Profil</button>
+  </div>
+  <div id="clubContent"></div>
 </div>
 
 <!-- ===== SUPER ADMIN DASHBOARD ===== -->
@@ -1972,6 +1968,7 @@ const DELIVERY_TIERS=[
   {maxKm:Infinity, price:12.90,label:'+ 20 km',    color:'#7C3AED', desc:'Livraison grande distance'},
 ];
 
+/* ── ABONNEMENT PATIENT — supprimé ── */
 /* ── Professions de santé réglementées avec ordre ── */
 const PROFESSIONS_ORDRE = [
   'Médecin','Chirurgien-dentiste','Pharmacien','Sage-femme',
@@ -1982,7 +1979,6 @@ const PROFESSIONS_ORDRE = [
   'Opticien-lunetier','Prothésiste / Orthésiste','Diététicien(ne)'
 ];
 
-/* ── ABONNEMENT PATIENT — supprimé ── */
 /* ── PARRAINAGE LIVREUR ── */
 // Parrainage progressif : 10€ inscription + 10€ toutes les 10 livraisons du filleul (×4) = 50€ max
 const DRIVER_REFERRAL={
@@ -6214,6 +6210,188 @@ function afterLogin(){
   else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); }
 }
 
+async function doLogout(){
+  if(window.LS_SB?.SB_READY) await window.LS_SB.sbSignOut();
+  currentUser=null; patientProfile=null;
+  try{localStorage.removeItem('livraisante_session');}catch(e){}
+  localStorage.removeItem('livraisante_pharmacy');
+  updateAccountChip(); renderHeader(); renderBottomNav(); showHome();
+}
+function clearLoginErr(){const e=document.getElementById('loginErr'); if(e) e.style.display='none';}
+function fillDemo(type){
+  const map={pharmacie:'pharmacie.demo@livraisante.fr',livreur:'livreur.demo@livraisante.fr',patient:'patient.demo@livraisante.fr'};
+  const email=map[type]; if(!email)return;
+  const el1=document.getElementById('loginEmail'), el2=document.getElementById('loginPassword');
+  if(el1) el1.value=email; if(el2) el2.value='Demo2024!';
+}
+async function doRegister(){
+  const prenom=(document.getElementById('regPrenom')?.value||'').trim();
+  const nom=(document.getElementById('regNom')?.value||'').trim();
+  const email=(document.getElementById('regEmail')?.value||'').trim().toLowerCase();
+  const pwd=document.getElementById('regPassword')?.value||'';
+  const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
+  const errEl=document.getElementById('regErr');
+  if(!prenom||!email||pwd.length<6){
+    if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs (mot de passe : 6 caractères min).';}
+    return;
+  }
+  // Vérification consentements RGPD
+  const cgu=document.getElementById('consentCGU')?.checked;
+  const sante=document.getElementById('consentSante')?.checked;
+  if(!cgu||!sante){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Vous devez accepter les CGU et le traitement des données de santé pour créer votre compte (Art. 9 RGPD).';}
+    return;
+  }
+
+  // Extra validation for health pro
+  if(role==='professionnel_sante'){
+    const rpps=(document.getElementById('regRPPS')?.value||'').trim();
+    const profession=document.getElementById('regProfession')?.value||'';
+    if(!profession){if(errEl){errEl.style.display='block';errEl.textContent='Veuillez choisir votre profession.';}return;}
+    if(!/^\d{11}$/.test(rpps)){if(errEl){errEl.style.display='block';errEl.textContent='Le numéro RPPS doit contenir exactement 11 chiffres.';}return;}
+  }
+
+  // ── Supabase auth ────────────────────────────────────────────
+  if(window.LS_SB?.SB_READY){
+    const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role});
+    if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}return;}
+    // Create health pro record if needed
+    if(role==='professionnel_sante'){
+      const rpps=(document.getElementById('regRPPS')?.value||'').trim();
+      const profession=document.getElementById('regProfession')?.value||'';
+      const clubId=document.getElementById('regClubHP')?.value||null;
+      setTimeout(async()=>{
+        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null});
+      },1500);
+    }
+    // Create club record if needed
+    if(role==='club'){
+      const nom=(document.getElementById('regClubNom')?.value||'').trim();
+      const ville=(document.getElementById('regClubVille')?.value||'').trim();
+      const federation=(document.getElementById('regClubFed')?.value||'').trim();
+      const siret=(document.getElementById('regClubSiret')?.value||'').trim();
+      const contactEmail=(document.getElementById('regClubEmail')?.value||'').trim();
+      setTimeout(async()=>{
+        await window.LS_SB.sbUpsertClub(user.id,{nom,ville,federation,siret:siret||null,contact_email:contactEmail});
+      },1500);
+    }
+    showToast('Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
+    enterRole('loginScreen');
+    return;
+  }
+
+  // ── Fallback localStorage ────────────────────────────────────
+  loadAccounts();
+  if(ACCOUNTS[email]){
+    if(errEl){errEl.style.display='block';errEl.textContent='Cet email est déjà utilisé. Connectez-vous.';}
+    return;
+  }
+  const acc={id:'u_'+Date.now(),prenom,nom,email,password:pwd,role,orders:[],cagnotte:{total:0,history:[]},
+    consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing:!!document.getElementById('consentMarketing')?.checked};
+  // Champs patient supplémentaires
+  if(role==='patient'){
+    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
+    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
+    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
+    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
+    const zip=(document.getElementById('regZip')?.value||'').trim();
+    const city=(document.getElementById('regCity')?.value||'').trim();
+    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
+    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
+    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
+    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
+    acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
+  }
+  ACCOUNTS[email]=acc; saveAccounts();
+  currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
+  updateAccountChip(); enterRole('sante');
+}
+/* Auto-restore session (localStorage fallback — skipped when Supabase is active) */
+function restoreSession(){
+  if(window.LS_SB?.SB_READY) return; // Supabase handles session restore above
+  try{
+    const s=JSON.parse(localStorage.getItem('livraisante_session')||'null');
+    if(s&&Date.now()-s.ts<86400000*7&&ACCOUNTS[s.email]){
+      currentUser=ACCOUNTS[s.email];
+      if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
+      if(currentUser.cagnotte) cagnotte=currentUser.cagnotte;
+      if(currentUser.role==='pharmacien'&&currentUser.pharmacyInfo?.labsActive) activeLabs=new Set(currentUser.pharmacyInfo.labsActive);
+      if(currentUser.driverInfo?.refCode) myDriverCode=currentUser.driverInfo.refCode;
+    }
+  }catch(e){}
+}
+
+/* ---- UI helpers ---- */
+function handleAccountClick(){
+  if(currentUser) enterRole('profileScreen');
+  else enterRole('loginScreen');
+}
+function updateAccountChip(){
+  const avatar=document.getElementById('accountAvatarSante');
+  const label=document.getElementById('accountLabelSante');
+  if(!avatar||!label) return;
+  if(currentUser){
+    avatar.textContent=currentUser.prenom[0].toUpperCase();
+    label.textContent=currentUser.prenom;
+  } else {
+    avatar.textContent='👤'; label.textContent='Compte';
+  }
+}
+function initRegisterForm(){
+  // Populate meds chips
+  const medDiv=document.getElementById('regMeds');
+  if(medDiv&&CHRONIC_MEDS){
+    medDiv.innerHTML=CHRONIC_MEDS.map(m=>`<button class="chip" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')+'<button class="chip" data-v="aucun" onclick="clearRegMeds(this)" style="font-size:12px">Aucun</button>';
+  }
+  // Populate professions dropdown
+  const profSel=document.getElementById('regProfession');
+  if(profSel&&typeof PROFESSIONS_ORDRE!=='undefined'){
+    profSel.innerHTML='<option value="">-- Choisir votre profession --</option>'+PROFESSIONS_ORDRE.map(p=>`<option value="${p}">${p}</option>`).join('');
+  }
+  // Populate clubs dropdown
+  populateClubsDropdown();
+
+  // Role toggle hides/shows contextual fields
+  document.querySelectorAll('[data-group="regRole"] .chip').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
+      const pf=document.getElementById('regPatientFields');
+      const hpf=document.getElementById('regHealthProFields');
+      const clf=document.getElementById('regClubFields');
+      if(pf) pf.style.display=role==='patient'?'block':'none';
+      if(hpf) hpf.style.display=role==='professionnel_sante'?'block':'none';
+      if(clf) clf.style.display=role==='club'?'block':'none';
+    });
+  });
+}
+function clearRegMeds(btn){document.querySelectorAll('#regMeds .chip').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
+
+/* ---- Populate clubs dropdown ---- */
+async function populateClubsDropdown(){
+  const sel=document.getElementById('regClubHP'); if(!sel) return;
+  if(window.LS_SB?.SB_READY){
+    const sb=window.LS_SB.getSB(); if(!sb) return;
+    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
+    if(data&&data.length){
+      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
+    }
+  }
+}
+
+/* ---- RPPS validation ---- */
+document.addEventListener('input',function(e){
+  if(e.target.id==='regRPPS'){
+    const v=e.target.value.replace(/\D/g,'');
+    e.target.value=v;
+    const msg=document.getElementById('rppsMsg');
+    if(msg){
+      if(v.length===0){msg.textContent='';msg.className='field-msg';}
+      else if(v.length===11){msg.textContent='✓ Format valide';msg.className='field-msg ok';}
+      else{msg.textContent=`${v.length}/11 chiffres`;msg.className='field-msg err';}
+    }
+  }
+});
+
 /* ===================================================================
    SUPER ADMIN DASHBOARD
 =================================================================== */
@@ -6643,189 +6821,6 @@ function renderPromoCodes(){
   container.appendChild(section);
 }
 
-async function doLogout(){
-  if(window.LS_SB?.SB_READY) await window.LS_SB.sbSignOut();
-  currentUser=null; patientProfile=null;
-  try{localStorage.removeItem('livraisante_session');}catch(e){}
-  localStorage.removeItem('livraisante_pharmacy');
-  updateAccountChip(); renderHeader(); renderBottomNav(); showHome();
-}
-function clearLoginErr(){const e=document.getElementById('loginErr'); if(e) e.style.display='none';}
-function fillDemo(type){
-  const map={pharmacie:'pharmacie.demo@livraisante.fr',livreur:'livreur.demo@livraisante.fr',patient:'patient.demo@livraisante.fr'};
-  const email=map[type]; if(!email)return;
-  const el1=document.getElementById('loginEmail'), el2=document.getElementById('loginPassword');
-  if(el1) el1.value=email; if(el2) el2.value='Demo2024!';
-}
-async function doRegister(){
-  const prenom=(document.getElementById('regPrenom')?.value||'').trim();
-  const nom=(document.getElementById('regNom')?.value||'').trim();
-  const email=(document.getElementById('regEmail')?.value||'').trim().toLowerCase();
-  const pwd=document.getElementById('regPassword')?.value||'';
-  const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
-  const errEl=document.getElementById('regErr');
-  if(!prenom||!email||pwd.length<6){
-    if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs (mot de passe : 6 caractères min).';}
-    return;
-  }
-  // Vérification consentements RGPD
-  const cgu=document.getElementById('consentCGU')?.checked;
-  const sante=document.getElementById('consentSante')?.checked;
-  if(!cgu||!sante){
-    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Vous devez accepter les CGU et le traitement des données de santé pour créer votre compte (Art. 9 RGPD).';}
-    return;
-  }
-
-  // Extra validation for health pro
-  if(role==='professionnel_sante'){
-    const rpps=(document.getElementById('regRPPS')?.value||'').trim();
-    const profession=document.getElementById('regProfession')?.value||'';
-    if(!profession){if(errEl){errEl.style.display='block';errEl.textContent='Veuillez choisir votre profession.';}return;}
-    if(!/^\d{11}$/.test(rpps)){if(errEl){errEl.style.display='block';errEl.textContent='Le numéro RPPS doit contenir exactement 11 chiffres.';}return;}
-  }
-
-  // ── Supabase auth ────────────────────────────────────────────
-  if(window.LS_SB?.SB_READY){
-    const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role});
-    if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}return;}
-    // Create health pro record if needed
-    if(role==='professionnel_sante'){
-      const rpps=(document.getElementById('regRPPS')?.value||'').trim();
-      const profession=document.getElementById('regProfession')?.value||'';
-      const clubId=document.getElementById('regClubHP')?.value||null;
-      // Delay slightly for profile to be created via trigger
-      setTimeout(async()=>{
-        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null});
-      },1500);
-    }
-    // Create club record if needed
-    if(role==='club'){
-      const nom=(document.getElementById('regClubNom')?.value||'').trim();
-      const ville=(document.getElementById('regClubVille')?.value||'').trim();
-      const federation=(document.getElementById('regClubFed')?.value||'').trim();
-      const siret=(document.getElementById('regClubSiret')?.value||'').trim();
-      const contactEmail=(document.getElementById('regClubEmail')?.value||'').trim();
-      setTimeout(async()=>{
-        await window.LS_SB.sbUpsertClub(user.id,{nom,ville,federation,siret:siret||null,contact_email:contactEmail});
-      },1500);
-    }
-    showToast('Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
-    enterRole('loginScreen');
-    return;
-  }
-
-  // ── Fallback localStorage ────────────────────────────────────
-  loadAccounts();
-  if(ACCOUNTS[email]){
-    if(errEl){errEl.style.display='block';errEl.textContent='Cet email est déjà utilisé. Connectez-vous.';}
-    return;
-  }
-  const acc={id:'u_'+Date.now(),prenom,nom,email,password:pwd,role,orders:[],cagnotte:{total:0,history:[]},
-    consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing:!!document.getElementById('consentMarketing')?.checked};
-  // Champs patient supplémentaires
-  if(role==='patient'){
-    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
-    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
-    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
-    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
-    const zip=(document.getElementById('regZip')?.value||'').trim();
-    const city=(document.getElementById('regCity')?.value||'').trim();
-    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
-    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
-    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
-    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
-    acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
-  }
-  ACCOUNTS[email]=acc; saveAccounts();
-  currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
-  updateAccountChip(); enterRole('sante');
-}
-/* Auto-restore session (localStorage fallback — skipped when Supabase is active) */
-function restoreSession(){
-  if(window.LS_SB?.SB_READY) return; // Supabase handles session restore above
-  try{
-    const s=JSON.parse(localStorage.getItem('livraisante_session')||'null');
-    if(s&&Date.now()-s.ts<86400000*7&&ACCOUNTS[s.email]){
-      currentUser=ACCOUNTS[s.email];
-      if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
-      if(currentUser.cagnotte) cagnotte=currentUser.cagnotte;
-      if(currentUser.role==='pharmacien'&&currentUser.pharmacyInfo?.labsActive) activeLabs=new Set(currentUser.pharmacyInfo.labsActive);
-      if(currentUser.driverInfo?.refCode) myDriverCode=currentUser.driverInfo.refCode;
-    }
-  }catch(e){}
-}
-
-/* ---- UI helpers ---- */
-function handleAccountClick(){
-  if(currentUser) enterRole('profileScreen');
-  else enterRole('loginScreen');
-}
-function updateAccountChip(){
-  const avatar=document.getElementById('accountAvatarSante');
-  const label=document.getElementById('accountLabelSante');
-  if(!avatar||!label) return;
-  if(currentUser){
-    avatar.textContent=currentUser.prenom[0].toUpperCase();
-    label.textContent=currentUser.prenom;
-  } else {
-    avatar.textContent='👤'; label.textContent='Compte';
-  }
-}
-function initRegisterForm(){
-  // Populate meds chips
-  const medDiv=document.getElementById('regMeds');
-  if(medDiv&&CHRONIC_MEDS){
-    medDiv.innerHTML=CHRONIC_MEDS.map(m=>`<button class="chip" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')+'<button class="chip" data-v="aucun" onclick="clearRegMeds(this)" style="font-size:12px">Aucun</button>';
-  }
-  // Populate professions dropdown
-  const profSel=document.getElementById('regProfession');
-  if(profSel&&typeof PROFESSIONS_ORDRE!=='undefined'){
-    profSel.innerHTML='<option value="">-- Choisir votre profession --</option>'+PROFESSIONS_ORDRE.map(p=>`<option value="${p}">${p}</option>`).join('');
-  }
-  // Populate clubs dropdown
-  populateClubsDropdown();
-
-  // Role toggle hides/shows contextual fields
-  document.querySelectorAll('[data-group="regRole"] .chip').forEach(c=>{
-    c.addEventListener('click',()=>{
-      const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
-      const pf=document.getElementById('regPatientFields');
-      const hpf=document.getElementById('regHealthProFields');
-      const clf=document.getElementById('regClubFields');
-      if(pf) pf.style.display=role==='patient'?'block':'none';
-      if(hpf) hpf.style.display=role==='professionnel_sante'?'block':'none';
-      if(clf) clf.style.display=role==='club'?'block':'none';
-    });
-  });
-}
-function clearRegMeds(btn){document.querySelectorAll('#regMeds .chip').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
-
-/* ---- Populate clubs dropdown ---- */
-async function populateClubsDropdown(){
-  const sel=document.getElementById('regClubHP'); if(!sel) return;
-  if(window.LS_SB?.SB_READY){
-    const sb=window.LS_SB.getSB(); if(!sb) return;
-    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
-    if(data&&data.length){
-      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
-    }
-  }
-}
-
-/* ---- RPPS validation ---- */
-document.addEventListener('input',function(e){
-  if(e.target.id==='regRPPS'){
-    const v=e.target.value.replace(/\D/g,'');
-    e.target.value=v;
-    const msg=document.getElementById('rppsMsg');
-    if(msg){
-      if(v.length===0){msg.textContent='';msg.className='field-msg';}
-      else if(v.length===11){msg.textContent='✓ Format valide';msg.className='field-msg ok';}
-      else{msg.textContent=`${v.length}/11 chiffres`;msg.className='field-msg err';}
-    }
-  }
-});
-
 /* ═══════════════════════════════════════════════════════════
    DASHBOARD — PROFESSIONNEL DE SANTÉ
 ═══════════════════════════════════════════════════════════ */
@@ -7041,8 +7036,6 @@ async function renderClubDashboard(){
   // Sort pros: pending first, then validated, then rejected
   const pendingPros=pros.filter(p=>!p.validated_by_club&&!p.rejected);
   const validatedPros=pros.filter(p=>p.validated_by_club);
-  const rejectedPros=pros.filter(p=>p.rejected);
-
   const pendingMembers=members.filter(m=>!m.validated);
   const validatedMembers=members.filter(m=>m.validated);
 
@@ -7171,86 +7164,6 @@ async function validateMember(memberId, validated){
   if(error){showToast('Erreur : '+error,'var(--err)');return;}
   showToast(validated?'✓ Membre validé':'Membre refusé',validated?'var(--ok)':'var(--err)');
   renderClubDashboard();
-}
-
-/* ═══════════════════════════════════════════════════════════
-   RENDEZ-VOUS PATIENT — Prendre RDV avec un pro du club
-═══════════════════════════════════════════════════════════ */
-async function renderPatientAppointments(containerEl){
-  if(!containerEl||!currentUser||!window.LS_SB?.SB_READY) return;
-  // Find patient's club membership
-  const sb=window.LS_SB.getSB(); if(!sb) return;
-  const {data:memberships}=await sb.from('club_members').select('club_id,validated,clubs(nom,ville)').eq('user_id',currentUser.id).eq('validated',true);
-  if(!memberships||!memberships.length){
-    containerEl.innerHTML='<div class="note">ℹ️ <div>Vous n\'êtes pas encore membre validé d\'un club sportif. Rejoignez un club pour accéder aux professionnels de santé partenaires.</div></div>';
-    return;
-  }
-  const membership=memberships[0];
-  const pros=await window.LS_SB.sbGetProsForMember(membership.club_id);
-  const myAppts=await window.LS_SB.sbGetAppointments(currentUser.id,'patient');
-
-  containerEl.innerHTML=`
-  <div style="background:linear-gradient(135deg,#1F6FEB15,#1F6FEB08);border:1.5px solid #1F6FEB30;border-radius:16px;padding:18px;margin-bottom:18px">
-    <div style="font-weight:800;font-size:17px;margin-bottom:4px;color:var(--kine)">🩺 Professionnels de santé — ${esc(membership.clubs?.nom||'Mon club')}</div>
-    <div style="font-size:13px;color:var(--ink-soft)">Prenez rendez-vous avec les professionnels de santé partenaires de votre club</div>
-  </div>
-
-  ${pros.length?`
-  <div class="dash-sec-title">Professionnels disponibles</div>
-  ${pros.map(p=>`
-  <div class="ocard" style="margin-bottom:12px">
-    <div class="otop">
-      <div class="oid">${esc(p.profiles?.prenom||'')} ${esc(p.profiles?.nom||'')}
-        <small>${esc(p.profession)}</small>
-      </div>
-    </div>
-    <div class="form-group" style="margin:8px 0 0">
-      <label class="form-label" style="font-size:12px">Date & heure du rendez-vous souhaité</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <input type="date" id="apptDate_${p.id}" style="padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
-        <input type="time" id="apptTime_${p.id}" style="padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
-      </div>
-      <input type="text" id="apptMotif_${p.id}" placeholder="Motif de consultation (facultatif)" style="width:100%;padding:9px 12px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:8px">
-      <button onclick="bookAppointment('${p.id}','${membership.club_id}')" class="btn primary" style="font-size:13px;padding:9px 18px">Demander ce RDV →</button>
-      <div id="apptMsg_${p.id}" style="font-size:12px;margin-top:6px"></div>
-    </div>
-  </div>`).join('')}
-  `:'<div class="dash-empty">Aucun professionnel de santé disponible dans votre club pour le moment</div>'}
-
-  ${myAppts.length?`
-  <div class="dash-sec-title" style="margin-top:20px">📅 Mes rendez-vous</div>
-  ${myAppts.map(a=>{
-    const dt=new Date(a.scheduled_at);
-    const dateStr=dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-    const timeStr=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const statusColors={pending:'var(--warn)',confirmed:'var(--ok)',cancelled:'var(--err)',done:'var(--ink-soft)'};
-    const statusLabels={pending:'En attente',confirmed:'Confirmé ✓',cancelled:'Annulé',done:'Terminé'};
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:14px">
-      <div>
-        <div style="font-weight:700">${dateStr} à ${timeStr}</div>
-        <div style="font-size:12px;color:var(--ink-soft)">${esc(a.health_professionals?.profession||'')} · ${esc(a.health_professionals?.profiles?.prenom||'')} ${esc(a.health_professionals?.profiles?.nom||'')}</div>
-        ${a.motif?`<div style="font-size:12px;color:var(--ink-soft)">${esc(a.motif)}</div>`:''}
-      </div>
-      <span style="font-size:11px;font-weight:800;color:${statusColors[a.status]||'var(--ink-soft)'};white-space:nowrap">${statusLabels[a.status]||a.status}</span>
-    </div>`;
-  }).join('')}`:''}
-  `;
-}
-
-async function bookAppointment(proId, clubId){
-  if(!currentUser||!window.LS_SB?.SB_READY) return;
-  const date=document.getElementById('apptDate_'+proId)?.value;
-  const time=document.getElementById('apptTime_'+proId)?.value;
-  const motif=document.getElementById('apptMotif_'+proId)?.value||'';
-  const msg=document.getElementById('apptMsg_'+proId);
-  if(!date||!time){if(msg){msg.style.color='var(--err)';msg.textContent='Veuillez choisir une date et une heure.';}return;}
-  const scheduled_at=new Date(date+'T'+time).toISOString();
-  const {error}=await window.LS_SB.sbInsertAppointment({pro_id:proId,patient_id:currentUser.id,club_id:clubId,scheduled_at,motif,status:'pending'});
-  if(error){if(msg){msg.style.color='var(--err)';msg.textContent='Erreur : '+error;}return;}
-  if(msg){msg.style.color='var(--ok)';msg.textContent='✓ Demande envoyée au professionnel !';}
-  document.getElementById('apptDate_'+proId).value='';
-  document.getElementById('apptTime_'+proId).value='';
-  document.getElementById('apptMotif_'+proId).value='';
 }
 
 /* ---- PROFIL SCREEN ---- */
@@ -7442,23 +7355,7 @@ function renderProfile(){
   html+=`<button class="btn ghost" style="width:100%;margin-top:14px;font-size:14px;border-color:var(--err);color:var(--err)" onclick="doLogout()">Se déconnecter</button>`;
   // Section abonnement + parrainage patient
   if(acc?.role==='patient') html+=renderPatientReferral();
-  // Section rendez-vous pour patients membres d'un club avec profil santé complété
-  if(acc?.role==='patient'){
-    const hp=acc.healthProfile||patientProfile||{};
-    const hasProfile=hp.ageRange||hp.age;
-    if(hasProfile){
-      html+=`<div class="profile-section" style="margin-top:16px"><h3>🩺 Rendez-vous santé</h3><div id="patientApptsContainer"><div style="color:var(--ink-soft);font-size:13px">Chargement…</div></div></div>`;
-    }
-  }
   document.getElementById('profileContent').innerHTML=html;
-  // Load patient appointments if health profile filled
-  if(acc?.role==='patient'){
-    const hp=acc.healthProfile||patientProfile||{};
-    if(hp.ageRange||hp.age){
-      const c=document.getElementById('patientApptsContainer');
-      if(c) renderPatientAppointments(c);
-    }
-  }
   // Wire edit chips
   document.querySelectorAll('[data-group="editPreg"] .chip').forEach(c=>c.addEventListener('click',e=>{
     document.querySelectorAll('[data-group="editPreg"] .chip').forEach(x=>x.classList.remove('sel')); e.target.classList.add('sel');
