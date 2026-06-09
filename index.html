@@ -5344,41 +5344,14 @@ async function populateClubsDropdown(){
   }
 }
 
-/* ---- Comptes de démonstration ---- */
+/* ---- Comptes de démonstration désactivés ---- */
 function initDemoAccounts(){
-  const demos={
-    'pharmacie.demo@livraisante.fr':{
-      id:'demo_pharma',prenom:'Pharmacie 115',email:'pharmacie.demo@livraisante.fr',password:'Demo2024!',role:'pharmacien',
-      pharmacyInfo:{
-        nom:'Pharmacie 115',
-        adresse:'115 Ter Avenue Jean Perrot',
-        ville:'38100 Grenoble',
-        tel:'04 76 25 41 94',
-        emailOfficine:'contact@pharmacie115.fr',
-        horaires:'Lun–Sam 08:30–20:00 · Dimanche fermé',
-        ordreNum:'10102156014',
-        rcs:'902 797 760 RCS Grenoble',
-        finess:'380007891',
-        rpps:'21000038001',
-        siret:'90279776000010',
-        plan:'prio',period:'mens',labsActive:null
-      }
-    },
-    'livreur.demo@livraisante.fr':{
-      id:'demo_livreur',prenom:'Jean-Marc',nom:'Dupont',email:'livreur.demo@livraisante.fr',password:'Demo2024!',role:'livreur',
-      driverInfo:{vehicle:'scooter',siret:'76123456789012',refCode:'LIV-DEMO01',
-        referrals:[{name:'Ali Benali',date:'15/01/2025',earned:50},{name:'Sophie Martin',date:'22/01/2025',earned:50}]}
-    },
-    'patient.demo@livraisante.fr':{
-      id:'demo_patient',prenom:'Marie',email:'patient.demo@livraisante.fr',password:'Demo2024!',role:'patient',
-      healthProfile:{ageRange:'18-64',pregnancy:'enceinte',meds:['thyroid']},
-      cagnotte:{total:3.50,history:[{orderId:'LS001',savings:3.50,product:'Ergymag → Magnésium générique',date:'20/01/2025'}]},
-      orders:[]
-    }
-  };
+  // Comptes démo supprimés — authentification Supabase uniquement
+  // Nettoyage des anciens comptes démo s'ils existent en localStorage
+  const demoEmails=['pharmacie.demo@livraisante.fr','livreur.demo@livraisante.fr','patient.demo@livraisante.fr'];
   let changed=false;
-  for(const [email,acc] of Object.entries(demos)){
-    if(!ACCOUNTS[email]){ACCOUNTS[email]=acc; changed=true;}
+  for(const email of demoEmails){
+    if(ACCOUNTS[email]){delete ACCOUNTS[email]; changed=true;}
   }
   if(changed) saveAccounts();
 }
