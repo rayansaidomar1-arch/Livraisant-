@@ -912,6 +912,7 @@
   <!-- Footer RGPD -->
   <div style="padding:8px 20px 32px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
     <button onclick="showRgpdModal()" style="font-family:inherit;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;text-decoration:underline">Confidentialité &amp; RGPD</button>
+    <button onclick="showRgpdModal('cgu')" style="font-family:inherit;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;text-decoration:underline">CGU</button>
     <button onclick="showRgpdModal('cookies')" style="font-family:inherit;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;text-decoration:underline">Cookies</button>
     <button onclick="showRgpdModal('mentions')" style="font-family:inherit;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;text-decoration:underline">Mentions légales</button>
     <span style="font-size:11px;color:rgba(255,255,255,.2)">© 2026 Livraisanté SAS</span>
@@ -1480,7 +1481,7 @@
 
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:10px;font-size:13px;line-height:1.4">
           <input type="checkbox" id="consentCGU" style="width:17px;height:17px;margin-top:2px;accent-color:var(--ink);flex:0 0 auto">
-          <span>J'ai lu et j'accepte les <button onclick="showRgpdModal('mentions')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Conditions Générales d'Utilisation</button> et la <button onclick="showRgpdModal('intro')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Politique de Confidentialité</button> *</span>
+          <span>J'ai lu et j'accepte les <button onclick="showRgpdModal('cgu')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Conditions Générales d'Utilisation</button> et la <button onclick="showRgpdModal('intro')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Politique de Confidentialité</button> *</span>
         </label>
 
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:10px;font-size:13px;line-height:1.4">
@@ -2504,10 +2505,59 @@ function showRgpdModal(section='intro'){
     mentions:`<h3>Mentions légales</h3>
       <p><b>Éditeur :</b> Livraisanté SAS<br>Capital : 10 000 €<br>Siège : 115 Ter Avenue Jean Perrot, 38100 Grenoble<br>SIRET : 000 000 000 00000<br>RCS Grenoble</p>
       <p><b>Directeur de publication :</b> Rayan Saidomar</p>
-      <p><b>Hébergement :</b> GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA — GitHub Pages (HTTPS)</p>
+      <p><b>Hébergement statique :</b> GitHub Inc. — GitHub Pages (HTTPS). <b>Données de santé :</b> Supabase (infrastructure AWS eu-west-3 Paris). Une migration vers un hébergeur HDS certifié ARS (OVH Healthcare, Microsoft Azure HDS ou Cegedim Health Data) est planifiée avant tout traitement de données de santé en production clinique.</p>
       <p><b>Pharmacie partenaire :</b> Pharmacie 115 · FINESS : 380007891 · N° Ordre : 10102156014</p>
       <p><b>Avertissement médical :</b> L'application Livraisanté propose des conseils en compléments alimentaires et dispositifs médicaux pour des affections bénignes. Elle ne constitue pas un acte médical et ne remplace pas une consultation médicale.</p>
       <p><b>Données de santé :</b> Livraisanté traite des données de santé (Art. 9 RGPD). Le responsable de traitement s'engage à mettre en place les mesures techniques et organisationnelles appropriées conformément au RGPD et aux recommandations de la CNIL.</p>`,
+    cgu:`<h3>Conditions Générales d'Utilisation</h3>
+      <p style="font-size:11px;color:#888">Version 1.0 — Entrée en vigueur : 10 juin 2026</p>
+
+      <h4 style="margin:14px 0 6px">Article 1 — Objet et champ d'application</h4>
+      <p>Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de l'application Livraisanté, éditée par Livraisanté SAS (ci-après « la Société »). Livraisanté est un <b>outil d'aide à la dispensation et à la livraison de compléments alimentaires (CA) et de dispositifs médicaux (DM)</b> à domicile, en partenariat avec des pharmaciens titulaires d'officine agréés.</p>
+
+      <h4 style="margin:14px 0 6px">Article 2 — Usage autorisé</h4>
+      <p>L'application est réservée à :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>Des patients majeurs cherchant un conseil pharmaceutique pour des <b>affections bénignes courantes</b></li>
+        <li>Des pharmaciens partenaires pour la gestion des ordonnances et commandes</li>
+        <li>Des livreurs indépendants pour la prise en charge des courses</li>
+        <li>Des clubs sportifs et professionnels de santé dans le cadre du programme B2B2C Livraisanté</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px">Article 3 — Usages strictement interdits</h4>
+      <p>Il est formellement interdit, sous peine des sanctions prévues à l'Article 5 :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>D'utiliser Livraisanté pour commander, distribuer ou promouvoir des <b>médicaments soumis à prescription</b> sans ordonnance valide</li>
+        <li>De contourner les mécanismes de conseil pharmaceutique pour obtenir des produits à des fins <b>autres que celles prévues</b> (revente, usage non conforme, etc.)</li>
+        <li>D'usurper l'identité d'un professionnel de santé, d'un pharmacien ou d'un livreur</li>
+        <li>De soumettre de <b>fausses informations médicales</b> afin d'obtenir des recommandations non adaptées à son état de santé réel</li>
+        <li>D'utiliser l'application à des fins de <b>dopage</b>, y compris pour les sportifs licenciés (tous les produits référencés sont non-dopants AMA, toute tentative de détournement est prohibée)</li>
+        <li>D'accéder à des données d'autres utilisateurs, de tenter d'altérer le fonctionnement de l'application, ou de procéder à une extraction massive de données (scraping)</li>
+        <li>D'utiliser les informations pharmaceutiques fournies pour se substituer à une consultation médicale en cas de symptômes graves, persistants ou d'urgence</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px">Article 4 — Responsabilité médicale</h4>
+      <p>Livraisanté n'est <b>pas un service médical</b>. Les conseils fournis concernent exclusivement des affections bénignes et des produits en vente libre. En cas de doute, d'aggravation des symptômes ou de suspicion d'urgence médicale, l'utilisateur doit contacter un médecin ou appeler le <b>15 (SAMU)</b>. La Société décline toute responsabilité en cas d'utilisation détournée des conseils délivrés.</p>
+
+      <h4 style="margin:14px 0 6px">Article 5 — Sanctions en cas de violation</h4>
+      <p>Tout manquement aux présentes CGU, et notamment tout détournement de l'objet de l'application, entraîne :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>La <b>résiliation immédiate et sans préavis</b> du compte utilisateur, sans remboursement des éventuels services en cours</li>
+        <li>Le <b>signalement aux autorités compétentes</b> (ARS, Ordre des Pharmaciens, Procureur de la République) le cas échéant</li>
+        <li>L'engagement de <b>poursuites judiciaires civiles et/ou pénales</b> pour les préjudices causés à la Société, aux pharmaciens partenaires ou aux autres utilisateurs</li>
+        <li>Pour les professionnels de santé : signalement au <b>Conseil de l'Ordre</b> concerné</li>
+      </ul>
+      <p>La Société se réserve le droit de conserver les données nécessaires à l'établissement de la preuve d'une violation, conformément au RGPD et à l'Article L. 34-1 du Code des postes et des communications électroniques.</p>
+
+      <h4 style="margin:14px 0 6px">Article 6 — Propriété intellectuelle</h4>
+      <p>L'ensemble du contenu de l'application (protocoles pharmaceutiques, interface, algorithmes de conseil) est la propriété exclusive de Livraisanté SAS et est protégé par le droit d'auteur. Toute reproduction ou utilisation commerciale sans autorisation écrite est interdite.</p>
+
+      <h4 style="margin:14px 0 6px">Article 7 — Modification des CGU</h4>
+      <p>La Société se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés par notification dans l'application. La poursuite de l'utilisation après modification vaut acceptation des nouvelles CGU.</p>
+
+      <h4 style="margin:14px 0 6px">Article 8 — Droit applicable et juridiction</h4>
+      <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige, et après tentative de résolution amiable, les tribunaux compétents sont ceux du ressort du Tribunal de Commerce de Grenoble.</p>
+      <p style="margin-top:14px;font-size:12px;color:#888">Contact : contact@livraisante.fr · Livraisanté SAS, 115 Ter Avenue Jean Perrot, 38100 Grenoble</p>`,
   };
   const modal=document.createElement('div');
   modal.id='rgpdModal';
@@ -2515,7 +2565,7 @@ function showRgpdModal(section='intro'){
   modal.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:540px;max-height:80vh;overflow-y:auto;animation:slideDown .3s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="display:flex;gap:8px">
-        ${['intro','cookies','mentions'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal'}[s]}</button>`).join('')}
+        ${['intro','cookies','mentions','cgu'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal','cgu':'📜 CGU'}[s]}</button>`).join('')}
       </div>
       <button onclick="document.getElementById('rgpdModal').remove()" style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--ink-soft)">✕</button>
     </div>
@@ -3980,8 +4030,7 @@ function santeHome(){
     </div>
 
     ${selectedAilments.size>0?`<div style="position:sticky;bottom:86px;display:flex;justify-content:center;margin-bottom:10px;pointer-events:none">
-      <button onclick="showCombinedConseil()" style="pointer-events:all;font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px 9px 10px;background:var(--ink);color:white;border:none;border-radius:30px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 3px 14px rgba(13,14,9,.28)">
-        <span style="background:#C2F23E;color:#0D0E09;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:900;line-height:1.5">${selectedAilments.size}</span>
+      <button onclick="showCombinedConseil()" style="pointer-events:all;font-family:inherit;font-size:13px;font-weight:700;padding:11px 22px;background:var(--ink);color:white;border:none;border-radius:30px;cursor:pointer;box-shadow:0 3px 14px rgba(13,14,9,.28)">
         Voir mes conseils →
       </button>
     </div>`:''}
@@ -4015,11 +4064,14 @@ function cartTotal(mode){
   const subtotal=base*(1+MARGE_PCT);
   return mode==='cnc' ? subtotal : subtotal+getDeliveryFee();
 }
+/** 10% de frais de fonctionnement Livraisanté (transparents, affichés au client) */
+function platformCommission(mode){ return parseFloat((cartTotal(mode)*0.10).toFixed(2)); }
 function renderCart(){
   const el=document.getElementById('cartSection'); if(!el) return;
   if(!patientCart.length){el.innerHTML='<div style="font-size:13.5px;color:var(--ink-soft);padding:8px 0">Aucun produit sélectionné.</div>';return;}
   const assoc=getCurrentAssoc();
   const rawTotal=cartTotal(deliveryMode);
+  const commission=platformCommission(deliveryMode);
   const donation=donationEnabled?donationAmount(rawTotal):0;
   const total=cartTotalFull(deliveryMode);
   const monthName=new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
@@ -4057,10 +4109,14 @@ function renderCart(){
       </div>`).join('')}
     </div>
     ${feeLine}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 20px;border-top:1px solid #eee;font-size:13px">
+      <span style="color:var(--ink-soft)">⚙️ Frais de fonctionnement (10%)</span>
+      <span style="font-weight:700">€${commission.toFixed(2)}</span>
+    </div>
     <div class="assoc-section" id="donationSection">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:${donationEnabled?'10px':'0'}">
         <input type="checkbox" ${donationEnabled?'checked':''} onchange="toggleDonation()" style="width:17px;height:17px;accent-color:var(--pharma)">
-        Activer l'arrondi solidaire (${donation>0?'+€'+donation.toFixed(2):'+€0 ce mois'})
+        <span>💚 Don solidaire <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(optionnel)</span>${donationEnabled&&donation>0?' — +€'+donation.toFixed(2):''}</span>
       </label>
       ${donationEnabled?`
       <div id="donationTargetSection">
@@ -4074,7 +4130,7 @@ function renderCart(){
       </div>`:''}
     </div>
     <div class="cart-total-row">
-      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':'Livraison incluse'}${donationEnabled?' · Don solidaire inclus':''}</div>
+      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
       ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
       <div class="cart-grand-total">€${total.toFixed(2)}</div>
     </div>`;
@@ -4087,11 +4143,11 @@ async function renderDonationClubOptions(){
   const club=await getPatientClub();
   if(!club){el.style.display='none';return;}
   el.style.display='block';
-  const fee=getDeliveryFee();
-  const contrib=clubContributionAmount(fee);
+  const orderTotal=cartTotal(deliveryMode);
+  const contrib=clubContributionAmount(orderTotal);
   el.innerHTML=`<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-radius:10px;padding:10px 12px;font-size:12px">
     <div style="font-weight:700;color:var(--pharma);margin-bottom:3px">🏆 Licencié(e) ${esc(club.nom)}</div>
-    <div style="color:var(--ink-soft)">Livraisanté reverse automatiquement <b>${contrib.toFixed(2)} €</b> à votre club sur cette commande (50% de la commission plateforme). Votre don solidaire personnel va à l'association du mois.</div>
+    <div style="color:var(--ink-soft)">Livraisanté reverse automatiquement <b>${contrib.toFixed(2)} €</b> à votre club (50% des frais de fonctionnement). Votre don solidaire personnel, s'il est activé, va à l'association du mois.</div>
   </div>`;
 }
 
@@ -4157,7 +4213,7 @@ const HEALTH_ASSOCIATIONS=[
   {id:'arc',name:'Fondation ARC pour la recherche',icon:'🔬',color:'#1F6FEB',url:'https://www.fondation-arc.org'},
   {id:'aides',name:'Aides (VIH / Hépatites)',icon:'🌈',color:'#E8590C',url:'https://www.aides.org'},
 ];
-let donationEnabled=true; // opt-in patient (activé par défaut)
+let donationEnabled=false; // opt-in patient (désactivé par défaut)
 // 'assoc' = association du mois uniquement
 // 'club'  = club du patient uniquement (licencié)
 // 'both'  = 50% assoc + 50% club (licencié)
@@ -4175,8 +4231,10 @@ function donationAmount(rawTotal){
 }
 function cartTotalFull(mode){
   const raw=cartTotal(mode);
-  if(!donationEnabled||!patientCart.length) return raw;
-  return parseFloat((raw+donationAmount(raw)).toFixed(2));
+  if(!patientCart.length) return raw;
+  const comm=platformCommission(mode);
+  const don=donationEnabled?donationAmount(raw):0;
+  return parseFloat((raw+comm+don).toFixed(2));
 }
 function toggleDonation(){ donationEnabled=!donationEnabled; renderCart(); }
 function setDonationTarget(t){ donationTarget=t; renderCart(); }
@@ -4298,6 +4356,25 @@ function getSortedSubstances(ail){
 /* Badge AMA — tous les CA/DM de notre base sont non dopants */
 const AMA_BADGE=`<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:30px;display:inline-block;margin-top:3px">✓ Non dopant AMA</span>`;
 
+/** Retourne true si l'utilisateur courant est licencié sportif */
+function isLicensedSportif(){ return !!(currentUser?.sportLicense); }
+
+/** Badge autorité de recommandation (non-sport) */
+function recoBadge(source){
+  if(!source) return `<span style="background:#f1f5f9;color:#475569;font-size:10px;font-weight:700;padding:2px 7px;border-radius:30px;display:inline-block;margin-top:3px">Conseil pharmacien</span>`;
+  const cfg={
+    HAS:{bg:'#eff6ff',c:'#1d4ed8'},
+    OMS:{bg:'#f0fdf4',c:'#15803d'},
+    OMEDIT:{bg:'#fef3c7',c:'#92400e'},
+    ANSES:{bg:'#fff7ed',c:'#c2410c'},
+  };
+  const d=cfg[source]||{bg:'#f5f5f5',c:'#555'};
+  return `<span style="background:${d.bg};color:${d.c};font-size:10px;font-weight:700;padding:2px 7px;border-radius:30px;display:inline-block;margin-top:3px">Reco ${source}</span>`;
+}
+
+/** Badge contextuel : AMA pour licenciés sportifs, autorité pour les autres */
+function smartBadge(recoSource){ return isLicensedSportif() ? AMA_BADGE : recoBadge(recoSource); }
+
 /* Rendu d'un item accordéon */
 function renderAccItem(ailId, sub, col){
   const sk=subKey(sub.n);
@@ -4314,8 +4391,8 @@ function renderAccItem(ailId, sub, col){
   // Badge priorité pharmacien
   const badge=isPrioLab?`<span class="acc-badge" style="background:${bgColor}20;color:${col.text}">⭐ Prioritaire</span>`:
                sub.reco?`<span class="acc-badge" style="background:${bgColor}15;color:${col.text}">Reco ${sub.reco}</span>`:'';
-  // Badge AMA (tous les compléments et DM de notre base sont non dopants)
-  const amaBadge=AMA_BADGE;
+  // Badge contextuel : AMA pour licenciés sportifs, recommandation officielle pour les autres
+  const amaBadge=smartBadge(sub.reco||null);
 
   // ─── INDISPONIBLE ────────────────────────────────────────
   if(!available){
@@ -4718,11 +4795,11 @@ function placeOrderSante(){
   if(assocObj && donAmt>0){
     donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};
   }
-  // B2B2C : reverser 50% de la commission plateforme au club du licencié (automatique, indépendant du don)
+  // B2B2C : reverser 50% de la commission (10% du total) au club du licencié (automatique)
   getPatientClub().then(club=>{
     if(club?.id){
-      const fee=getDeliveryFee();
-      addCagnotteContribution(club.id, 'order-'+Date.now(), fee);
+      const orderTotal=cartTotal(deliveryMode);
+      addCagnotteContribution(club.id, 'order-'+Date.now(), orderTotal);
     }
   });
   createOrder({items, kind:deliveryMode==='cnc'?'click-collect':'santé',
@@ -6327,7 +6404,7 @@ function renderCrossSell(ailmentIds){
         return `<div class="cs-card ${inCart?'added':''}" id="csc-${pKey}">
           <div class="cs-icon">${icon}</div>
           <div class="cs-name">${prod.name}</div>
-          ${AMA_BADGE}
+          ${smartBadge(sub.reco||null)}
           <div class="cs-lab">${prod.lab} · ${prod.dosage}</div>
           <div class="cs-benefit">${getCsBenefit(sub)}</div>
           ${warn.level?`<div style="font-size:10.5px;color:var(--warn);font-weight:700">⚠ ${warn.ansm||'Précaution'}</div>`:''}
@@ -6889,14 +6966,14 @@ async function renderDriverInvoicesSection(containerId){
 }
 
 /* ===== CAGNOTTE CLUBS — B2B2C =====
-   Commission plateforme : 20% des frais de livraison
-   Reversement club      : 50% de la commission (= 10% des frais)
+   Commission plateforme : 10% du total commande (panier + livraison)
+   Reversement club      : 50% de la commission (= 5% du total)
 ================================================= */
-const PLATFORM_FEE_RATE=0.20;   // Part Livraisanté sur les frais de livraison
-const CLUB_SHARE_RATE=0.50;      // Part reversée au club depuis la commission
+const PLATFORM_FEE_RATE=0.10;   // Commission Livraisanté sur le total commande
+const CLUB_SHARE_RATE=0.50;      // Part reversée au club (= 5% du total)
 
-function clubContributionAmount(deliveryFee){
-  return Math.round(deliveryFee*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
+function clubContributionAmount(orderTotal){
+  return Math.round(orderTotal*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
 }
 function getCagnotte(clubId){
   try{return JSON.parse(localStorage.getItem(`livraisante_cagnotte_${clubId}`)||'{"balance":0,"history":[]}');}catch(e){return{balance:0,history:[]};}
@@ -6904,8 +6981,8 @@ function getCagnotte(clubId){
 function saveCagnotte(clubId,data){
   try{localStorage.setItem(`livraisante_cagnotte_${clubId}`,JSON.stringify(data));}catch(e){}
 }
-function addCagnotteContribution(clubId, orderId, deliveryFee){
-  const amount=deliveryFee>0?clubContributionAmount(deliveryFee):0.10; // fallback 0.10€ minimum
+function addCagnotteContribution(clubId, orderId, orderTotal){
+  const amount=orderTotal>0?clubContributionAmount(orderTotal):0.15; // fallback 0.15€ minimum
   const c=getCagnotte(clubId);
   if(c.history.some(h=>h.orderId===orderId)) return;
   c.balance=Math.round((c.balance+amount)*100)/100;
