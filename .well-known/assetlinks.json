@@ -1,10 +1,12 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "fr.livraisante.app",
-    "sha256_cert_fingerprints": [
-      "REMPLACEZ_ICI_PAR_VOTRE_SHA256_FINGERPRINT"
-    ]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "fr.livraisante.app",
+      "sha256_cert_fingerprints": [
+        "REMPLACER_PAR_LE_FINGERPRINT_SHA256_GENERE_PAR_PWABUILDER"
+      ]
+    }
   }
-}]
+]
