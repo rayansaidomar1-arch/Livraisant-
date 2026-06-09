@@ -5453,12 +5453,34 @@ async function doLogin(){
 function afterLogin(){
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPassword').value='';
+  const role=currentUser?.role;
+
+  if(role==='admin'){
+    // Navigation admin — forcer l'affichage directement sans passer par enterRole
+    currentView='admin';
+    // Cacher tous les écrans
+    document.querySelectorAll('.wrap, [id$="App"], [id$="Screen"]').forEach(el=>{
+      if(el.id!=='adminApp') el.style.display='none';
+    });
+    // Montrer le dashboard admin
+    const adminApp=document.getElementById('adminApp');
+    if(adminApp) adminApp.style.display='block';
+    // Barre de nav admin
+    const nav=document.getElementById('appNav');
+    if(nav) nav.innerHTML=`
+      <button class="nav-btn on" onclick="enterRole('admin')"><span class="ni">🛡️</span><span>Admin</span></button>
+      <button class="nav-btn gear" onclick="handleAccountClick()"><span class="ni">⚙️</span><span>Compte</span></button>`;
+    // Rendre le dashboard
+    try{ renderAdminDashboard(); }catch(e){ console.error('renderAdminDashboard',e); }
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+
   updateAccountChip(); renderHeader(); renderBottomNav();
-  if(currentUser.role==='admin') enterRole('admin');
-  else if(currentUser.role==='pharmacien') enterRole('pro');
-  else if(currentUser.role==='livreur') enterRole('livreur');
-  else if(currentUser.role==='professionnel_sante') enterRole('healthPro');
-  else if(currentUser.role==='club') enterRole('club');
+  if(role==='pharmacien') enterRole('pro');
+  else if(role==='livreur') enterRole('livreur');
+  else if(role==='professionnel_sante') enterRole('healthPro');
+  else if(role==='club') enterRole('club');
   else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); }
 }
 
