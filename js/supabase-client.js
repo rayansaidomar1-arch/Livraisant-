@@ -105,6 +105,81 @@ async function sbGetSettlements(pharmacyId){
   return data || [];
 }
 
+async function sbGetClub(userId){
+  const sb = getSB(); if(!sb) return null;
+  const { data } = await sb.from('clubs').select('*').eq('user_id', userId).single();
+  return data;
+}
+
+async function sbUpsertClub(userId, clubData){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('clubs').upsert({ user_id: userId, ...clubData });
+  return { error: error?.message || null };
+}
+
+async function sbGetClubMembers(clubId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('club_members').select('*, profiles(prenom,nom,email)').eq('club_id', clubId);
+  return data || [];
+}
+
+async function sbGetClubHealthPros(clubId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('health_professionals').select('*, profiles(prenom,nom,email)').eq('club_id', clubId);
+  return data || [];
+}
+
+async function sbValidateHealthPro(proId, validated){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('health_professionals').update({ validated_by_club: validated, rejected: !validated }).eq('id', proId);
+  return { error: error?.message || null };
+}
+
+async function sbGetHealthPro(userId){
+  const sb = getSB(); if(!sb) return null;
+  const { data } = await sb.from('health_professionals').select('*, clubs(nom,ville)').eq('user_id', userId).single();
+  return data;
+}
+
+async function sbUpsertHealthPro(userId, proData){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('health_professionals').upsert({ user_id: userId, ...proData });
+  return { error: error?.message || null };
+}
+
+async function sbGetProsForMember(clubId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('health_professionals').select('*, profiles(prenom,nom)').eq('club_id', clubId).eq('validated_by_club', true);
+  return data || [];
+}
+
+async function sbGetAppointments(userId, role){
+  const sb = getSB(); if(!sb) return [];
+  if(role === 'professionnel_sante'){
+    const pro = await sbGetHealthPro(userId);
+    if(!pro) return [];
+    const { data } = await sb.from('appointments').select('*, profiles(prenom,nom,health_profile)').eq('pro_id', pro.id).order('scheduled_at');
+    return data || [];
+  }
+  const { data } = await sb.from('appointments').select('*, health_professionals(profession, profiles(prenom,nom))').eq('patient_id', userId).order('scheduled_at');
+  return data || [];
+}
+
+async function sbInsertAppointment(appt){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('appointments').insert(appt);
+  return { error: error?.message || null };
+}
+
+async function sbUpdateAppointment(apptId, updates){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.from('appointments').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', apptId);
+  return { error: error?.message || null };
+}
+
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
-  sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements };
+  sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements,
+  sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
+  sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
+  sbGetAppointments, sbInsertAppointment, sbUpdateAppointment };
