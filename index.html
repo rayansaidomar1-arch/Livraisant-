@@ -7323,21 +7323,44 @@ function renderProfile(){
         const clubs=Object.values(accs).filter(a=>a.role==='club');
         const currentClubId=hp.clubId||u.clubId||'';
         const currentClub=clubs.find(c=>c.id===currentClubId);
-        if(currentClub){
+        const freeReq=hp.clubRequest;
+        const pending=!!(hp.clubLiaisonPending&&(currentClubId||freeReq));
+        const validated=!!(currentClub&&!hp.clubLiaisonPending);
+        const inputStyle='width:100%;padding:9px 12px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;background:white';
+
+        if(validated){
           return `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;margin-bottom:10px">
             <span style="font-size:24px">🏆</span>
             <div><div style="font-weight:800;font-size:15px;color:#1d4ed8">${currentClub.clubInfo?.nom||currentClub.email}</div>
-            <div style="font-size:12px;color:var(--ink-soft)">${currentClub.clubValidated?'✅ Club partenaire vérifié':'⏳ Adhésion en attente de validation'}</div></div>
-          </div>`;
+            <div style="font-size:12px;color:var(--ink-soft)">✅ Liaison active — 5% de vos commandes reversés au club</div></div>
+          </div>
+          <button onclick="cancelClubRequest()" style="font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border:1.5px solid var(--err);border-radius:20px;background:transparent;color:var(--err);cursor:pointer">Dissocier le club</button>`;
         }
-        if(!clubs.length){
-          return `<div style="font-size:13px;color:var(--ink-soft);padding:4px 0">Aucun club partenaire disponible pour le moment. <br><span style="font-style:italic">Parlez-en à votre club pour qu'il rejoigne Livraisanté.</span></div>`;
+        if(pending){
+          const clubName=currentClub?.clubInfo?.nom||currentClub?.email||freeReq?.nom||'votre club';
+          const licNum=freeReq?.licenseNum||u.sportLicense||hp.licenseNum||'';
+          return `<div style="display:flex;align-items:center;gap:12px;padding:13px;background:#fefce8;border:1.5px solid #fde047;border-radius:12px;margin-bottom:10px">
+            <span style="font-size:26px">⏳</span>
+            <div><div style="font-weight:800;font-size:15px;color:#92400e">Demande envoyée — ${clubName}</div>
+            <div style="font-size:12px;color:#78350f;margin-top:2px">En attente de validation par le responsable du club${licNum?` · Licence : ${licNum}`:''}</div></div>
+          </div>
+          <button onclick="cancelClubRequest()" style="font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border:1.5px solid var(--err);border-radius:20px;background:transparent;color:var(--err);cursor:pointer">Annuler la demande</button>`;
         }
-        return `<select id="profileClubSelect" onchange="saveClubFromProfile(this.value)" style="width:100%;padding:9px 12px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
-          <option value="">-- Sélectionner mon club --</option>
-          ${clubs.map(c=>`<option value="${c.id}">${c.clubInfo?.nom||c.email}${c.clubValidated?' ✅':' (en attente)'}</option>`).join('')}
-        </select>
-        <div style="font-size:11px;color:var(--ink-soft);margin-top:6px">5% de chaque commande est reversé à votre club (programme B2B2C)</div>`;
+        // Formulaire de demande — toujours disponible
+        const clubDropdown=clubs.length?`
+          <select id="profileClubSelect" style="${inputStyle}">
+            <option value="">— Sélectionner dans la liste des clubs partenaires —</option>
+            ${clubs.map(c=>`<option value="${c.id}">${c.clubInfo?.nom||c.email}${c.clubValidated?' ✅':' (en attente)'}</option>`).join('')}
+          </select>
+          <div style="text-align:center;font-size:12px;color:var(--ink-soft);padding:2px 0;font-style:italic">— ou saisir manuellement —</div>
+        `:'';
+        return `<div style="display:flex;flex-direction:column;gap:8px">
+          ${clubDropdown}
+          <input id="profileClubNom" placeholder="Nom de votre club (ex. AS Villepinte, Club Athlé 93…)" style="${inputStyle}" value="">
+          <input id="profileClubLicense" placeholder="N° de licence (optionnel)" value="${u.sportLicense||hp.licenseNum||''}" style="${inputStyle}">
+          <button id="clubLiaisonBtn" onclick="requestClubLiaison()" style="font-family:inherit;font-size:14px;font-weight:800;padding:11px 18px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Envoyer la demande de liaison →</button>
+          <div style="font-size:11px;color:var(--ink-soft)">Votre club sera invité à rejoindre Livraisanté. 5% de chaque commande leur sera reversé.</div>
+        </div>`;
       })()}
     </div>
 
@@ -7610,26 +7633,95 @@ function updateProfileBMI(){
   const cat=bmi<18.5?{l:'Insuffisance pondérale',c:'#2563EB'}:bmi<25?{l:'Poids normal ✓',c:'#16A34A'}:bmi<30?{l:'Surpoids',c:'#D97706'}:{l:'Obésité',c:'#DC2626'};
   el.innerHTML=`<div style="display:inline-flex;align-items:center;gap:10px;background:${cat.c}15;border:1.5px solid ${cat.c}40;border-radius:10px;padding:7px 12px;font-size:13px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:900;font-size:17px;color:${cat.c}">${bmi}</span><span style="font-weight:700;color:${cat.c}">IMC — ${cat.l}</span></div>`;
 }
-function savePhysique(){
+async function savePhysique(){
   if(!currentUser) return;
   const w=parseFloat(document.getElementById('editWeight')?.value)||null;
   const h=parseFloat(document.getElementById('editHeight')?.value)||null;
+  if(!w&&!h){showToast('Saisissez au moins le poids ou la taille.','var(--warn)');return;}
   const bmi=w&&h?+(w/((h/100)**2)).toFixed(1):null;
   if(!currentUser.healthProfile) currentUser.healthProfile={};
   if(w) currentUser.healthProfile.weight=w;
   if(h) currentUser.healthProfile.height=h;
   if(bmi) currentUser.healthProfile.bmi=bmi;
   patientProfile={...(patientProfile||{}), ...currentUser.healthProfile};
+  // Persist to both localStorage stores
+  saveProfile(patientProfile);
   const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
-  const msg=document.getElementById('editPhysiqueMsg'); if(msg){msg.textContent='✓ Données mises à jour';setTimeout(()=>{if(msg)msg.textContent='';},2000);}
-  setTimeout(()=>renderProfile(),600);
+  // Sync to Supabase if available
+  if(window.LS_SB?.SB_READY&&currentUser.id){
+    const sb=window.LS_SB.getSB();
+    sb.from('profiles').update({health_profile:currentUser.healthProfile,updated_at:new Date().toISOString()}).eq('id',currentUser.id).then(()=>{}).catch(()=>{});
+  }
+  const msg=document.getElementById('editPhysiqueMsg'); if(msg){msg.textContent='✅ Données physiques enregistrées';setTimeout(()=>{if(msg)msg.textContent='';},2500);}
+  setTimeout(()=>renderProfile(),700);
 }
-function saveClubFromProfile(clubId){
+async function requestClubLiaison(){
   if(!currentUser) return;
+  const clubId=(document.getElementById('profileClubSelect')?.value||'').trim();
+  const clubNom=(document.getElementById('profileClubNom')?.value||'').trim();
+  const licenseNum=(document.getElementById('profileClubLicense')?.value||'').trim();
+  if(!clubId&&!clubNom){showToast('Saisissez le nom de votre club pour envoyer une demande.','var(--warn)');return;}
+  const btn=document.getElementById('clubLiaisonBtn');
+  if(btn){btn.disabled=true;btn.textContent='Envoi en cours…';}
   if(!currentUser.healthProfile) currentUser.healthProfile={};
-  currentUser.healthProfile.clubId=clubId;
-  patientProfile={...(patientProfile||{}), clubId};
+  // Liaison avec un club déjà inscrit (dropdown)
+  if(clubId){
+    if(window.LS_SB?.SB_READY){
+      const sb=window.LS_SB.getSB();
+      const {data:existing}=await sb.from('club_members').select('id,validated').eq('club_id',clubId).eq('user_id',currentUser.id).maybeSingle();
+      if(existing){
+        showToast(existing.validated?'✅ Vous êtes déjà membre de ce club':'⏳ Demande déjà en cours','var(--warn)');
+        if(btn){btn.disabled=false;btn.textContent='Envoyer la demande de liaison →';}
+        return;
+      }
+      const {error}=await sb.from('club_members').insert({
+        club_id:clubId, user_id:currentUser.id,
+        numero_licence:licenseNum||currentUser.sportLicense||currentUser.healthProfile?.licenseNum||null,
+        validated:false
+      });
+      if(error){showToast('Erreur : '+error.message,'var(--err)');if(btn){btn.disabled=false;btn.textContent='Envoyer la demande de liaison →';}return;}
+    }
+    currentUser.healthProfile.clubId=clubId;
+    currentUser.healthProfile.clubLiaisonPending=true;
+    delete currentUser.healthProfile.clubRequest;
+  } else {
+    // Demande libre (club pas encore inscrit)
+    if(window.LS_SB?.SB_READY){
+      const sb=window.LS_SB.getSB();
+      await sb.from('club_join_requests').insert({
+        user_id:currentUser.id, club_nom:clubNom,
+        license_num:licenseNum||null, status:'pending',
+        patient_email:currentUser.email, patient_nom:`${currentUser.prenom||''} ${currentUser.nom||''}`.trim()||null
+      }).then(()=>{}).catch(()=>{}); // best-effort, table may not exist yet
+    }
+    currentUser.healthProfile.clubRequest={nom:clubNom,licenseNum:licenseNum||null,date:new Date().toISOString(),status:'pending'};
+    currentUser.healthProfile.clubLiaisonPending=true;
+    delete currentUser.healthProfile.clubId;
+  }
+  if(licenseNum&&!currentUser.sportLicense) currentUser.sportLicense=licenseNum;
+  patientProfile={...(patientProfile||{}), ...currentUser.healthProfile};
+  saveProfile(patientProfile);
   const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  showToast('✓ Demande envoyée ! En attente de validation.','var(--ok)');
+  renderProfile();
+}
+async function cancelClubRequest(){
+  if(!currentUser) return;
+  const clubId=currentUser.healthProfile?.clubId||'';
+  if(window.LS_SB?.SB_READY&&clubId){
+    const sb=window.LS_SB.getSB();
+    await sb.from('club_members').delete().eq('club_id',clubId).eq('user_id',currentUser.id).eq('validated',false);
+  }
+  if(currentUser.healthProfile){
+    delete currentUser.healthProfile.clubId;
+    delete currentUser.healthProfile.clubLiaisonPending;
+    delete currentUser.healthProfile.clubRequest;
+  }
+  if(patientProfile){delete patientProfile.clubId;delete patientProfile.clubLiaisonPending;delete patientProfile.clubRequest;}
+  saveProfile(patientProfile||{});
+  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  showToast('Demande annulée.','var(--ink-soft)');
+  renderProfile();
 }
 function toggleDurationEdit(){ const p=document.getElementById('durationEditPanel'); if(p) p.style.display=p.style.display==='none'?'block':'none'; }
 function endPregnancy(){
@@ -7637,7 +7729,7 @@ function endPregnancy(){
   chips.forEach(c=>{c.classList.remove('sel'); if(c.dataset.v==='non') c.classList.add('sel');});
   document.getElementById('saveProfileMsg').textContent='';
 }
-function saveHealthProfile(){
+async function saveHealthProfile(){
   if(!currentUser||!['patient','patient_licencie'].includes(currentUser.role)) return;
   const preg=document.querySelector('[data-group="editPreg"] .chip.sel')?.dataset.v||'non';
   const meds=[...document.querySelectorAll('#editMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
@@ -7647,12 +7739,18 @@ function saveHealthProfile(){
   const hp={...currentUser.healthProfile,pregnancy:preg,meds};
   if(licenseNum){hp.licenseNum=licenseNum;currentUser.sportLicense=licenseNum;}
   if(federation) hp.federation=federation;
-  if(clubId) hp.clubId=clubId;
+  if(clubId){hp.clubId=clubId;hp.clubLiaisonPending=true;}
   currentUser.healthProfile=hp; patientProfile=hp;
-  ACCOUNTS[currentUser.email]=currentUser; saveAccounts();
+  saveProfile(patientProfile);
+  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  if(window.LS_SB?.SB_READY&&currentUser.id){
+    const sb=window.LS_SB.getSB();
+    sb.from('profiles').update({health_profile:hp,updated_at:new Date().toISOString()}).eq('id',currentUser.id).then(()=>{}).catch(()=>{});
+  }
   const msg=document.getElementById('saveProfileMsg');
-  if(msg) msg.textContent='✓ Profil mis à jour avec succès !';
-  setTimeout(()=>renderProfile(),600);
+  if(msg) msg.textContent='✅ Profil mis à jour !';
+  showToast('✅ Profil de santé enregistré','var(--ok)');
+  setTimeout(()=>renderProfile(),700);
 }
 function birthdateToAgeRange(bd){
   if(!bd) return '18-64';
@@ -7673,7 +7771,7 @@ function birthdateToAgeId(bd){
 function showEditPersonalInfo(){
   const p=document.getElementById('editPersonalPanel');if(p)p.style.display=p.style.display==='none'?'block':'none';
 }
-function savePersonalInfo(){
+async function savePersonalInfo(){
   if(!currentUser) return;
   const prenom=(document.getElementById('editPrenom')?.value||'').trim();
   const nom=(document.getElementById('editNom')?.value||'').trim();
@@ -7686,16 +7784,35 @@ function savePersonalInfo(){
   if(nom) currentUser.nom=nom;
   if(tel) currentUser.tel=tel;
   if(birthdate&&!currentUser.birthdate) currentUser.birthdate=birthdate; // only set once
-  if(line1||zip||city) currentUser.address={line1,zip,city,country:'France'};
-  // Also update ageRange in healthProfile if birthdate set
+  // Save address even if only zip+city (street can be empty)
+  if(zip||city||line1) currentUser.address={line1,zip,city,country:'France'};
+  // Update ageRange in healthProfile from birthdate
   if(currentUser.birthdate){
     if(!currentUser.healthProfile) currentUser.healthProfile={};
     currentUser.healthProfile.ageRange=birthdateToAgeId(currentUser.birthdate);
+    currentUser.healthProfile.age=birthdateToAgeId(currentUser.birthdate);
   }
+  // Also sync address into healthProfile for triage compatibility
+  if(currentUser.address){
+    if(!currentUser.healthProfile) currentUser.healthProfile={};
+    currentUser.healthProfile.address=currentUser.address;
+    patientProfile={...(patientProfile||{}), address:currentUser.address};
+  }
+  saveProfile(patientProfile||{});
   const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  // Sync to Supabase if available
+  if(window.LS_SB?.SB_READY&&currentUser.id){
+    const sb=window.LS_SB.getSB();
+    sb.from('profiles').update({
+      prenom:currentUser.prenom, nom:currentUser.nom, tel:currentUser.tel,
+      birthdate:currentUser.birthdate||null, address:currentUser.address||null,
+      updated_at:new Date().toISOString()
+    }).eq('id',currentUser.id).then(()=>{}).catch(()=>{});
+  }
   const msg=document.getElementById('editPersonalMsg');
-  if(msg) msg.textContent='✅ Informations mises à jour';
-  setTimeout(()=>renderProfile(),600);
+  if(msg) msg.textContent='✅ Informations enregistrées';
+  showToast('✅ Informations personnelles enregistrées','var(--ok)');
+  setTimeout(()=>renderProfile(),700);
 }
 
 /* ===================================================================
