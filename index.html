@@ -1004,10 +1004,12 @@
       <div id="sportSelected" style="display:none;margin-top:10px" class="help-box"></div>
     </div>
 
-    <div class="triad">
+    <div class="triad" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
       <div class="t k"><div class="ic k">🤲</div><h3>Kinésithérapeute</h3><p>Rééducation, mobilité, renforcement ciblé et réathlétisation.</p></div>
       <div class="t p"><div class="ic p">⚡</div><h3>Préparateur athlétique</h3><p>Charge d'entraînement, prévention et performance.</p></div>
       <div class="t f"><div class="ic f">💊</div><h3>Pharmacien</h3><p>Nutrition, hydratation, récupération et conseils santé.</p></div>
+      <div class="t" style="border-top-color:#6366f1"><div class="ic" style="background:#ede9fe;color:#6366f1">🩺</div><h3>Médecin du sport</h3><p>Diagnostic, bilan médical, certificat d'aptitude et suivi clinique.</p></div>
+      <div class="t" style="border-top-color:#f59e0b"><div class="ic" style="background:#fef3c7;color:#d97706">🥗</div><h3>Nutritionniste</h3><p>Plans alimentaires, micronutrition, gestion du poids et performances.</p></div>
     </div>
     <div class="note">⚠️ <div><b>Outil éducatif d'aide à la décision.</b> Il ne remplace pas un diagnostic ni l'avis d'un professionnel de santé. Tout protocole doit être validé par l'équipe médicale.</div></div>
     <div class="nav" style="justify-content:flex-end;border-top:none;margin-top:24px;padding-top:0">
@@ -2384,7 +2386,13 @@ function renderHeader(){
   const el=document.getElementById('headerAccount'); if(!el) return;
   if(currentUser){
     const init=(currentUser.prenom||currentUser.email||'A')[0].toUpperCase();
-    el.innerHTML=`<button class="h-avatar" onclick="handleAccountClick()" title="Mon compte" style="font-family:inherit">${init}</button>`;
+    const unread=getMyNotifications().filter(n=>!n.read).length;
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+  <button class="notif-bell-btn" onclick="toggleNotifPanel();event.stopPropagation()" title="Notifications" style="position:relative;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">
+    🔔<span class="notif-bell-count" style="display:${unread?'flex':'none'};position:absolute;top:-2px;right:-2px;background:#ef4444;color:white;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center">${unread||''}</span>
+  </button>
+  <button class="h-avatar" onclick="handleAccountClick()" title="Mon compte" style="font-family:inherit">${init}</button>
+</div>`;
   } else {
     el.innerHTML=`<button onclick="handleAccountClick()" style="font-family:inherit;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:7px 14px;cursor:pointer">Se connecter</button>`;
   }
@@ -2685,8 +2693,9 @@ function renderLicencieTab(){
       <div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:8px">⚠ Points d'attention</div>
       ${proto.alertes.map(a=>`<div style="font-size:12.5px;color:#78350f;margin-bottom:4px">• ${a}</div>`).join('')}
     </div>`:''}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <button onclick="setSportWizStep(4)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Modifier</button>
+      <button onclick="downloadSportProtocolPDF()" style="font-family:inherit;font-weight:700;font-size:13px;padding:13px;background:white;color:#1F6FEB;border:2px solid #1F6FEB;border-radius:12px;cursor:pointer">📄 Télécharger PDF</button>
       <button onclick="setSportWizStep(6)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Prendre RDV →</button>
     </div>`;
   }
@@ -2831,6 +2840,47 @@ function buildSportProtocol(d){
   if(d.hydra==='insuffisant') alertes.push('Hydratation insuffisante : visez 2 L/j minimum + boisson isotonique à l\'effort');
 
   return {sections,alertes};
+}
+function downloadSportProtocolPDF(){
+  const d=sportWiz.data;
+  const proto=buildSportProtocol(d);
+  const win=window.open('','_blank','width=800,height=900');
+  if(!win){showToast('Autorisez les popups pour générer le PDF','var(--warn)');return;}
+  const itemsHtml=proto.sections.map(s=>`
+    <div style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:13px;color:#1F6FEB;border-bottom:2px solid #EFF6FF;padding-bottom:4px;margin-bottom:8px">${s.icon} ${s.titre}</div>
+      ${s.items.map(item=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px">
+        <div><b>${item.nom}</b><br><span style="color:#666">${item.desc}</span></div>
+        ${item.ama?'<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;align-self:center">✓ AMA</span>':''}
+      </div>`).join('')}
+    </div>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Protocole Sport-Santé — Livraisanté</title>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+  body{padding:24px;max-width:800px;margin:0 auto;font-size:13px;color:#0D0E09}
+  h1{font-size:20px;font-weight:800;color:#1F6FEB;margin-bottom:4px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid #1F6FEB}
+  .badge{background:#dcfce7;color:#16a34a;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#f8f8f7;border-radius:8px;padding:10px;margin-bottom:16px;font-size:12px}
+  .meta b{display:block;font-weight:800;font-size:13px}
+  .alert{background:#fffbe6;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-top:12px;font-size:12px}
+  .footer{margin-top:20px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:10px;color:#888;text-align:center}
+  @media print{button{display:none}}</style></head><body>
+  <div class="header">
+    <div><h1>Protocole Sport-Santé personnalisé</h1><div style="font-size:12px;color:#666;margin-top:4px">Généré le ${new Date().toLocaleDateString('fr-FR')} · Livraisanté</div></div>
+    <span class="badge">Compléments alimentaires CA · Non dopant AMA</span>
+  </div>
+  <div class="meta">
+    <div><b>${d.sport||'—'}</b>Sport</div>
+    <div><b>${d.niveau||'—'}</b>Niveau</div>
+    <div><b>${(d.objectifs||[]).join(', ')||'—'}</b>Objectifs</div>
+  </div>
+  ${itemsHtml}
+  ${proto.alertes.length?`<div class="alert"><b>⚠ Points d'attention :</b><br>${proto.alertes.map(a=>'• '+a).join('<br>')}</div>`:''}
+  <div class="footer">Ce protocole est proposé à titre informatif. Conseil et validation par votre pharmacien partenaire. Non substituable à un avis médical.</div>
+  <div style="margin-top:16px;text-align:center"><button onclick="window.print()" style="font-family:sans-serif;font-weight:700;font-size:14px;padding:10px 24px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer">🖨 Imprimer / Enregistrer en PDF</button></div>
+  </body></html>`);
+  win.document.close();
 }
 
 function onWizSportChange(sport){
@@ -3203,6 +3253,68 @@ if(bc) bc.onmessage=ev=>{
 };
 function broadcast(order){ if(bc) bc.postMessage({order}); }
 
+/* ── SYSTÈME DE NOTIFICATIONS ─────────────────────────────────── */
+const NOTIF_KEY='livraisante_notifications_v1';
+function getNotifications(){ try{return JSON.parse(localStorage.getItem(NOTIF_KEY)||'[]');}catch(e){return [];} }
+function saveNotifications(arr){ try{localStorage.setItem(NOTIF_KEY,JSON.stringify(arr.slice(-100)));}catch(e){} }
+function pushNotification(targetRole,message,meta={}){
+  const notifs=getNotifications();
+  notifs.push({id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),targetRole,message,meta,ts:Date.now(),read:false});
+  saveNotifications(notifs);
+  // Also broadcast for same-session listeners
+  if(bc) bc.postMessage({type:'notification',targetRole,message,meta});
+  // Browser Notification API (if granted)
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    try{ new Notification('Livraisanté',{body:message,icon:'/icons/icon-192.png'}); }catch(e){}
+  }
+}
+function getMyNotifications(){
+  if(!currentUser) return [];
+  const role=currentUser.role||'patient';
+  return getNotifications().filter(n=>n.targetRole===role||n.targetRole===currentUser.id);
+}
+function markAllRead(){
+  const notifs=getNotifications().map(n=>{
+    if(n.targetRole===(currentUser?.role)||n.targetRole===currentUser?.id) n.read=true;
+    return n;
+  });
+  saveNotifications(notifs);
+  renderNotifBell();
+}
+function renderNotifBell(){
+  const unread=getMyNotifications().filter(n=>!n.read).length;
+  const bells=document.querySelectorAll('.notif-bell-count');
+  bells.forEach(b=>{ b.textContent=unread||''; b.style.display=unread?'flex':'none'; });
+}
+function renderNotifPanel(){
+  const mine=getMyNotifications().sort((a,b)=>b.ts-a.ts).slice(0,20);
+  markAllRead();
+  return `<div style="max-width:420px;width:100%;padding:16px">
+    <div style="font-weight:800;font-size:16px;margin-bottom:12px">🔔 Mes notifications</div>
+    ${mine.length?mine.map(n=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">
+      <div style="flex:1"><div style="font-size:13.5px;font-weight:600">${n.message}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${new Date(n.ts).toLocaleString('fr-FR')}</div></div>
+    </div>`).join('')
+    :'<div style="font-size:13px;color:var(--ink-soft);padding:8px 0">Aucune notification pour le moment.</div>'}
+  </div>`;
+}
+function toggleNotifPanel(){
+  let panel=document.getElementById('notifPanel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='notifPanel';
+    panel.style.cssText='position:fixed;top:60px;right:12px;background:white;border:1.5px solid var(--line-strong);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:2000;max-height:70vh;overflow-y:auto';
+    document.body.appendChild(panel);
+    document.addEventListener('click',e=>{ if(!panel.contains(e.target)&&!e.target.closest('.notif-bell-btn')){panel.remove();} },{once:true});
+  }
+  panel.innerHTML=renderNotifPanel();
+}
+// Request browser notification permission on first interaction
+function requestNotifPermission(){
+  if(typeof Notification!=='undefined'&&Notification.permission==='default'){
+    Notification.requestPermission().then(p=>{ if(p==='granted') showToast('✅ Notifications activées','var(--ok)'); });
+  }
+}
+
 function saveOrder(o){ ORDERS[o.id]=o; persistOrders(); broadcast(o); refreshViews(); }
 function refreshViews(){
   if(currentView==='pro') renderPro();
@@ -3514,7 +3626,33 @@ function orderAddrHtml(o){
 function timeAgo(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?'à l\'instant':m+' min'; }
 
 /* ---- PHARMACIEN ---- */
-function setStatus(id,st){ const o=ORDERS[id]; if(!o) return; o.status=st; saveOrder(o); }
+function setStatus(id,st){
+  const o=ORDERS[id]; if(!o) return;
+  o.status=st; saveOrder(o);
+  // Notifications
+  const pName=o.patient?.name||'Patient';
+  const orderId=id;
+  if(st==='validee'){
+    pushNotification('patient',`📦 Votre commande ${orderId} est en cours de préparation par le pharmacien`,{orderId,type:'order_status'});
+    pushNotification('pharmacien',`🆕 Nouvelle commande de ${pName} — à préparer`,{orderId,type:'new_order'});
+  }
+  if(st==='prete'){
+    pushNotification('patient',`✅ Commande ${orderId} prête — votre livreur va la prendre en charge`,{orderId,type:'order_status'});
+    pushNotification('livreur',`🛵 Commande ${orderId} prête à livrer dans votre secteur`,{orderId,type:'new_delivery'});
+  }
+  if(st==='en_livraison'){
+    pushNotification('patient',`🛵 Votre commande ${orderId} est prise en charge par le livreur`,{orderId,type:'order_status'});
+    pushNotification('livreur',`📍 Vous avez pris en charge la commande ${orderId}`,{orderId,type:'delivery_accepted'});
+  }
+  if(st==='livree'){
+    pushNotification('patient',`🎉 Votre commande ${orderId} a été livrée avec succès !`,{orderId,type:'order_delivered'});
+    pushNotification('pharmacien',`✅ Commande ${orderId} de ${pName} livrée`,{orderId,type:'order_delivered'});
+    pushNotification('livreur',`✅ Livraison ${orderId} terminée — merci !`,{orderId,type:'delivery_done'});
+  }
+  if(currentView==='pro') renderPro();
+  if(currentView==='livreur') renderLivreur();
+  renderNotifBell();
+}
 /* ═══════════════════════════════════════════════════════════
    PRIORITÉ DE RECOMMANDATION — choix stratégique du pharmacien
 ═══════════════════════════════════════════════════════════ */
@@ -3922,8 +4060,8 @@ function renderPro(){
 
 /* ---- LIVREUR ---- */
 let mapLiv=null;
-function takeOrder(id){ const o=ORDERS[id]; if(!o) return; o.status='en_livraison'; o.driver=true; saveOrder(o); }
-function deliverOrder(id){ const o=ORDERS[id]; if(!o) return; o.status='livree'; saveOrder(o); }
+function takeOrder(id){ setStatus(id,'en_livraison'); const o=ORDERS[id]; if(o){o.driver=true;saveOrder(o);} }
+function deliverOrder(id){ setStatus(id,'livree'); }
 function renderLivreur(){
   const all=Object.values(ORDERS).sort((a,b)=>b.createdAt-a.createdAt);
   const dispo=all.filter(o=>o.status==='prete');
@@ -6273,12 +6411,25 @@ function clearMedChips(btn){
 let selectedSlot=null;
 function generateTimeSlots(){
   const slots=[];
-  const pattern={9:'green',9.5:'green',10:'yellow',10.5:'yellow',11:'red',11.5:'red',12:'green',12.5:'green',13:'yellow',13.5:'yellow',14:'yellow',14.5:'yellow',15:'red',15.5:'red',16:'red',16.5:'yellow',17:'yellow',17.5:'green',18:'green',18.5:'green'};
+  // Use stored busy pattern if available, otherwise default pharmacy pattern
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  const stored=phData.busyPattern||null;
+  const COLOR_MAP={1:'green',2:'yellow',3:'red'};
+  const defaultPattern=[[9,0,'green'],[9,30,'green'],[10,0,'yellow'],[10,30,'yellow'],[11,0,'red'],[11,30,'red'],[12,0,'green'],[12,30,'green'],[13,0,'yellow'],[13,30,'yellow'],[14,0,'yellow'],[14,30,'yellow'],[15,0,'red'],[15,30,'red'],[16,0,'red'],[16,30,'yellow'],[17,0,'yellow'],[17,30,'green'],[18,0,'green'],[18,30,'green']];
   const labels={green:'Faible affluence',yellow:'Affluence modérée',red:'Forte affluence'};
-  for(const [h,color] of Object.entries(pattern)){
-    const hour=Math.floor(+h), min=+h%1===0?'00':'30';
-    const label=`${hour}:${min}`;
-    slots.push({time:label, color, label:labels[color]});
+  if(stored){
+    // Build from stored pattern (sorted numerically)
+    const hours=Object.keys(stored).map(Number).sort((a,b)=>a-b);
+    hours.forEach(h=>{
+      const color=COLOR_MAP[stored[h]]||'green';
+      slots.push({time:`${h}:00`,color,label:labels[color]});
+      slots.push({time:`${h}:30`,color,label:labels[color]});
+    });
+  } else {
+    defaultPattern.forEach(([h,m,color])=>{
+      const label=`${h}:${m===0?'00':'30'}`;
+      slots.push({time:label,color,label:labels[color]});
+    });
   }
   return slots;
 }
@@ -6301,7 +6452,48 @@ function selectSlot(time){
   document.getElementById('modeDetails').innerHTML=renderSlotContent();
 }
 function renderSlotContent(){
-  return `<div class="cnc-info">🏪 <b>Click &amp; Collect :</b> votre commande est préparée par la pharmacie. Délai estimé <b>30 à 60 min</b> selon l'affluence.</div>${renderTimeSlotPicker()}`;
+  return `<div class="cnc-info">🏪 <b>Click &amp; Collect :</b> votre commande est préparée par la pharmacie. Délai estimé <b>30 à 60 min</b> selon l'affluence.</div>${renderTimeSlotPicker()}${renderCncCheckin()}`;
+}
+function renderCncCheckin(){
+  return `<div id="cncCheckinBox" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-top:12px">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px">🏪 Je suis à la pharmacie</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Cochez cette case lorsque vous êtes physiquement présent à l'officine pour prévenir le pharmacien.</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:700">
+      <input type="checkbox" id="cncPresent" onchange="onCncPresent(this)" style="width:20px;height:20px;accent-color:#15803d;cursor:pointer">
+      Je suis présent(e) à la pharmacie
+    </label>
+    <div id="cncCountdown" style="display:none;margin-top:12px;text-align:center">
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">Le pharmacien a été notifié — préparation en cours</div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;color:#15803d" id="cncTimer">5:00</div>
+      <div style="font-size:12px;color:var(--ink-soft)">Délai de dispensation</div>
+    </div>
+  </div>`;
+}
+let _cncTimerInterval=null;
+function onCncPresent(checkbox){
+  const countdown=document.getElementById('cncCountdown');
+  if(!checkbox.checked){
+    clearInterval(_cncTimerInterval); _cncTimerInterval=null;
+    if(countdown) countdown.style.display='none';
+    return;
+  }
+  // Notify pharmacist (in-app notification stored in localStorage)
+  pushNotification('pharmacien','🏪 Patient présent à l\'officine — Click &amp; Collect en attente de dispensation',{type:'cnc_arrival',ts:Date.now()});
+  showToast('✅ Le pharmacien a été notifié de votre présence','var(--ok)');
+  if(countdown) countdown.style.display='block';
+  let secs=300;
+  const timerEl=document.getElementById('cncTimer');
+  clearInterval(_cncTimerInterval);
+  _cncTimerInterval=setInterval(()=>{
+    secs--;
+    const m=Math.floor(secs/60), s=secs%60;
+    if(timerEl) timerEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(secs<=0){
+      clearInterval(_cncTimerInterval);
+      if(timerEl) timerEl.textContent='0:00';
+      showToast('⏰ Délai de dispensation écoulé — contactez le pharmacien','var(--warn)');
+    }
+  },1000);
 }
 
 /* ---- CAGNOTTE patient ---- */
@@ -6809,6 +7001,9 @@ async function doRegister(){
     acc.partnerClubs=regProSelectedClubs;
   }
   ACCOUNTS[email]=acc; saveAccounts();
+  if(role==='patient_licencie'&&acc.sportLicense){
+    pushNotification('club',`🎽 Nouveau licencié inscrit : ${prenom} ${nom} — numéro de licence ${acc.sportLicense}`,{type:'new_member',email});
+  }
   currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
   updateAccountChip(); enterRole('sante');
 }
@@ -7033,8 +7228,33 @@ function renderProfile(){
     html+=`
     <div class="profile-section">
       <h3>👤 Informations personnelles</h3>
-      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom}</span></div>
+      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
+      <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
       <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+      <div class="pfield"><span class="pk">Téléphone</span><span class="pv">${u.tel||'—'}</span></div>
+      <div class="pfield"><span class="pk">Date de naissance</span><span class="pv">${u.birthdate?new Date(u.birthdate).toLocaleDateString('fr-FR'):'—'}</span></div>
+      ${u.birthdate?`<div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv" style="background:#f0fdf4;color:#15803d;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">🔒 ${birthdateToAgeRange(u.birthdate)} — déterminé par votre date de naissance</span></div>`:''}
+      ${u.address?.line1||hp.address?.line1?`<div class="pfield"><span class="pk">📍 Adresse</span><span class="pv">${(u.address||hp.address).line1}, ${(u.address||hp.address).zip} ${(u.address||hp.address).city}</span></div>
+      <div style="font-size:12px;color:var(--ink-soft);padding:2px 0 6px 0">Utilisée pour la livraison et la facturation</div>`
+      :`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">📍 Aucune adresse enregistrée</div>`}
+      <button onclick="showEditPersonalInfo()" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer;margin-top:6px">✏️ Modifier mes informations</button>
+      <div id="editPersonalPanel" style="display:none;margin-top:12px;background:#f8f8f7;border-radius:12px;padding:14px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Modifier mes informations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Prénom</label><input id="editPrenom" value="${u.prenom||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Nom</label><input id="editNom" value="${u.nom||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+        </div>
+        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Téléphone</label><input id="editTel" value="${u.tel||''}" oninput="formatPhone(this)" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Date de naissance <span style="font-weight:400;color:#666">(définit la tranche d'âge)</span></label><input id="editBirthdate" type="date" value="${u.birthdate||''}" ${u.birthdate?'readonly style="background:#f5f5f5;cursor:not-allowed"':''} style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">Adresse (livraison &amp; facturation)</div>
+        <input id="editAddr" placeholder="N° et rue" value="${u.address?.line1||hp.address?.line1||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:6px">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:6px;margin-bottom:12px">
+          <input id="editZip" placeholder="Code postal" value="${u.address?.zip||hp.address?.zip||''}" oninput="lookupCitiesFromZip(this.value,'editCity','editCityDropdown')" style="padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box">
+          <div style="position:relative"><input id="editCity" placeholder="Ville" value="${u.address?.city||hp.address?.city||''}" readonly style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"><div id="editCityDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid var(--line-strong);border-radius:10px;z-index:100;max-height:140px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)"></div></div>
+        </div>
+        <button onclick="savePersonalInfo()" style="font-family:inherit;font-weight:800;font-size:14px;padding:10px 20px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Enregistrer →</button>
+        <div id="editPersonalMsg" style="font-size:12px;color:var(--ok);margin-top:6px;min-height:14px"></div>
+      </div>
     </div>
 
     <div class="profile-section">
@@ -7061,6 +7281,19 @@ function renderProfile(){
       <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-64':'18–64 ans','65+':'65 ans et +'}[hp.age||hp.ageRange]||'—'}</span></div>
       <div class="pfield"><span class="pk">Grossesse / Allaitement</span><span class="pv ${hp.pregnancy==='enceinte'||hp.pregnancy==='allaitement'?'highlight':''}">${pregnancyLabel}</span></div>
       <div class="pfield"><span class="pk">Traitements chroniques</span><span class="pv">${meds}</span></div>
+      <div class="pfield" style="align-items:flex-start">
+        <span class="pk">Durée des symptômes</span>
+        <span class="pv" style="display:flex;align-items:center;gap:8px">
+          <span id="durationDisplay">${{lt24h:'< 24h',j1j3:'1-3 jours',j4j7:'4-7 jours',gt7j:'> 7 jours'}[hp.duration||'']||'—'}</span>
+          <button onclick="toggleDurationEdit()" style="font-family:inherit;font-size:11px;font-weight:700;padding:3px 10px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer">Modifier</button>
+        </span>
+      </div>
+      <div id="durationEditPanel" style="display:none;padding:8px 0 4px">
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px">⚠ Cette information est affichée uniquement — elle ne modifie pas votre profil enregistré.</div>
+        <div class="chips" data-group="profileDuration">
+          ${[{v:'lt24h',l:'< 24h'},{v:'j1j3',l:'1-3 jours'},{v:'j4j7',l:'4-7 jours'},{v:'gt7j',l:'> 7 jours'}].map(d=>`<button class="chip${(hp.duration||''===d.v)?' sel':''}" onclick="document.getElementById('durationDisplay').textContent='${d.l}';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">${d.l}</button>`).join('')}
+        </div>
+      </div>
       <div class="edit-inline" id="editHealthPanel">
         <div style="font-size:13px;font-weight:700;margin-bottom:8px">Modifier mon profil de santé</div>
         <div style="margin-bottom:10px">
@@ -7078,6 +7311,31 @@ function renderProfile(){
             ${CHRONIC_MEDS.map(m=>`<button class="chip ${hp.meds?.includes(m.id)?'sel':''}" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')}
           </div>
         </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🎽 Numéro de licence <span style="font-weight:400">(optionnel)</span></div>
+          <input id="editLicenseNum" value="${hp.licenseNum||u.sportLicense||''}" placeholder="Ex. 12345678" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🏆 Fédération sportive <span style="font-weight:400">(optionnel)</span></div>
+          <select id="editFederation" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;background:white">
+            <option value="">-- Aucune --</option>
+            ${['FFF (Football)','FFR (Rugby)','FFN (Natation)','FFA (Athlétisme)','FFJudo','FFTennis','FFCO (Course d\'orientation)','FFCyclisme','FFBB (Basket-ball)','FFHB (Handball)','FFVB (Volley-ball)','FFSki','FFBoxe','FFRS (Running)','FFEPMM (Fitness)','FFME (Escalade)','FFYoga'].map(f=>`<option value="${f}" ${(hp.federation||''===f)?'selected':''}>${f}</option>`).join('')}
+          </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🏋️ Club partenaire <span style="font-weight:400">(optionnel)</span></div>
+          ${(()=>{
+            const accs=getAccounts();
+            const clubs=Object.values(accs).filter(a=>a.role==='club');
+            const currentClubId=hp.clubId||u.clubId||'';
+            if(!clubs.length) return '<div style="font-size:12px;color:var(--ink-soft)">Aucun club partenaire enregistré sur la plateforme pour le moment.</div>';
+            return `<select id="editClubId" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;background:white">
+              <option value="">-- Aucun club --</option>
+              ${clubs.map(c=>`<option value="${c.id}" ${currentClubId===c.id?'selected':''}>${c.clubInfo?.nom||c.email}${c.clubValidated?' ✅':' (en attente)'}</option>`).join('')}
+            </select>
+            ${currentClubId&&!clubs.find(c=>c.id===currentClubId)?.clubValidated?'<div style="font-size:11px;color:var(--warn);margin-top:4px">⏳ Le club n\'a pas encore validé votre adhésion</div>':''}`;
+          })()}
+        </div>
         <button class="btn primary" style="font-size:14px;padding:10px 20px" onclick="saveHealthProfile()">Enregistrer les modifications</button>
         <div id="saveProfileMsg" style="font-size:13px;color:var(--ok);margin-top:8px"></div>
       </div>
@@ -7088,6 +7346,17 @@ function renderProfile(){
         <div class="cagnotte-badge"><span style="font-size:28px">🐷</span><div><div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px">€${u.cagnotte.total.toFixed(2)}</div><div style="font-size:13px">solde disponible</div></div></div>
         <div style="margin-top:12px">${(u.cagnotte.history||[]).map(h=>`<div class="pfield"><span class="pk">${h.date}</span><span class="pv" style="color:var(--ok)">+€${h.savings.toFixed?h.savings.toFixed(2):h.savings} · ${h.product}</span></div>`).join('')}</div>`
       :'<div style="font-size:14px;color:var(--ink-soft)">Aucune économie pour le moment. Les substitutions acceptées alimentent votre cagnotte.</div>'}
+    </div>
+    <div class="profile-section">
+      <h3>🏆 Votre participation au club</h3>
+      ${u.sportLicense||u.clubId?`<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:14px;padding:16px;text-align:center">
+        <div style="font-size:32px;margin-bottom:4px">🥇</div>
+        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;color:#1d4ed8">${Math.round((u.orders||[]).reduce((s,o)=>s+(o.total||0),0)*0.05).toFixed(2)} €</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">reversés à votre club via vos commandes</div>
+        <div style="font-size:11px;color:#1d4ed8;margin-top:8px;font-weight:700">${u.sportLicense?'🎽 Licence : '+u.sportLicense:''}</div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:8px;text-align:center">5% de chaque commande est reversé à votre club partenaire (programme B2B2C)</div>`
+      :`<div style="font-size:13px;color:var(--ink-soft)">Liez un club sportif dans votre profil de santé pour activer le programme B2B2C et suivre votre participation.</div>`}
     </div>`;
   }
 
@@ -7188,6 +7457,31 @@ function renderProfile(){
             ${CHRONIC_MEDS.map(m=>`<button class="chip ${hp.meds?.includes(m.id)?'sel':''}" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')}
           </div>
         </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🎽 Numéro de licence <span style="font-weight:400">(optionnel)</span></div>
+          <input id="editLicenseNum" value="${hp.licenseNum||u.sportLicense||''}" placeholder="Ex. 12345678" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🏆 Fédération sportive <span style="font-weight:400">(optionnel)</span></div>
+          <select id="editFederation" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;background:white">
+            <option value="">-- Aucune --</option>
+            ${['FFF (Football)','FFR (Rugby)','FFN (Natation)','FFA (Athlétisme)','FFJudo','FFTennis','FFCO (Course d\'orientation)','FFCyclisme','FFBB (Basket-ball)','FFHB (Handball)','FFVB (Volley-ball)','FFSki','FFBoxe','FFRS (Running)','FFEPMM (Fitness)','FFME (Escalade)','FFYoga'].map(f=>`<option value="${f}" ${(hp.federation||''===f)?'selected':''}>${f}</option>`).join('')}
+          </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">🏋️ Club partenaire <span style="font-weight:400">(optionnel)</span></div>
+          ${(()=>{
+            const accs=getAccounts();
+            const clubs=Object.values(accs).filter(a=>a.role==='club');
+            const currentClubId=hp.clubId||u.clubId||'';
+            if(!clubs.length) return '<div style="font-size:12px;color:var(--ink-soft)">Aucun club partenaire enregistré sur la plateforme pour le moment.</div>';
+            return `<select id="editClubId" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;background:white">
+              <option value="">-- Aucun club --</option>
+              ${clubs.map(c=>`<option value="${c.id}" ${currentClubId===c.id?'selected':''}>${c.clubInfo?.nom||c.email}${c.clubValidated?' ✅':' (en attente)'}</option>`).join('')}
+            </select>
+            ${currentClubId&&!clubs.find(c=>c.id===currentClubId)?.clubValidated?'<div style="font-size:11px;color:var(--warn);margin-top:4px">⏳ Le club n\'a pas encore validé votre adhésion</div>':''}`;
+          })()}
+        </div>
         <button class="btn primary" style="font-size:14px;padding:10px 20px" onclick="saveHealthProfile()">Enregistrer les modifications</button>
         <div id="saveProfileMsg" style="font-size:13px;color:var(--ok);margin-top:8px"></div>
       </div>
@@ -7241,6 +7535,7 @@ function renderProfile(){
   }));
 }
 function toggleEditHealth(){const p=document.getElementById('editHealthPanel'); if(p) p.classList.toggle('on');}
+function toggleDurationEdit(){ const p=document.getElementById('durationEditPanel'); if(p) p.style.display=p.style.display==='none'?'block':'none'; }
 function endPregnancy(){
   const chips=document.querySelectorAll('[data-group="editPreg"] .chip');
   chips.forEach(c=>{c.classList.remove('sel'); if(c.dataset.v==='non') c.classList.add('sel');});
@@ -7250,11 +7545,60 @@ function saveHealthProfile(){
   if(!currentUser||!['patient','patient_licencie'].includes(currentUser.role)) return;
   const preg=document.querySelector('[data-group="editPreg"] .chip.sel')?.dataset.v||'non';
   const meds=[...document.querySelectorAll('#editMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
+  const licenseNum=(document.getElementById('editLicenseNum')?.value||'').trim();
+  const federation=document.getElementById('editFederation')?.value||'';
+  const clubId=document.getElementById('editClubId')?.value||'';
   const hp={...currentUser.healthProfile,pregnancy:preg,meds};
+  if(licenseNum){hp.licenseNum=licenseNum;currentUser.sportLicense=licenseNum;}
+  if(federation) hp.federation=federation;
+  if(clubId) hp.clubId=clubId;
   currentUser.healthProfile=hp; patientProfile=hp;
   ACCOUNTS[currentUser.email]=currentUser; saveAccounts();
   const msg=document.getElementById('saveProfileMsg');
   if(msg) msg.textContent='✓ Profil mis à jour avec succès !';
+  setTimeout(()=>renderProfile(),600);
+}
+function birthdateToAgeRange(bd){
+  if(!bd) return '18-64';
+  const age=Math.floor((Date.now()-new Date(bd))/(365.25*24*3600*1000));
+  if(age<15) return '< 15 ans';
+  if(age<=17) return '15-17 ans';
+  if(age<=64) return '18-64 ans';
+  return '65 ans et +';
+}
+function birthdateToAgeId(bd){
+  if(!bd) return '18-64';
+  const age=Math.floor((Date.now()-new Date(bd))/(365.25*24*3600*1000));
+  if(age<15) return 'lt15';
+  if(age<=17) return '15-17';
+  if(age<=64) return '18-64';
+  return '65+';
+}
+function showEditPersonalInfo(){
+  const p=document.getElementById('editPersonalPanel');if(p)p.style.display=p.style.display==='none'?'block':'none';
+}
+function savePersonalInfo(){
+  if(!currentUser) return;
+  const prenom=(document.getElementById('editPrenom')?.value||'').trim();
+  const nom=(document.getElementById('editNom')?.value||'').trim();
+  const tel=(document.getElementById('editTel')?.value||'').trim();
+  const birthdate=document.getElementById('editBirthdate')?.value||'';
+  const line1=(document.getElementById('editAddr')?.value||'').trim();
+  const zip=(document.getElementById('editZip')?.value||'').trim();
+  const city=(document.getElementById('editCity')?.value||'').trim();
+  if(prenom) currentUser.prenom=prenom;
+  if(nom) currentUser.nom=nom;
+  if(tel) currentUser.tel=tel;
+  if(birthdate&&!currentUser.birthdate) currentUser.birthdate=birthdate; // only set once
+  if(line1||zip||city) currentUser.address={line1,zip,city,country:'France'};
+  // Also update ageRange in healthProfile if birthdate set
+  if(currentUser.birthdate){
+    if(!currentUser.healthProfile) currentUser.healthProfile={};
+    currentUser.healthProfile.ageRange=birthdateToAgeId(currentUser.birthdate);
+  }
+  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const msg=document.getElementById('editPersonalMsg');
+  if(msg) msg.textContent='✅ Informations mises à jour';
   setTimeout(()=>renderProfile(),600);
 }
 
