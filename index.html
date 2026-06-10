@@ -994,8 +994,8 @@
   <!-- INTRO -->
   <section class="screen on hero" id="s0">
     <span class="eyebrow">Bilan préventif &nbsp;·&nbsp; 3 minutes</span>
-    <h1>Comprends ton corps, <span class="hl">préviens la blessure.</span></h1>
-    <p class="lead">Sélectionne ton sport, réponds au questionnaire sur ton hygiène de vie et tes blessures. L'application génère un protocole de soin adapté à ton activité.</p>
+    <h1>Espace Sport &amp; Santé</h1>
+    <p class="lead">Sélectionne ton sport et réponds au questionnaire pour générer ton protocole personnalisé.</p>
 
     <div class="form-group" style="margin:18px 0">
       <label class="form-label">Ton sport <span class="opt">(commence à taper pour filtrer)</span></label>
@@ -2467,9 +2467,9 @@ function renderSportApp(){
 function setSportTab(t){ sportTab=t; renderSportApp(); }
 
 function renderLicencieTab(){
-  // Steps: 0=identification, 1=hygiene, 2=pratique, 3=demandes, 4=protocole, 5=rdv
-  const steps=['Identité','Hygiène de vie','Pratique sportive','Objectifs','Protocole','Rendez-vous'];
-  const stepsIcons=['👤','🌿','🏃','🎯','💊','📅'];
+  // Steps: 0=identification, 1=hygiene, 2=corps&prevention, 3=pratique, 4=objectifs, 5=protocole, 6=rdv
+  const steps=['Identité','Hygiène de vie','Corps & Prévention','Pratique sportive','Objectifs','Protocole','Rendez-vous'];
+  const stepsIcons=['👤','🌿','🧍','🏃','🎯','💊','📅'];
   const n=sportWiz.step;
 
   const stepBar=`<div style="display:flex;gap:0;overflow-x:auto;margin-bottom:20px;padding-bottom:4px">
@@ -2500,15 +2500,6 @@ function renderLicencieTab(){
       <div style="width:44px;height:44px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white">${(currentUser.prenom||currentUser.email||'?')[0].toUpperCase()}</div>
       <div><div style="font-weight:800;font-size:15px">${currentUser.prenom||currentUser.email}</div><div style="font-size:12px;color:var(--ink-soft)">${currentUser.sportLicense?'🏅 Licence : '+currentUser.sportLicense:'Pas de licence enregistrée'}</div></div>
     </div>`:''}
-    <div class="card" style="margin-bottom:16px">
-      <h3 style="font-size:15px;font-weight:800;margin-bottom:12px">🎽 Numéro de licence sportive</h3>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input id="licenseInput" type="text" placeholder="Ex. 12345678 ou CLUB-XXXXX" value="${currentUser?.sportLicense||''}"
-          style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:15px;font-weight:700">
-        <button onclick="saveSportLicense()" style="font-family:inherit;font-weight:800;font-size:13px;padding:10px 16px;background:var(--ink);color:var(--lime);border:none;border-radius:10px;cursor:pointer">✓ Lier</button>
-      </div>
-      <div style="font-size:12px;color:var(--ink-soft)">FFFootball · FFRugby · FFN · FFA · FFJudo · FFTennis · FFBox · FFHockey</div>
-    </div>
     <div class="card" style="margin-bottom:16px">
   <h3 style="font-size:15px;font-weight:800;margin-bottom:10px">⚽ Votre sport et votre club</h3>
   <div style="margin-bottom:12px">
@@ -2571,7 +2562,48 @@ function renderLicencieTab(){
   }
 
   else if(n===2){
-    // ── ÉTAPE 2 : PRATIQUE SPORTIVE ──
+    // ── ÉTAPE 2 : CORPS & PRÉVENTION ──
+    content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🧍 Comprends ton corps, préviens la blessure.</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Ces informations permettent de personnaliser ton protocole de prévention et de récupération</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🤕 Antécédents de blessures <span style="font-weight:400;font-size:12px;color:var(--ink-soft)">(plusieurs possibles)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px" id="wizInjuries">
+        ${['Genoux','Chevilles','Épaules','Dos','Coude','Hanche','Aucun'].map(b=>`<button class="chip${(sportWiz.data.injuries||[]).includes(b)?' sel':''}" onclick="toggleWizInjury('${b}',this)" style="font-size:12px">${b}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">⚖️ Ressenti physique actuel</div>
+      <div class="chips" data-group="wizPhysique">
+        <button class="chip${sportWiz.data.physique==='bien'?' sel':''}" data-v="bien" onclick="sportWiz.data.physique='bien';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">En forme 💪</button>
+        <button class="chip${sportWiz.data.physique==='fatigue'?' sel':''}" data-v="fatigue" onclick="sportWiz.data.physique='fatigue';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Fatigué</button>
+        <button class="chip${sportWiz.data.physique==='douleur'?' sel':''}" data-v="douleur" onclick="sportWiz.data.physique='douleur';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Douleurs actuelles</button>
+        <button class="chip${sportWiz.data.physique==='convalescent'?' sel':''}" data-v="convalescent" onclick="sportWiz.data.physique='convalescent';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">En reprise</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🔄 Fréquence des rechutes / blessures répétitives</div>
+      <div class="chips" data-group="wizRechute">
+        <button class="chip${sportWiz.data.rechute==='jamais'?' sel':''}" data-v="jamais" onclick="sportWiz.data.rechute='jamais';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Jamais</button>
+        <button class="chip${sportWiz.data.rechute==='rarement'?' sel':''}" data-v="rarement" onclick="sportWiz.data.rechute='rarement';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Rarement</button>
+        <button class="chip${sportWiz.data.rechute==='souvent'?' sel':''}" data-v="souvent" onclick="sportWiz.data.rechute='souvent';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Souvent</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏃 Échauffement avant effort</div>
+      <div class="chips" data-group="wizEchauff">
+        <button class="chip${sportWiz.data.echauffement==='toujours'?' sel':''}" data-v="toujours" onclick="sportWiz.data.echauffement='toujours';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Toujours</button>
+        <button class="chip${sportWiz.data.echauffement==='parfois'?' sel':''}" data-v="parfois" onclick="sportWiz.data.echauffement='parfois';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Parfois</button>
+        <button class="chip${sportWiz.data.echauffement==='jamais'?' sel':''}" data-v="jamais" onclick="sportWiz.data.echauffement='jamais';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Jamais</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(1)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="setSportWizStep(3)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Suivant →</button>
+    </div>`;
+  }
+
+  else if(n===3){
+    // ── ÉTAPE 3 : PRATIQUE SPORTIVE ──
     const sports=['Football','Rugby','Natation','Athlétisme','Judo','Tennis','Cyclisme','Basket','Handball','Volley','Ski','Boxe','Running','Fitness','Yoga','Escalade'];
     content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🏃 Pratique sportive</div>
     <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Dites-nous tout sur votre pratique</div>
@@ -2589,12 +2621,6 @@ function renderLicencieTab(){
         <button class="chip${sportWiz.data.freq==='5+'?' sel':''}" data-v="5+" onclick="sportWiz.data.freq='5+';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">5+/sem</button>
       </div>
     </div>
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🤕 Antécédents de blessures</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px" id="wizInjuries">
-        ${['Genoux','Chevilles','Épaules','Dos','Coude','Hanche','Aucun'].map(b=>`<button class="chip${(sportWiz.data.injuries||[]).includes(b)?' sel':''}" onclick="toggleWizInjury('${b}',this)" style="font-size:12px">${b}</button>`).join('')}
-      </div>
-    </div>
     <div class="card" style="margin-bottom:18px">
       <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏆 Niveau de pratique</div>
       <div class="chips" data-group="wizNiveau">
@@ -2604,13 +2630,13 @@ function renderLicencieTab(){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button onclick="setSportWizStep(1)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
-      <button onclick="validateSportWizStep(2)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Suivant →</button>
+      <button onclick="setSportWizStep(2)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="validateSportWizStep(3)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Suivant →</button>
     </div>`;
   }
 
-  else if(n===3){
-    // ── ÉTAPE 3 : OBJECTIFS & DEMANDES ──
+  else if(n===4){
+    // ── ÉTAPE 4 : OBJECTIFS & DEMANDES ──
     content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🎯 Vos objectifs</div>
     <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Qu'attendez-vous de votre protocole sport-santé ?</div>
     <div class="card" style="margin-bottom:14px">
@@ -2634,13 +2660,13 @@ function renderLicencieTab(){
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button onclick="setSportWizStep(2)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="setSportWizStep(3)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
       <button onclick="sportWiz.data.notes=document.getElementById('wizNotes')?.value||'';generateSportProtocol()" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Générer mon protocole →</button>
     </div>`;
   }
 
-  else if(n===4){
-    // ── ÉTAPE 4 : PROTOCOLE GÉNÉRÉ ──
+  else if(n===5){
+    // ── ÉTAPE 5 : PROTOCOLE GÉNÉRÉ ──
     const proto=buildSportProtocol(sportWiz.data);
     content=`<div style="background:linear-gradient(135deg,#EFF6FF,#dbeafe);border:1.5px solid #1F6FEB40;border-radius:16px;padding:18px;margin-bottom:18px">
       <div style="font-weight:800;font-size:18px;color:#1F6FEB;margin-bottom:4px">💊 Votre protocole personnalisé</div>
@@ -2660,13 +2686,13 @@ function renderLicencieTab(){
       ${proto.alertes.map(a=>`<div style="font-size:12.5px;color:#78350f;margin-bottom:4px">• ${a}</div>`).join('')}
     </div>`:''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button onclick="setSportWizStep(3)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Modifier</button>
-      <button onclick="setSportWizStep(5)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Prendre RDV →</button>
+      <button onclick="setSportWizStep(4)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Modifier</button>
+      <button onclick="setSportWizStep(6)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Prendre RDV →</button>
     </div>`;
   }
 
-  else if(n===5){
-    // ── ÉTAPE 5 : RENDEZ-VOUS ──
+  else if(n===6){
+    // ── ÉTAPE 6 : RENDEZ-VOUS ──
     const clubId=sportWiz.data.clubId||'';
     const clubNom=sportWiz.data.clubNom||'';
     // Find health pros who listed this club as partner
@@ -2701,7 +2727,7 @@ function renderLicencieTab(){
       💡 <b>Vous êtes professionnel de santé ?</b> <a href="javascript:enterRole('registerScreen')" style="color:#1F6FEB;font-weight:700">Créez votre compte</a> et sélectionnez votre club partenaire pour apparaître ici.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button onclick="setSportWizStep(4)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Protocole</button>
+      <button onclick="setSportWizStep(5)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Protocole</button>
       <button onclick="setSportWizStep(0)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">🔄 Nouveau bilan</button>
     </div>`;
   }
@@ -2712,14 +2738,14 @@ function renderLicencieTab(){
 function setSportWizStep(s){ sportWiz.step=s; renderSportApp(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function validateSportWizStep(step){
-  const errFields={1:['sommeil','stress','alim','hydra'],2:['freq','niveau'],3:[]};
+  const errFields={1:['sommeil','stress','alim','hydra'],3:['freq','niveau'],4:[]};
   const fields=errFields[step]||[];
   for(const f of fields){
     if(!sportWiz.data[f]){
       showToast('⚠ Veuillez répondre à toutes les questions','var(--warn)'); return;
     }
   }
-  if(step===2&&!sportWiz.data.sport){
+  if(step===3&&!sportWiz.data.sport){
     showToast('⚠ Choisissez votre sport principal','var(--warn)'); return;
   }
   setSportWizStep(step+1);
@@ -2742,7 +2768,7 @@ function toggleWizObjectif(val,btn){
   btn.classList.toggle('sel',idx<0);
 }
 
-function generateSportProtocol(){ setSportWizStep(4); }
+function generateSportProtocol(){ setSportWizStep(5); }
 
 function buildSportProtocol(d){
   const sections=[];
@@ -2820,32 +2846,10 @@ function onWizSportChange(sport){
 }
 
 function getClubsForSport(sport){
-  // Registered clubs in localStorage
   const accs=getAccounts();
-  const regClubs=Object.values(accs).filter(a=>a.role==='club'&&(!a.clubInfo?.federation||a.clubInfo.federation.toLowerCase().includes(sport.toLowerCase())||true)).map(a=>({id:a.id,nom:a.clubInfo?.nom||a.email,sport}));
-  // Static fallback clubs per sport
-  const STATIC={
-    Football:['AS Monaco','OGC Nice','Olympique de Marseille','Stade Toulousain FC','SC Bastia','Grenoble Foot 38','FC Sochaux','Valenciennes FC','Pau FC'],
-    Rugby:['Stade Aurillacois','Aviron Bayonnais','Biarritz Olympique','Stade Montois','US Dax','CA Périgueux','FC Auch','Stade Tarbes'],
-    Natation:['CN Marseille','CN Antibes','Mulhouse ON','Amiens UC Natation','Montpellier Natation','Canet 66 Natation'],
-    Athlétisme:['CA Balma','Stade Sottevillais','Entente Athlé 38','Lyon Athlétisme','Paris Athlétisme 94'],
-    Judo:['Levallois Sporting Club','Paris Judo','Toulouse Judo','Grenoble UC Judo','AJ Strasbourg'],
-    Tennis:['Tennis Club de Paris','TC Nice','Lawn Tennis Club de Marseille','Stade Toulousain Tennis'],
-    Cyclisme:['CC Étupes','VC Rouen','Team Pays de Savoie','Vendée U','AC Bisontine'],
-    Basket:['Nanterre 92','CSP Limoges','Élan Chalon','STB Le Havre','Élan Sportif Chalonnais'],
-    Handball:['Paris Saint-Germain HB','Montpellier HB','HBC Nantes','Chambéry Savoie Mont Blanc HB'],
-    Volley:['Paris Volley','Chaumont VC 52','AS Cannes','Montpellier UC'],
-    Ski:['SC Megève','CS Chamonix','ASM Ski','US Villard de Lans'],
-    Boxe:['Racing Club de France Boxe','Roquetas BC','Lyon Savate BC'],
-    Running:['Entente Poitiers Athlé 86','EA Grenoble','Stade Rennais Athlétisme','CAN Saint-Maur'],
-    Fitness:['Club Med Gym','Moving','Keep Cool','Fitness Park'],
-    Escalade:["Vertical'Art Rennes",'Arkose Paris',"Block'Out Lyon",'Imagine Vertical'],
-    Yoga:['Fédération Française de Yoga','Centre de Yoga Paris','Ashtanga Yoga Toulouse'],
-  };
-  const staticList=(STATIC[sport]||[]).map(nom=>({id:'static_'+nom.replace(/\s/g,'_'),nom}));
-  // Merge: registered clubs first, then static (deduplicate by nom)
-  const seen=new Set(regClubs.map(c=>c.nom));
-  return [...regClubs,...staticList.filter(c=>!seen.has(c.nom))];
+  return Object.values(accs)
+    .filter(a=>a.role==='club')
+    .map(a=>({id:a.id||a.email, nom:a.clubInfo?.nom||a.email, sport:a.clubInfo?.federation||''}));
 }
 
 function getClubHealthPros(clubId){
@@ -3626,6 +3630,250 @@ function priorityWidget(){
   </div>`;
 }
 
+function renderPharmacyHoursPanel(){
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  const planId=phData.plan||'free';
+  const hours=phData.googleHours||null;
+  const placeId=phData.googlePlaceId||'';
+  const busy=phData.busyPattern||null;
+
+  const DAYS_FR=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+  const hoursHtml=hours?hours.map((d,i)=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px">
+    <span style="font-weight:700;width:80px;flex:0 0 80px">${DAYS_FR[i]||d.day}</span>
+    <span style="color:${d.open?'var(--ok)':'var(--err)'}">${d.open?d.hours:'Fermé'}</span>
+  </div>`).join('')
+  :`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">Aucun horaire synchronisé depuis Google.</div>`;
+
+  // Busy pattern heatmap
+  const defaultBusy={9:1,10:2,11:3,12:1,13:1,14:2,15:3,16:3,17:2,18:1};
+  const bp=busy||defaultBusy;
+  const BUSY_COLOR={1:'#86efac',2:'#fde68a',3:'#fca5a5'};
+  const BUSY_LABEL={1:'Calme',2:'Modéré',3:'Chargé'};
+  const busyHtml=Object.entries(bp).map(([h,v])=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+    <div style="width:28px;height:${v*16}px;background:${BUSY_COLOR[v]};border-radius:4px;transition:height .2s"></div>
+    <div style="font-size:10px;color:var(--ink-soft)">${h}h</div>
+  </div>`).join('');
+
+  return `<div class="lab-panel" style="margin-bottom:18px">
+    <h3>🕐 Horaires & Affluence</h3>
+    <p class="sub">Synchronisez vos horaires d'ouverture et l'affluence depuis votre fiche Google pour améliorer le service Click &amp; Collect.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">📅 Horaires d'ouverture</div>
+        ${hoursHtml}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">📊 Affluence type (journée)</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding-bottom:4px">${busyHtml}</div>
+        <div style="display:flex;gap:10px;margin-top:6px;font-size:11px">
+          <span><i style="display:inline-block;width:10px;height:10px;background:#86efac;border-radius:2px;margin-right:3px"></i>Calme</span>
+          <span><i style="display:inline-block;width:10px;height:10px;background:#fde68a;border-radius:2px;margin-right:3px"></i>Modéré</span>
+          <span><i style="display:inline-block;width:10px;height:10px;background:#fca5a5;border-radius:2px;margin-right:3px"></i>Chargé</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#f8f8f7;border:1.5px solid #e5e5e5;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">🔗 Connecter votre fiche Google</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">
+        Collez l'URL de votre fiche Google My Business ou votre Place ID (visible dans Google Business Profile → Informations → ID de lieu).
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="googlePlaceInput" type="text" value="${placeId}" placeholder="Ex. ChIJd8BlQ2BZwokR... ou URL Google Maps"
+          style="flex:1;padding:9px 12px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:13px">
+        <button onclick="syncGoogleHours()" style="font-family:inherit;font-weight:700;font-size:13px;padding:9px 16px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer;white-space:nowrap">Synchroniser →</button>
+      </div>
+      <div id="googleSyncMsg" style="font-size:12px;min-height:16px"></div>
+    </div>
+    <button onclick="showCustomBusyEditor()" style="font-family:inherit;font-size:13px;font-weight:700;padding:8px 16px;background:white;border:1.5px solid var(--line-strong);border-radius:10px;cursor:pointer">✏️ Modifier l'affluence manuellement</button>
+    <div id="busyEditorPanel" style="display:none;margin-top:12px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px">Cliquez sur chaque créneau pour définir l'affluence (1=calme · 2=modéré · 3=chargé)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="busyEditorSlots">
+        ${Object.entries(defaultBusy).map(([h,v])=>`<button onclick="cycleBusy('${h}',this)" data-h="${h}" data-v="${bp[h]||v}" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 10px;border:2px solid ${BUSY_COLOR[bp[h]||v]};border-radius:8px;background:${BUSY_COLOR[bp[h]||v]}20;cursor:pointer;min-width:48px">${h}h <span style="color:${BUSY_COLOR[bp[h]||v]}">${BUSY_LABEL[bp[h]||v]}</span></button>`).join('')}
+      </div>
+      <button onclick="saveBusyPattern()" style="font-family:inherit;font-size:13px;font-weight:700;padding:8px 18px;background:var(--ok);color:white;border:none;border-radius:10px;cursor:pointer;margin-top:10px">✓ Enregistrer l'affluence</button>
+    </div>
+  </div>`;
+}
+
+function showCustomBusyEditor(){
+  const p=document.getElementById('busyEditorPanel');if(p)p.style.display=p.style.display==='none'?'block':'none';
+}
+function cycleBusy(h,btn){
+  let v=parseInt(btn.dataset.v||1);v=v>=3?1:v+1;
+  btn.dataset.v=v;
+  const BUSY_COLOR={1:'#86efac',2:'#fde68a',3:'#fca5a5'};
+  const BUSY_LABEL={1:'Calme',2:'Modéré',3:'Chargé'};
+  btn.style.borderColor=BUSY_COLOR[v];btn.style.background=BUSY_COLOR[v]+'20';
+  btn.innerHTML=`${h}h <span style="color:${BUSY_COLOR[v]}">${BUSY_LABEL[v]}</span>`;
+}
+function saveBusyPattern(){
+  const slots=document.querySelectorAll('#busyEditorSlots button[data-h]');
+  const bp={};slots.forEach(b=>{bp[b.dataset.h]=parseInt(b.dataset.v||1);});
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  phData.busyPattern=bp; localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  showToast('✅ Affluence enregistrée','var(--ok)'); renderPro();
+}
+async function syncGoogleHours(){
+  const input=document.getElementById('googlePlaceInput');
+  const msg=document.getElementById('googleSyncMsg');
+  if(!input||!msg) return;
+  let raw=input.value.trim();
+  if(!raw){msg.innerHTML='<span style="color:var(--err)">⚠ Saisissez un Place ID ou une URL Google Maps</span>';return;}
+  // Extract place_id from URL if given
+  let placeId=raw;
+  const m=raw.match(/place_id[=:]([^&\s/]+)/i)||raw.match(/!1s([^!]+)/i);
+  if(m) placeId=decodeURIComponent(m[1]);
+  msg.innerHTML='<span style="color:var(--ink-soft)">⏳ Synchronisation en cours...</span>';
+  try{
+    // Google Places API — requires an API key; fallback to manual if CORS/key error
+    const API_KEY=''; // Pharmacist can add their key in settings
+    if(!API_KEY) throw new Error('no_key');
+    const url=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours,name&key=${API_KEY}`;
+    const res=await fetch(url);
+    const data=await res.json();
+    if(data.status!=='OK') throw new Error(data.status||'api_error');
+    const oh=data.result?.opening_hours;
+    const DAYS_EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    // Reorder to Mon-Sun
+    const periods=(oh?.weekday_text||[]).map((t,i)=>({day:t.split(':')[0],hours:t.split(':').slice(1).join(':').trim(),open:!t.toLowerCase().includes('fermé')&&!t.toLowerCase().includes('closed')}));
+    let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+    phData.googleHours=periods; phData.googlePlaceId=placeId;
+    localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+    msg.innerHTML='<span style="color:var(--ok)">✅ Horaires synchronisés depuis Google</span>';
+    renderPro();
+  }catch(e){
+    if(e.message==='no_key'){
+      // Guide the user
+      let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e2){}
+      phData.googlePlaceId=placeId;
+      localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+      msg.innerHTML=`<span style="color:var(--warn)">⚠ Place ID enregistré. Pour synchroniser automatiquement les horaires, configurez une clé API Google Places dans vos paramètres ou <a href="https://business.google.com" target="_blank" style="color:#1F6FEB;font-weight:700">saisissez vos horaires manuellement ci-dessous</a>.</span>`;
+    } else {
+      msg.innerHTML=`<span style="color:var(--err)">✗ Erreur de synchronisation (${e.message}). Vérifiez votre Place ID.</span>`;
+    }
+  }
+}
+
+function renderCustomAdvicePanel(){
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  if(phData.plan!=='alt') return ''; // Premium plan only
+  const advices=phData.customAdvice||[];
+
+  // All CA + DM products from AILMENTS (no CIP 3400 = no médicaments)
+  const allProducts=[];
+  if(typeof AILMENTS!=='undefined'){
+    AILMENTS.forEach(ail=>{ (ail.prods||[]).forEach(p=>{ if(!allProducts.find(x=>x.n===p.n)&&p.c!=='Médicament'&&!p.cip?.startsWith('3400')) allProducts.push({n:p.n,c:p.c,ail:ail.id}); }); });
+  }
+  if(typeof CATALOG!=='undefined'){
+    Object.entries(CATALOG).forEach(([name,data])=>{ if(data.cat==='CA'||data.cat==='DM') if(!allProducts.find(x=>x.n===name)) allProducts.push({n:name,c:data.cat==='CA'?'Complément alimentaire':'Dispositif médical'}); });
+  }
+
+  const ailOptions=typeof AILMENTS!=='undefined'?AILMENTS.map(a=>`<option value="${a.id}">${a.ic} ${a.name}</option>`).join(''):'';
+
+  return `<div class="lab-panel" style="margin-bottom:18px;border:2px solid #fef3c7">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="background:#fbbf24;color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">👑 PREMIUM</span>
+      <h3 style="margin:0">Mes conseils personnalisés</h3>
+    </div>
+    <p class="sub">Ajoutez vos recommandations spécifiques à votre officine pour chaque symptôme. Seuls les compléments alimentaires (CA) et dispositifs médicaux (DM) sont disponibles — les médicaments soumis à AMM (CIP 3400…) sont exclus.</p>
+
+    ${advices.length?`<div style="margin-bottom:16px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">📋 Conseils enregistrés (${advices.length})</div>
+      ${advices.map((a,i)=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;background:var(--grey);border-radius:10px;margin-bottom:6px;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px">${typeof AILMENTS!=='undefined'?(AILMENTS.find(x=>x.id===a.ailmentId)?.ic||'')+(AILMENTS.find(x=>x.id===a.ailmentId)?.name||a.ailmentId):a.ailmentId}</div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">${(a.products||[]).join(' · ')}</div>
+          ${a.text?`<div style="font-size:12px;color:var(--ink);margin-top:4px;font-style:italic">"${a.text}"</div>`:''}
+        </div>
+        <button onclick="deleteCustomAdvice(${i})" style="font-family:inherit;font-size:11px;font-weight:700;padding:5px 10px;background:white;border:1.5px solid var(--err);color:var(--err);border-radius:8px;cursor:pointer;flex:0 0 auto">Supprimer</button>
+      </div>`).join('')}
+    </div>`:''}
+
+    <div style="background:white;border:1.5px solid #e5e5e5;border-radius:12px;padding:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">➕ Ajouter un conseil</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Symptôme concerné</label>
+        <select id="caAilment" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
+          <option value="">-- Choisir un symptôme --</option>
+          ${ailOptions}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Produits recommandés <span style="font-weight:400;color:#666">(CA et DM uniquement)</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <input id="caProductSearch" type="text" placeholder="Rechercher un complément alimentaire ou DM…"
+            oninput="searchCustomAdviceProducts(this.value)"
+            style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:13px">
+        </div>
+        <div id="caProductResults" style="display:none;border:2px solid var(--line-strong);border-top:none;border-radius:0 0 10px 10px;max-height:150px;overflow-y:auto;background:white;margin-top:-2px"></div>
+        <div id="caProductChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:10px"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Votre conseil personnalisé <span style="font-weight:400;color:#666">(optionnel)</span></label>
+        <textarea id="caAdviceText" placeholder="Ex. Préférez notre marque X, disponible en stock à la pharmacie. À prendre avec le repas du soir."
+          style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;min-height:70px;box-sizing:border-box"></textarea>
+      </div>
+      <button onclick="saveCustomAdvice()" style="font-family:inherit;font-weight:800;font-size:14px;padding:11px 22px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Enregistrer ce conseil →</button>
+      <div id="caMsg" style="font-size:12.5px;margin-top:8px;min-height:16px"></div>
+    </div>
+  </div>`;
+}
+
+let _caSelectedProducts=[];
+function searchCustomAdviceProducts(q){
+  const res=document.getElementById('caProductResults');
+  if(!res) return;
+  if(!q||q.length<2){res.style.display='none';return;}
+  const all=[];
+  if(typeof AILMENTS!=='undefined') AILMENTS.forEach(ail=>(ail.prods||[]).forEach(p=>{if(p.c!=='Médicament'&&!p.cip?.startsWith('3400')&&!all.find(x=>x.n===p.n))all.push(p);}));
+  if(typeof CATALOG!=='undefined') Object.entries(CATALOG).forEach(([name,data])=>{if((data.cat==='CA'||data.cat==='DM')&&!all.find(x=>x.n===name))all.push({n:name,c:data.cat==='CA'?'Complément alimentaire':'Dispositif médical'});});
+  const filtered=all.filter(p=>p.n.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!filtered.length){res.style.display='none';return;}
+  res.innerHTML=filtered.map(p=>`<div onclick="addCustomAdviceProduct('${p.n.replace(/'/g,"\\'")}','${p.c.replace(/'/g,"\\'")}',this)" style="padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+    <span style="font-weight:600">${p.n}</span>
+    <span style="font-size:11px;font-weight:700;color:${p.c==='Dispositif médical'?'#1d4ed8':'#15803d'};background:${p.c==='Dispositif médical'?'#eff6ff':'#f0fdf4'};padding:2px 7px;border-radius:20px">${p.c==='Dispositif médical'?'DM':'CA'}</span>
+  </div>`).join('');
+  res.style.display='block';
+}
+function addCustomAdviceProduct(nom,cat,el){
+  if(!_caSelectedProducts.find(p=>p.n===nom)) _caSelectedProducts.push({n:nom,c:cat});
+  renderCustomAdviceChips();
+  const res=document.getElementById('caProductResults');if(res)res.style.display='none';
+  const inp=document.getElementById('caProductSearch');if(inp)inp.value='';
+}
+function removeCustomAdviceProduct(nom){
+  _caSelectedProducts=_caSelectedProducts.filter(p=>p.n!==nom);
+  renderCustomAdviceChips();
+}
+function renderCustomAdviceChips(){
+  const el=document.getElementById('caProductChips');if(!el)return;
+  el.innerHTML=_caSelectedProducts.map(p=>`<div style="display:flex;align-items:center;gap:5px;background:${p.c==='Dispositif médical'?'#eff6ff':'#f0fdf4'};border:1.5px solid ${p.c==='Dispositif médical'?'#bfdbfe':'#86efac'};border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700">
+    ${p.n}<button onclick="removeCustomAdviceProduct('${p.n.replace(/'/g,"\\'")}');" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1">×</button>
+  </div>`).join('');
+}
+function saveCustomAdvice(){
+  const ailId=document.getElementById('caAilment')?.value;
+  const text=document.getElementById('caAdviceText')?.value.trim();
+  const msg=document.getElementById('caMsg');
+  if(!ailId){if(msg)msg.innerHTML='<span style="color:var(--err)">⚠ Choisissez un symptôme.</span>';return;}
+  if(!_caSelectedProducts.length){if(msg)msg.innerHTML='<span style="color:var(--err)">⚠ Ajoutez au moins un produit CA ou DM.</span>';return;}
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  if(!phData.customAdvice) phData.customAdvice=[];
+  phData.customAdvice.push({ailmentId:ailId,products:_caSelectedProducts.map(p=>p.n),text,createdAt:Date.now()});
+  localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  _caSelectedProducts=[];
+  showToast('✅ Conseil enregistré','var(--ok)');
+  renderPro();
+}
+function deleteCustomAdvice(idx){
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  if(!phData.customAdvice) return;
+  phData.customAdvice.splice(idx,1);
+  localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  renderPro();
+}
+
 function renderPro(){
   const all=Object.values(ORDERS).sort((a,b)=>b.createdAt-a.createdAt);
   const enCours=all.filter(o=>['prete','en_livraison'].includes(o.status));
@@ -3647,6 +3895,8 @@ function renderPro(){
       <div id="sub-${o.id}"></div>
     </div>`;
   const sec=(t,arr)=>`<div class="dash-sec-title">${t} <span class="cnt">${arr.length}</span></div>`+(arr.length?arr.map(card).join(''):'<div class="dash-empty">Aucune commande.</div>');
+  const hoursPanel=renderPharmacyHoursPanel();
+  const customAdvicePanel=renderCustomAdvicePanel();
   const labPanel=`
     <div class="lab-panel">
       <h3>🏷️ Mes laboratoires partenaires — COS Pharmacie</h3>
@@ -3664,7 +3914,7 @@ function renderPro(){
       </div>
     </div>`;
   document.getElementById('proContent').innerHTML =
-    trialWidget() + renderArrivalNotifications() + priorityWidget() + labPanel + conversionWidget() + breakEvenWidget() + basketConfigWidget() + `<div id="proFacturesSection" style="margin-bottom:20px"></div>` + sec('À traiter',aTraiter)+sec('En cours',enCours)+sec('Historique',closes);
+    trialWidget() + renderArrivalNotifications() + priorityWidget() + hoursPanel + customAdvicePanel + labPanel + conversionWidget() + breakEvenWidget() + basketConfigWidget() + `<div id="proFacturesSection" style="margin-bottom:20px"></div>` + sec('À traiter',aTraiter)+sec('En cours',enCours)+sec('Historique',closes);
   // Render priority widget content after DOM is ready
   renderPriorityWidget();
   renderPharmacyInvoicesSection('proFacturesSection');
