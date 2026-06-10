@@ -1549,6 +1549,16 @@
               <option value="">-- Choisir votre profession --</option>
             </select>
           </div>
+          <div class="form-group" style="margin-bottom:0;margin-top:10px">
+            <label class="form-label">Clubs partenaires <span style="font-weight:400;color:#666">(optionnel — plusieurs possibles)</span></label>
+            <div style="display:flex;gap:8px;margin-bottom:6px">
+              <input id="regProClubSearch" type="text" placeholder="Rechercher un club (ex. AS Monaco)"
+                oninput="searchProClubs(this.value)"
+                style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+            </div>
+            <div id="regProClubResults" style="display:none;border:2px solid var(--line-strong);border-radius:10px;max-height:140px;overflow-y:auto;margin-bottom:8px;background:white"></div>
+            <div id="regProClubSelected" style="display:flex;flex-wrap:wrap;gap:6px;min-height:10px"></div>
+          </div>
         </div>
       </div>
 
@@ -2499,6 +2509,22 @@ function renderLicencieTab(){
       </div>
       <div style="font-size:12px;color:var(--ink-soft)">FFFootball · FFRugby · FFN · FFA · FFJudo · FFTennis · FFBox · FFHockey</div>
     </div>
+    <div class="card" style="margin-bottom:16px">
+  <h3 style="font-size:15px;font-weight:800;margin-bottom:10px">⚽ Votre sport et votre club</h3>
+  <div style="margin-bottom:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">Sport principal</div>
+    <select id="wizSportSelect" onchange="onWizSportChange(this.value)" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
+      <option value="">-- Choisir votre sport --</option>
+      ${['Football','Rugby','Natation','Athlétisme','Judo','Tennis','Cyclisme','Basket','Handball','Volley','Ski','Boxe','Running','Fitness','Escalade','Yoga'].map(s=>`<option value="${s}" ${sportWiz.data.sport===s?'selected':''}>${s}</option>`).join('')}
+    </select>
+  </div>
+  <div id="wizClubSection" style="${sportWiz.data.sport?'':'display:none'}">
+    <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">Club <span style="font-weight:400">(optionnel — pour accéder aux pros de santé du club)</span></div>
+    <select id="wizClubSelect" onchange="sportWiz.data.clubId=this.value;sportWiz.data.clubNom=this.options[this.selectedIndex]?.text" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
+      <option value="">-- Aucun club --</option>
+    </select>
+  </div>
+</div>
     <button onclick="setSportWizStep(1)" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
   }
 
@@ -2641,27 +2667,38 @@ function renderLicencieTab(){
 
   else if(n===5){
     // ── ÉTAPE 5 : RENDEZ-VOUS ──
+    const clubId=sportWiz.data.clubId||'';
+    const clubNom=sportWiz.data.clubNom||'';
+    // Find health pros who listed this club as partner
+    const pros=clubId?getClubHealthPros(clubId):[];
     content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">📅 Rendez-vous avec un professionnel de santé</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Un professionnel de santé référent de votre club examinera votre protocole</div>
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Professionnel de santé du club</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">${clubNom?'Professionnels de santé partenaires de <b>'+clubNom+'</b>':'Sélectionnez un club à l\'étape précédente pour accéder aux professionnels de santé'}</div>
+    ${!clubId?`<div style="background:#fffbe6;border:1.5px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:22px;margin-bottom:6px">⚽</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px">Aucun club sélectionné</div>
+      <div style="font-size:13px;color:var(--ink-soft)">Retournez à l'étape Identité pour sélectionner votre club et accéder aux professionnels de santé partenaires.</div>
+      <button onclick="setSportWizStep(0)" style="font-family:inherit;font-weight:700;font-size:13px;margin-top:12px;padding:9px 18px;background:var(--ink);color:white;border:none;border-radius:10px;cursor:pointer">← Retour identité</button>
+    </div>`
+    :pros.length===0?`<div style="background:#f8f8f7;border:1.5px solid #e5e5e5;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:22px;margin-bottom:6px">🩺</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px">Aucun professionnel de santé disponible</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px">Ce club n'a pas encore de professionnel de santé partenaire enregistré sur Livraisanté.</div>
+      <a href="mailto:sport@livraisante.fr" style="display:inline-block;font-family:inherit;font-weight:700;font-size:13px;padding:9px 18px;background:#1F6FEB;color:white;border-radius:10px;text-decoration:none">Contacter Livraisanté →</a>
+    </div>`
+    :`<div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Professionnels de santé du club</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${[
-          {nom:'Dr. Sophie Martin',spec:'Médecin du sport',dispo:'Disponible cette semaine'},
-          {nom:'Julien Renard',spec:'Kinésithérapeute',dispo:'Prochaine dispo : lundi'},
-          {nom:'Camille Perret',spec:'Diététicienne sportive',dispo:'Disponible demain'},
-        ].map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--grey);border-radius:12px;gap:10px">
+        ${pros.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--grey);border-radius:12px;gap:10px">
           <div>
-            <div style="font-weight:800;font-size:14px">${p.nom}</div>
-            <div style="font-size:12px;color:var(--ink-soft)">${p.spec}</div>
-            <div style="font-size:11px;color:var(--ok);font-weight:700;margin-top:2px">🟢 ${p.dispo}</div>
+            <div style="font-weight:800;font-size:14px">${p.prenom||''} ${p.nom||''}</div>
+            <div style="font-size:12px;color:var(--ink-soft)">${p.profession||p.healthProInfo?.profession||'Professionnel de santé'}</div>
           </div>
-          <button onclick="bookSportRdv('${p.nom}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer;flex:0 0 auto">Réserver →</button>
+          <button onclick="bookSportRdv('${(p.prenom||'')+' '+(p.nom||'')}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer;flex:0 0 auto">Réserver →</button>
         </div>`).join('')}
       </div>
-    </div>
+    </div>`}
     <div style="background:#f8f8f7;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12.5px;color:var(--ink-soft)">
-      💡 <b>Pas de professionnel de santé dans votre club ?</b> Contactez votre club pour activer ce service ou écrivez à <a href="mailto:sport@livraisante.fr" style="color:#1F6FEB;font-weight:700">sport@livraisante.fr</a>
+      💡 <b>Vous êtes professionnel de santé ?</b> <a href="javascript:enterRole('registerScreen')" style="color:#1F6FEB;font-weight:700">Créez votre compte</a> et sélectionnez votre club partenaire pour apparaître ici.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <button onclick="setSportWizStep(4)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Protocole</button>
@@ -2768,6 +2805,57 @@ function buildSportProtocol(d){
   if(d.hydra==='insuffisant') alertes.push('Hydratation insuffisante : visez 2 L/j minimum + boisson isotonique à l\'effort');
 
   return {sections,alertes};
+}
+
+function onWizSportChange(sport){
+  sportWiz.data.sport=sport;
+  sportWiz.data.clubId='';sportWiz.data.clubNom='';
+  const section=document.getElementById('wizClubSection');
+  const sel=document.getElementById('wizClubSelect');
+  if(!sport||!section||!sel){if(section)section.style.display='none';return;}
+  section.style.display='block';
+  // Build club list from registered club accounts + static list for the sport
+  const clubs=getClubsForSport(sport);
+  sel.innerHTML=`<option value="">-- Aucun club --</option>`+clubs.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+}
+
+function getClubsForSport(sport){
+  // Registered clubs in localStorage
+  const accs=getAccounts();
+  const regClubs=Object.values(accs).filter(a=>a.role==='club'&&(!a.clubInfo?.federation||a.clubInfo.federation.toLowerCase().includes(sport.toLowerCase())||true)).map(a=>({id:a.id,nom:a.clubInfo?.nom||a.email,sport}));
+  // Static fallback clubs per sport
+  const STATIC={
+    Football:['AS Monaco','OGC Nice','Olympique de Marseille','Stade Toulousain FC','SC Bastia','Grenoble Foot 38','FC Sochaux','Valenciennes FC','Pau FC'],
+    Rugby:['Stade Aurillacois','Aviron Bayonnais','Biarritz Olympique','Stade Montois','US Dax','CA Périgueux','FC Auch','Stade Tarbes'],
+    Natation:['CN Marseille','CN Antibes','Mulhouse ON','Amiens UC Natation','Montpellier Natation','Canet 66 Natation'],
+    Athlétisme:['CA Balma','Stade Sottevillais','Entente Athlé 38','Lyon Athlétisme','Paris Athlétisme 94'],
+    Judo:['Levallois Sporting Club','Paris Judo','Toulouse Judo','Grenoble UC Judo','AJ Strasbourg'],
+    Tennis:['Tennis Club de Paris','TC Nice','Lawn Tennis Club de Marseille','Stade Toulousain Tennis'],
+    Cyclisme:['CC Étupes','VC Rouen','Team Pays de Savoie','Vendée U','AC Bisontine'],
+    Basket:['Nanterre 92','CSP Limoges','Élan Chalon','STB Le Havre','Élan Sportif Chalonnais'],
+    Handball:['Paris Saint-Germain HB','Montpellier HB','HBC Nantes','Chambéry Savoie Mont Blanc HB'],
+    Volley:['Paris Volley','Chaumont VC 52','AS Cannes','Montpellier UC'],
+    Ski:['SC Megève','CS Chamonix','ASM Ski','US Villard de Lans'],
+    Boxe:['Racing Club de France Boxe','Roquetas BC','Lyon Savate BC'],
+    Running:['Entente Poitiers Athlé 86','EA Grenoble','Stade Rennais Athlétisme','CAN Saint-Maur'],
+    Fitness:['Club Med Gym','Moving','Keep Cool','Fitness Park'],
+    Escalade:["Vertical'Art Rennes",'Arkose Paris',"Block'Out Lyon",'Imagine Vertical'],
+    Yoga:['Fédération Française de Yoga','Centre de Yoga Paris','Ashtanga Yoga Toulouse'],
+  };
+  const staticList=(STATIC[sport]||[]).map(nom=>({id:'static_'+nom.replace(/\s/g,'_'),nom}));
+  // Merge: registered clubs first, then static (deduplicate by nom)
+  const seen=new Set(regClubs.map(c=>c.nom));
+  return [...regClubs,...staticList.filter(c=>!seen.has(c.nom))];
+}
+
+function getClubHealthPros(clubId){
+  if(!clubId) return [];
+  const accs=getAccounts();
+  return Object.values(accs).filter(a=>{
+    if(a.role!=='professionnel_sante') return false;
+    const clubs=a.partnerClubs||[];
+    return clubs.some(c=>(c.id||c)===clubId);
+  });
 }
 
 function bookSportRdv(proNom){
@@ -6384,7 +6472,7 @@ async function doRegister(){
       const profession=document.getElementById('regProfession')?.value||'';
       const clubId=document.getElementById('regClubHP')?.value||null;
       setTimeout(async()=>{
-        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null});
+        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null,partner_clubs:regProSelectedClubs});
       },1500);
     }
     // Store pharmacist RPPS
@@ -6464,6 +6552,12 @@ async function doRegister(){
       contactEmail:(document.getElementById('regClubEmail')?.value||'').trim(),
     };
   }
+  if(role==='professionnel_sante'){
+    const rpps=(document.getElementById('regRPPSPro')?.value||'').trim();
+    const profession=document.getElementById('regProfession')?.value||'';
+    acc.rpps=rpps; acc.profession=profession;
+    acc.partnerClubs=regProSelectedClubs;
+  }
   ACCOUNTS[email]=acc; saveAccounts();
   currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
   updateAccountChip(); enterRole('sante');
@@ -6508,6 +6602,40 @@ function selectCity(nom){
 function formatPhone(el){
   let v=el.value.replace(/\D/g,'').slice(0,10);
   el.value=v.replace(/(.{2})/g,'$1 ').trim();
+}
+
+let regProSelectedClubs=[];
+function searchProClubs(q){
+  const res=document.getElementById('regProClubResults');
+  if(!q||q.length<2){if(res)res.style.display='none';return;}
+  const ALL_CLUBS=['AS Monaco','OGC Nice','Olympique de Marseille','Stade Toulousain FC','Grenoble Foot 38','Stade Aurillacois','Aviron Bayonnais','Biarritz Olympique','CN Marseille','CN Antibes','Mulhouse ON','CA Balma','Stade Sottevillais','Lyon Athlétisme','Levallois Sporting Club','Paris Judo','Toulouse Judo','TC Paris','TC Nice','CC Étupes','VC Rouen','Nanterre 92','CSP Limoges','Paris SG HB','Montpellier HB','HBC Nantes','Paris Volley','SC Megève','CS Chamonix','Moving','Keep Cool','Fitness Park'];
+  // Also include registered clubs
+  const accs=getAccounts();
+  const regClubs=Object.values(accs).filter(a=>a.role==='club').map(a=>a.clubInfo?.nom||a.email);
+  const all=[...new Set([...ALL_CLUBS,...regClubs])];
+  const filtered=all.filter(c=>c.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!filtered.length){if(res)res.style.display='none';return;}
+  res.innerHTML=filtered.map(c=>`<div onclick="addProClub('${c.replace(/'/g,"\\'")}',this)" style="padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">${c}</div>`).join('');
+  res.style.display='block';
+}
+function addProClub(nom,el){
+  if(!regProSelectedClubs.find(c=>c.nom===nom)){
+    const id='reg_'+nom.replace(/\s/g,'_');
+    regProSelectedClubs.push({id,nom});
+    renderProClubChips();
+  }
+  const res=document.getElementById('regProClubResults');if(res)res.style.display='none';
+  const inp=document.getElementById('regProClubSearch');if(inp)inp.value='';
+}
+function removeProClub(id){
+  regProSelectedClubs=regProSelectedClubs.filter(c=>c.id!==id);
+  renderProClubChips();
+}
+function renderProClubChips(){
+  const el=document.getElementById('regProClubSelected');if(!el)return;
+  el.innerHTML=regProSelectedClubs.map(c=>`<div style="display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700">
+    ${c.nom}<button onclick="removeProClub('${c.id}')" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1">×</button>
+  </div>`).join('');
 }
 
 async function lookupCitiesFromZip(zip){
@@ -6816,6 +6944,43 @@ function renderProfile(){
     </div>`;
   }
 
+  if(u.role==='admin'){
+    html+=`<div class="profile-section">
+    <h3>🛡️ Administration</h3>
+    <div class="pfield"><span class="pk">Rôle</span><span class="pv highlight">Super Admin</span></div>
+    <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+    <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('admin')">Accéder au dashboard →</button></div>
+  </div>`;
+  }
+  if(u.role==='professionnel_sante'){
+    const partnerClubs=(u.partnerClubs||[]);
+    html+=`<div class="profile-section">
+    <h3>🩺 Mon profil professionnel</h3>
+    <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
+    <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
+    <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+    <div class="pfield"><span class="pk">Profession</span><span class="pv">${u.profession||u.healthProInfo?.profession||'—'}</span></div>
+    <div class="pfield"><span class="pk">RPPS</span><span class="pv" style="font-family:monospace">${u.rpps||u.healthProInfo?.rpps||'—'}</span></div>
+  </div>
+  <div class="profile-section">
+    <h3>🏋️ Clubs partenaires</h3>
+    ${partnerClubs.length
+      ?`<div style="display:flex;flex-direction:column;gap:8px">${partnerClubs.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--grey);border-radius:10px"><span style="font-weight:700">${c.nom||c}</span><span style="font-size:12px;color:var(--ink-soft)">${c.sport||''}</span></div>`).join('')}</div>`
+      :`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">Aucun club partenaire enregistré. Sélectionnez vos clubs depuis votre espace professionnel.</div>`}
+    <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('healthPro')">Accéder à mon espace →</button></div>
+  </div>`;
+  }
+  if(u.role==='club'){
+    const ci=u.clubInfo||{};
+    html+=`<div class="profile-section">
+    <h3>🏆 Mon club</h3>
+    <div class="pfield"><span class="pk">Nom du club</span><span class="pv">${ci.nom||'—'}</span></div>
+    <div class="pfield"><span class="pk">Fédération</span><span class="pv">${ci.federation||'—'}</span></div>
+    <div class="pfield"><span class="pk">N° affiliation</span><span class="pv" style="font-family:monospace">${ci.fedId||'—'}</span></div>
+    <div class="pfield"><span class="pk">Ville</span><span class="pv">${ci.ville||'—'}</span></div>
+    <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('club')">Accéder à mon espace →</button></div>
+  </div>`;
+  }
   html+=`<button class="btn ghost" style="width:100%;margin-top:14px;font-size:14px;border-color:var(--err);color:var(--err)" onclick="doLogout()">Se déconnecter</button>`;
   // Section abonnement + parrainage patient
   if(u.role==='patient'||u.role==='patient_licencie') html+=renderPatientReferral();
