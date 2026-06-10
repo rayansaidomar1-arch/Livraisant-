@@ -6765,9 +6765,60 @@ function renderProfile(){
     <div style="margin-top:10px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('livreur')">Accéder à mon espace →</button></div>`;
   }
 
+  // patient_licencie — same view as patient + sport license badge
+  if(u.role==='patient_licencie'){
+    const hp=u.healthProfile||patientProfile||{};
+    const pregnancyLabel={non:'Non',enceinte:'Enceinte 🤰',allaitement:'Allaitement 🍼'}[hp.pregnancy||'non']||'Non';
+    const meds=hp.meds?.length?hp.meds.map(m=>(CHRONIC_MEDS.find(x=>x.id===m)?.label)||m).join(', '):'Aucun';
+    html+=`
+    <div class="profile-section">
+      <h3>👤 Informations personnelles</h3>
+      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
+      <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
+      <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+      ${u.tel?`<div class="pfield"><span class="pk">Téléphone</span><span class="pv">${u.tel}</span></div>`:''}
+    </div>
+    <div class="profile-section">
+      <h3>🎽 Licence sportive</h3>
+      ${u.sportLicense
+        ?`<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px">
+            <span style="font-size:24px">🏅</span>
+            <div><div style="font-weight:800;font-size:15px;color:#1d4ed8">${u.sportLicense}</div>
+            <div style="font-size:12px;color:var(--ink-soft)">Licence fédérale vérifiée</div>
+            <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:4px">✓ Non dopant AMA</span></div>
+          </div>`
+        :`<div style="font-size:13px;color:var(--ink-soft)">Aucune licence enregistrée.</div>`}
+    </div>
+    <div class="profile-section">
+      <h3>🩺 Profil de santé <button onclick="toggleEditHealth()">Modifier</button></h3>
+      <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-64':'18–64 ans','65+':'65 ans et +'}[hp.age||hp.ageRange]||'—'}</span></div>
+      <div class="pfield"><span class="pk">Grossesse / Allaitement</span><span class="pv">${pregnancyLabel}</span></div>
+      <div class="pfield"><span class="pk">Traitements chroniques</span><span class="pv">${meds}</span></div>
+      <div class="edit-inline" id="editHealthPanel">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">Modifier mon profil de santé</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">Grossesse / Allaitement</div>
+          <div class="chips" data-group="editPreg">
+            <button class="chip ${hp.pregnancy==='non'||!hp.pregnancy?'sel':''}" data-v="non">Non</button>
+            <button class="chip ${hp.pregnancy==='enceinte'?'sel':''}" data-v="enceinte">Enceinte 🤰</button>
+            <button class="chip ${hp.pregnancy==='allaitement'?'sel':''}" data-v="allaitement">Allaitement 🍼</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">Traitements chroniques</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px" id="editMeds">
+            ${CHRONIC_MEDS.map(m=>`<button class="chip ${hp.meds?.includes(m.id)?'sel':''}" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')}
+          </div>
+        </div>
+        <button class="btn primary" style="font-size:14px;padding:10px 20px" onclick="saveHealthProfile()">Enregistrer les modifications</button>
+        <div id="saveProfileMsg" style="font-size:13px;color:var(--ok);margin-top:8px"></div>
+      </div>
+    </div>`;
+  }
+
   html+=`<button class="btn ghost" style="width:100%;margin-top:14px;font-size:14px;border-color:var(--err);color:var(--err)" onclick="doLogout()">Se déconnecter</button>`;
   // Section abonnement + parrainage patient
-  if(acc?.role==='patient') html+=renderPatientReferral();
+  if(u.role==='patient'||u.role==='patient_licencie') html+=renderPatientReferral();
   document.getElementById('profileContent').innerHTML=html;
   // Wire edit chips
   document.querySelectorAll('[data-group="editPreg"] .chip').forEach(c=>c.addEventListener('click',e=>{
@@ -6781,7 +6832,7 @@ function endPregnancy(){
   document.getElementById('saveProfileMsg').textContent='';
 }
 function saveHealthProfile(){
-  if(!currentUser||currentUser.role!=='patient') return;
+  if(!currentUser||!['patient','patient_licencie'].includes(currentUser.role)) return;
   const preg=document.querySelector('[data-group="editPreg"] .chip.sel')?.dataset.v||'non';
   const meds=[...document.querySelectorAll('#editMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
   const hp={...currentUser.healthProfile,pregnancy:preg,meds};
