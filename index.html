@@ -853,9 +853,9 @@
           <div><div style="font-weight:800;font-size:14px;color:#0D0E09">Mal de tête</div><div style="font-size:11px;color:#888">Migraine</div></div>
         </button>
 
-        <button onclick="quickAilment('digestion')" style="font-family:inherit;display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e5e5e5;border-radius:14px;background:white;cursor:pointer;text-align:left">
-          <span style="font-size:26px">🫃</span>
-          <div><div style="font-weight:800;font-size:14px;color:#0D0E09">Ventre</div><div style="font-size:11px;color:#888">Digestion difficile</div></div>
+        <button onclick="quickAilment('gastrique')" style="font-family:inherit;display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e5e5e5;border-radius:14px;background:white;cursor:pointer;text-align:left">
+          <span style="font-size:26px">🔥</span>
+          <div><div style="font-weight:800;font-size:14px;color:#0D0E09">Brûlures</div><div style="font-size:11px;color:#888">Estomac · Acidité</div></div>
         </button>
 
         <button onclick="quickAilment('sommeil')" style="font-family:inherit;display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #e5e5e5;border-radius:14px;background:white;cursor:pointer;text-align:left">
@@ -867,7 +867,7 @@
 
       <!-- CTA principal -->
       <button onclick="enterApp('sante')" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:16px;background:#0D0E09;color:#C2F23E;border:none;border-radius:14px;cursor:pointer;box-shadow:3px 3px 0 #C2F23E">
-        Voir tous les 16 symptômes →
+        Voir tous les 15 symptômes →
       </button>
 
       <!-- Confiance -->
@@ -897,8 +897,8 @@
     </div>
   </div>
 
-  <!-- ══════════ SPORT ══════════ -->
-  <div style="padding:0 16px 12px">
+  <!-- ══════════ SPORT + PRO SANTÉ ══════════ -->
+  <div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:10px">
     <button onclick="enterApp('sportif')" style="font-family:inherit;width:100%;background:linear-gradient(135deg,rgba(31,111,235,.25),rgba(31,111,235,.1));border:1.5px solid rgba(31,111,235,.4);border-radius:18px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px">
       <div style="width:40px;height:40px;background:#1F6FEB;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto">🏃</div>
       <div style="flex:1">
@@ -906,6 +906,14 @@
         <div style="font-size:11px;color:rgba(255,255,255,.5)">Licencié · Club partenaire · Protocoles prévention</div>
       </div>
       <span style="color:rgba(255,255,255,.4);font-size:18px">→</span>
+    </button>
+    <button onclick="enterRole('loginScreen')" style="font-family:inherit;width:100%;background:linear-gradient(135deg,rgba(20,184,166,.2),rgba(20,184,166,.08));border:1.5px solid rgba(20,184,166,.4);border-radius:18px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="width:40px;height:40px;background:#0d9488;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto">🩺</div>
+      <div style="flex:1">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;color:white">Pro de santé &amp; partenaire club</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45)">Kiné · Médecin du sport · Diét · Rejoignez le réseau</div>
+      </div>
+      <div style="background:rgba(20,184,166,.3);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;color:#5eead4;white-space:nowrap">Rejoindre →</div>
     </button>
   </div>
 
@@ -1413,14 +1421,21 @@
       <button class="switch" onclick="enterRole('loginScreen')">← Connexion</button>
     </div>
     <div class="login-box" style="border-radius:16px">
-      <div class="form-group"><label class="form-label">Votre prénom</label><input type="text" id="regPrenom" placeholder="Ex. Marie"></div>
-      <div class="form-group"><label class="form-label">Email</label><input type="email" id="regEmail" placeholder="votre@email.fr"></div>
-      <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="regPassword" placeholder="Minimum 6 caractères"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="regPrenom" placeholder="Ex. Marie"></div>
+        <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="regNom" placeholder="Ex. Dupont"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="regEmail" placeholder="votre@email.fr"></div>
+      <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="regPhone" inputmode="tel" placeholder="Ex. 06 12 34 56 78" oninput="formatPhone(this)" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;width:100%;box-sizing:border-box"></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="regPassword" placeholder="Minimum 6 caractères"></div>
       <div class="form-group"><label class="form-label">Vous êtes :</label>
-        <div class="chips" data-group="regRole">
+        <div class="chips" data-group="regRole" style="flex-wrap:wrap">
           <button class="chip sel" data-v="patient">🩹 Patient</button>
+          <button class="chip" data-v="patient_licencie">🎽 Sportif licencié</button>
           <button class="chip" data-v="pharmacien">💊 Pharmacien</button>
           <button class="chip" data-v="livreur">🛵 Livreur</button>
+          <button class="chip" data-v="professionnel_sante">🩺 Prof. santé</button>
+          <button class="chip" data-v="club">🏆 Club sportif</button>
         </div>
       </div>
       <!-- Profil santé (patient uniquement) -->
@@ -1466,21 +1481,116 @@
               style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
             <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
               <input id="regZip" type="text" inputmode="numeric" maxlength="5" placeholder="Code postal"
+                oninput="lookupCitiesFromZip(this.value)"
                 style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
-              <input id="regCity" type="text" placeholder="Ville"
-                style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+              <div style="position:relative">
+                <input id="regCity" type="text" placeholder="Ville" readonly
+                  style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box;background:white;cursor:pointer"
+                  onclick="document.getElementById('regCityDropdown').style.display='block'">
+                <div id="regCityDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid var(--line-strong);border-radius:10px;z-index:100;max-height:160px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)"></div>
+              </div>
             </div>
           </div>
         </div>
+        <div class="form-group" style="margin-top:10px">
+          <label class="form-label">🏅 Numéro de licence sportive <span class="opt">(optionnel — pour les sportifs licenciés)</span></label>
+          <input id="regSportLicense" type="text" placeholder="Ex. 12345678 · FFFootball, FFRugby, FFN…"
+            style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box">
+          <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Le badge « Non dopant AMA » sera activé sur vos conseils produits</div>
+        </div>
       </div>
+
+      <!-- Champs pharmacien -->
+      <div id="regPharmacienFields" style="display:none">
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#1d4ed8;margin-bottom:8px">💊 Vérification RPPS obligatoire</div>
+          <div style="font-size:13px;color:#1e40af;margin-bottom:12px">Pour rejoindre Livraisanté en tant que pharmacien titulaire, votre numéro RPPS (Répertoire Partagé des Professionnels de Santé) sera vérifié auprès de l'Annuaire Santé national.</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Numéro RPPS <span style="font-weight:400;color:#666">(11 chiffres — commence par 10)</span></label>
+            <div style="display:flex;gap:8px">
+              <input id="regRPPSPharma" type="text" inputmode="numeric" maxlength="11" placeholder="Ex. 10003456789"
+                oninput="this.value=this.value.replace(/\D/g,'')"
+                style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;letter-spacing:1px">
+              <button type="button" onclick="checkRPPSPharma()" style="font-family:inherit;font-size:13px;font-weight:700;padding:10px 16px;border:none;border-radius:10px;background:#1d4ed8;color:white;cursor:pointer;white-space:nowrap">Vérifier →</button>
+            </div>
+            <div id="rppsPharmaMsg" style="font-size:12px;margin-top:6px;min-height:18px"></div>
+          </div>
+          <div id="rppsPharmaResult" style="display:none;background:white;border-radius:10px;padding:12px;font-size:13px"></div>
+        </div>
+      </div>
+
+      <!-- Champs livreur (email + tel déjà requis, info seulement) -->
+      <div id="regLivreurFields" style="display:none">
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#c2410c;margin-bottom:6px">🛵 Vérification livreur</div>
+          <div style="font-size:13px;color:#9a3412">Votre identité sera vérifiée via votre adresse email et votre numéro de téléphone renseignés ci-dessus. Un code de confirmation vous sera envoyé par SMS avant l'activation de votre compte.</div>
+        </div>
+      </div>
+
+      <!-- Champs professionnel de santé -->
+      <div id="regHealthProFields" style="display:none">
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#15803d;margin-bottom:8px">🩺 Vérification RPPS obligatoire</div>
+          <div style="font-size:13px;color:#166534;margin-bottom:12px">Pour rejoindre Livraisanté en tant que professionnel de santé, votre numéro RPPS sera vérifié auprès de l'Annuaire Santé national.</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Numéro RPPS <span style="font-weight:400;color:#666">(11 chiffres — commence par 10)</span></label>
+            <div style="display:flex;gap:8px">
+              <input id="regRPPSPro" type="text" inputmode="numeric" maxlength="11" placeholder="Ex. 10003456789"
+                oninput="this.value=this.value.replace(/\D/g,'')"
+                style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;letter-spacing:1px">
+              <button type="button" onclick="checkRPPSPro()" style="font-family:inherit;font-size:13px;font-weight:700;padding:10px 16px;border:none;border-radius:10px;background:#15803d;color:white;cursor:pointer;white-space:nowrap">Vérifier →</button>
+            </div>
+            <div id="rppsProMsg" style="font-size:12px;margin-top:6px;min-height:18px"></div>
+          </div>
+          <div id="rppsProResult" style="display:none;background:white;border-radius:10px;padding:12px;font-size:13px"></div>
+          <div class="form-group" style="margin-bottom:0;margin-top:10px">
+            <label class="form-label">Profession</label>
+            <select id="regProfession" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
+              <option value="">-- Choisir votre profession --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Champs club -->
+      <div id="regClubFields" style="display:none">
+        <div style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#7c3aed;margin-bottom:8px">🏋️ Vérification club sportif</div>
+          <div style="font-size:13px;color:#6d28d9;margin-bottom:12px">Renseignez le numéro d'identification de votre fédération sportive. Ce numéro sera vérifié avant l'activation de votre espace club.</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">N° d'affiliation fédérale <span style="font-weight:400;color:#666">(ex. 123456 ou CLUB-A7K3MX)</span></label>
+            <input id="regFedId" type="text" placeholder="Numéro d'identification fédération"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;box-sizing:border-box">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Nom du club</label>
+            <input id="regClubName" type="text" placeholder="Ex. AS Grenoble Football"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+          </div>
+        </div>
+      </div>
+
+      <!-- Champs patient sportif licencié -->
+      <div id="regLicencieFields" style="display:none">
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#1d4ed8;margin-bottom:8px">🎽 Numéro de licence sportive *</div>
+          <div style="font-size:13px;color:#1e40af;margin-bottom:10px">Votre numéro de licence fédérale est utilisé pour vérifier votre statut de sportif licencié et vous connecter au programme B2B2C de votre club.</div>
+          <input id="regLicenseNum" type="text" placeholder="Ex. 12345678 ou CLUB-XXXXX"
+            style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:15px;font-weight:700;box-sizing:border-box">
+        </div>
+      </div>
+
       <div id="regErr" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
 
       <!-- ══ CONSENTEMENTS RGPD (Art. 6 & 9 RGPD) ══ -->
       <div style="background:#f8f8f7;border:1.5px solid #e5e5e5;border-radius:12px;padding:14px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px">🔒 Consentements requis (RGPD)</div>
-
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400e">
+          📜 <b>Vous devez lire les CGU avant de cocher la case.</b> En créant votre compte, vous vous engagez à utiliser Livraisanté exclusivement pour la dispensation et la livraison de compléments alimentaires et de dispositifs médicaux. Tout détournement entraîne résiliation immédiate et recours judiciaire.
+          <button onclick="showRgpdModal('cgu')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:12px;padding:0;margin-left:4px">Lire les CGU complètes →</button>
+        </div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:10px;font-size:13px;line-height:1.4">
-          <input type="checkbox" id="consentCGU" style="width:17px;height:17px;margin-top:2px;accent-color:var(--ink);flex:0 0 auto">
+          <input type="checkbox" id="consentCGU" style="width:17px;height:17px;margin-top:2px;accent-color:var(--ink);flex:0 0 auto" required>
           <span>J'ai lu et j'accepte les <button onclick="showRgpdModal('cgu')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Conditions Générales d'Utilisation</button> et la <button onclick="showRgpdModal('intro')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:13px;padding:0">Politique de Confidentialité</button> *</span>
         </label>
 
@@ -2249,11 +2359,12 @@ const APPS={home:'homeScreen',sante:'santeApp',sportif:'sportifApp',pro:'proApp'
 /* ── Page d'accueil ── */
 function enterApp(type){
   switch(type){
-    case 'sante':   enterRole('sante'); break;
-    case 'pro':     enterRole('pro');   break;
-    case 'livreur': enterRole('livreur');break;
-    case 'sportif': enterRole('sportif');break;
-    default:        showHome();
+    case 'sante':     enterRole('sante'); break;
+    case 'pro':       enterRole('pro');   break;
+    case 'livreur':   enterRole('livreur');break;
+    case 'sportif':   enterRole('sportif');break;
+    case 'healthPro': currentUser?enterRole('healthPro'):enterRole('loginScreen'); break;
+    default:          showHome();
   }
 }
 /* ═══════════════════════════════════════════════════════════
@@ -2333,6 +2444,7 @@ function quickAilment(id){
    ESPACE SPORT — Licencié & Partenaire sportif
 ═══════════════════════════════════════════════════════════ */
 let sportTab='licencie'; // 'licencie' | 'partenaire'
+let sportWiz={step:0,data:{}}; // wizard state for licencié tab
 
 function renderSportApp(){
   const el=document.getElementById('sportifContent'); if(!el) return;
@@ -2345,52 +2457,321 @@ function renderSportApp(){
 function setSportTab(t){ sportTab=t; renderSportApp(); }
 
 function renderLicencieTab(){
-  const isLinked=currentUser?.sportLicense;
-  const patientLinked=currentUser?.role==='patient';
-  return `
-  <div style="background:linear-gradient(135deg,#1F6FEB15,#1F6FEB08);border:1.5px solid #1F6FEB30;border-radius:16px;padding:18px;margin-bottom:18px">
-    <div style="font-weight:800;font-size:17px;margin-bottom:4px;color:#1F6FEB">🏃 Mon espace licencié</div>
-    <div style="font-size:13px;color:var(--ink-soft)">Conseil santé adapté à votre pratique sportive · Protocoles de prévention · Compléments légaux</div>
-  </div>
+  // Steps: 0=identification, 1=hygiene, 2=pratique, 3=demandes, 4=protocole, 5=rdv
+  const steps=['Identité','Hygiène de vie','Pratique sportive','Objectifs','Protocole','Rendez-vous'];
+  const stepsIcons=['👤','🌿','🏃','🎯','💊','📅'];
+  const n=sportWiz.step;
 
-  ${!currentUser?`<div style="background:var(--lime);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center">
-    <div style="font-weight:800;font-size:15px;margin-bottom:4px">Connectez votre compte licencié</div>
-    <div style="font-size:13px;margin-bottom:10px">Votre compte sportif se synchronise avec votre profil santé patient</div>
-    <button onclick="enterRole('loginScreen')" style="font-family:inherit;font-weight:800;font-size:14px;padding:10px 20px;background:var(--ink);color:var(--lime);border:none;border-radius:10px;cursor:pointer">Créer / Se connecter →</button>
-  </div>`:''}
-
-  <div class="card" style="margin-bottom:16px">
-    <h3 style="font-size:15px;font-weight:800;margin-bottom:12px">🎽 Mon numéro de licence</h3>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      <input id="licenseInput" type="text" placeholder="Ex. 12345678 ou CLUB-XXXXX" value="${currentUser?.sportLicense||''}"
-        style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:15px;font-weight:700">
-      <button onclick="saveSportLicense()" style="font-family:inherit;font-weight:800;font-size:13px;padding:10px 16px;background:var(--ink);color:var(--lime);border:none;border-radius:10px;cursor:pointer">✓ Lier</button>
-    </div>
-    <div style="font-size:12px;color:var(--ink-soft)">Accepté : numéro FFFootball, FFRugby, FFN, FFA, FFJudo, FFTennis, FFBox, FFHockey, ou code club CLUB-XXXXX</div>
-    ${patientLinked?`<div style="margin-top:10px;padding:8px 12px;background:#d7f0db;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ok)">✓ Lié à votre compte patient — profil de santé synchronisé</div>`:''}
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
-    <h3 style="font-size:15px;font-weight:800;margin-bottom:14px">🏆 Mon sport &amp; protocoles adaptés</h3>
-    <div id="sportGridInline" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
-      ${['Football','Rugby','Natation','Athlétisme','Judo','Tennis','Cyclisme','Basket','Handball','Volley','Ski','Boxe'].map(s=>`
-        <button onclick="selectSportLicence('${s}')" id="sli-${s}" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px;border:1.5px solid #e5e5e5;border-radius:10px;background:white;cursor:pointer;text-align:center;transition:.12s">🏅 ${s}</button>`).join('')}
-    </div>
-    <div id="sportProtocol" style="margin-top:14px"></div>
-  </div>
-
-  <div class="card">
-    <h3 style="font-size:15px;font-weight:800;margin-bottom:12px">💊 Compléments sport légaux (Liste WADA)</h3>
-    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Tous les produits conseillés respectent la liste des substances interdites de l'AMA/WADA. Validés par notre pharmacien.</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      ${[['Créatine','Monohydrate — Force &amp; récupération musculaire'],['Protéines de lactosérum','Whey — Récupération &amp; masse musculaire'],['Magnésium','Bisglycinate — Crampes, fatigue, performance'],['Oméga-3 EPA/DHA','Anti-inflammatoire — Récupération articulaire'],['Vitamine D3','Immunité, os, performance — surtout hiver'],['Beta-alanine','Tampon acide lactique — endurance &amp; HIIT']].map(([n,d])=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--grey);border-radius:10px">
-        <div><div style="font-weight:700;font-size:13.5px">${n}</div><div style="font-size:12px;color:var(--ink-soft)">${d}</div></div>
-        <button onclick="selectedAilments.clear();enterRole('sante');setTimeout(()=>showToast('Recherchez ${n} dans le catalogue 💊','var(--ok)'),300)" style="font-family:inherit;font-size:11px;font-weight:700;padding:6px 12px;background:var(--ink);color:var(--lime);border:none;border-radius:8px;cursor:pointer">Commander →</button>
-      </div>`).join('')}
-    </div>
-    <div style="font-size:11px;color:var(--warn);margin-top:10px;padding:8px;background:#fffbe6;border-radius:8px;font-weight:600">⚠ Toujours vérifier la liste WADA avant compétition. Consulter votre médecin du sport ou pharmacien.</div>
+  const stepBar=`<div style="display:flex;gap:0;overflow-x:auto;margin-bottom:20px;padding-bottom:4px">
+    ${steps.map((s,i)=>`<div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto;padding:0 6px;cursor:pointer;opacity:${i<=n?1:.35}" onclick="if(${i}<${n})setSportWizStep(${i})">
+      <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;background:${i<n?'#1F6FEB':i===n?'#1F6FEB':'#e5e5e5'};color:${i<=n?'white':'#aaa'};font-weight:800;font-size:${i<n?'11px':'14px'}">${i<n?'✓':stepsIcons[i]}</div>
+      <div style="font-size:9px;font-weight:700;color:${i===n?'#1F6FEB':'var(--ink-soft)'};margin-top:3px;text-align:center;white-space:nowrap">${s}</div>
+    </div>${i<steps.length-1?'<div style="flex:1;height:2px;background:'+(i<n?'#1F6FEB':'#e5e5e5')+';margin-top:14px;min-width:8px"></div>':''}`).join('')}
   </div>`;
+
+  let content='';
+
+  if(n===0){
+    // ── ÉTAPE 0 : IDENTIFICATION ──
+    content=`<div style="background:linear-gradient(135deg,#1F6FEB15,#1F6FEB08);border:1.5px solid #1F6FEB30;border-radius:16px;padding:18px;margin-bottom:18px">
+      <div style="font-weight:800;font-size:18px;margin-bottom:4px;color:#1F6FEB">🏃 Espace Sport & Santé</div>
+      <div style="font-size:13px;color:var(--ink-soft)">Bilan personnalisé · Protocoles prévention · Compléments légaux AMA</div>
+    </div>
+    ${!currentUser?`<div style="background:var(--lime);border-radius:14px;padding:18px;margin-bottom:16px;text-align:center">
+      <div style="font-weight:800;font-size:16px;margin-bottom:6px">Connectez-vous pour démarrer</div>
+      <div style="font-size:13px;margin-bottom:12px;opacity:.8">Votre bilan sport-santé sera sauvegardé sur votre profil</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button onclick="enterRole('loginScreen')" style="font-family:inherit;font-weight:800;font-size:14px;padding:11px 22px;background:var(--ink);color:var(--lime);border:none;border-radius:10px;cursor:pointer">Se connecter →</button>
+        <button onclick="enterRole('registerScreen')" style="font-family:inherit;font-weight:700;font-size:13px;padding:11px 18px;background:white;color:var(--ink);border:2px solid var(--ink);border-radius:10px;cursor:pointer">Créer un compte</button>
+      </div>
+    </div>
+    <div style="text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:10px;font-style:italic">— ou continuer sans compte —</div>`:''}
+    ${currentUser?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white">${(currentUser.prenom||currentUser.email||'?')[0].toUpperCase()}</div>
+      <div><div style="font-weight:800;font-size:15px">${currentUser.prenom||currentUser.email}</div><div style="font-size:12px;color:var(--ink-soft)">${currentUser.sportLicense?'🏅 Licence : '+currentUser.sportLicense:'Pas de licence enregistrée'}</div></div>
+    </div>`:''}
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="font-size:15px;font-weight:800;margin-bottom:12px">🎽 Numéro de licence sportive</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="licenseInput" type="text" placeholder="Ex. 12345678 ou CLUB-XXXXX" value="${currentUser?.sportLicense||''}"
+          style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:15px;font-weight:700">
+        <button onclick="saveSportLicense()" style="font-family:inherit;font-weight:800;font-size:13px;padding:10px 16px;background:var(--ink);color:var(--lime);border:none;border-radius:10px;cursor:pointer">✓ Lier</button>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft)">FFFootball · FFRugby · FFN · FFA · FFJudo · FFTennis · FFBox · FFHockey</div>
+    </div>
+    <button onclick="setSportWizStep(1)" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
+  }
+
+  else if(n===1){
+    // ── ÉTAPE 1 : HYGIÈNE DE VIE ──
+    content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🌿 Hygiène de vie</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Ces informations permettent d'adapter votre protocole de soin</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">😴 Qualité du sommeil</div>
+      <div class="chips" data-group="wizSommeil">
+        <button class="chip${sportWiz.data.sommeil==='bon'?' sel':''}" data-v="bon" onclick="sportWiz.data.sommeil='bon';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Bon (7-9h)</button>
+        <button class="chip${sportWiz.data.sommeil==='moyen'?' sel':''}" data-v="moyen" onclick="sportWiz.data.sommeil='moyen';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Moyen (5-7h)</button>
+        <button class="chip${sportWiz.data.sommeil==='mauvais'?' sel':''}" data-v="mauvais" onclick="sportWiz.data.sommeil='mauvais';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Insuffisant (&lt;5h)</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🧠 Niveau de stress</div>
+      <div class="chips" data-group="wizStress">
+        <button class="chip${sportWiz.data.stress==='faible'?' sel':''}" data-v="faible" onclick="sportWiz.data.stress='faible';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Faible</button>
+        <button class="chip${sportWiz.data.stress==='modere'?' sel':''}" data-v="modere" onclick="sportWiz.data.stress='modere';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Modéré</button>
+        <button class="chip${sportWiz.data.stress==='eleve'?' sel':''}" data-v="eleve" onclick="sportWiz.data.stress='eleve';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Élevé</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🥗 Alimentation</div>
+      <div class="chips" data-group="wizAlim">
+        <button class="chip${sportWiz.data.alim==='equilibre'?' sel':''}" data-v="equilibre" onclick="sportWiz.data.alim='equilibre';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Équilibrée</button>
+        <button class="chip${sportWiz.data.alim==='sportive'?' sel':''}" data-v="sportive" onclick="sportWiz.data.alim='sportive';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Sport-spécifique</button>
+        <button class="chip${sportWiz.data.alim==='insuffisante'?' sel':''}" data-v="insuffisante" onclick="sportWiz.data.alim='insuffisante';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">À améliorer</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">💧 Hydratation quotidienne</div>
+      <div class="chips" data-group="wizHydra">
+        <button class="chip${sportWiz.data.hydra==='ok'?' sel':''}" data-v="ok" onclick="sportWiz.data.hydra='ok';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">≥ 1,5 L/j</button>
+        <button class="chip${sportWiz.data.hydra==='insuffisant'?' sel':''}" data-v="insuffisant" onclick="sportWiz.data.hydra='insuffisant';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">&lt; 1,5 L/j</button>
+        <button class="chip${sportWiz.data.hydra==='variable'?' sel':''}" data-v="variable" onclick="sportWiz.data.hydra='variable';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Variable</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(0)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="validateSportWizStep(1)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Suivant →</button>
+    </div>`;
+  }
+
+  else if(n===2){
+    // ── ÉTAPE 2 : PRATIQUE SPORTIVE ──
+    const sports=['Football','Rugby','Natation','Athlétisme','Judo','Tennis','Cyclisme','Basket','Handball','Volley','Ski','Boxe','Running','Fitness','Yoga','Escalade'];
+    content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🏃 Pratique sportive</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Dites-nous tout sur votre pratique</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏅 Mon sport principal</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px">
+        ${sports.map(s=>`<button onclick="sportWiz.data.sport='${s}';document.querySelectorAll('[data-swsport]').forEach(b=>{b.style.background='white';b.style.borderColor='#e5e5e5';b.style.color='var(--ink)'});this.style.background='#EFF6FF';this.style.borderColor='#1F6FEB';this.style.color='#1F6FEB'" data-swsport="${s}" style="font-family:inherit;font-size:11px;font-weight:700;padding:8px 4px;border:1.5px solid ${sportWiz.data.sport===s?'#1F6FEB':'#e5e5e5'};border-radius:10px;background:${sportWiz.data.sport===s?'#EFF6FF':'white'};color:${sportWiz.data.sport===s?'#1F6FEB':'var(--ink)'};cursor:pointer;text-align:center">${s}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">📅 Fréquence d'entraînement</div>
+      <div class="chips" data-group="wizFreq">
+        <button class="chip${sportWiz.data.freq==='1-2'?' sel':''}" data-v="1-2" onclick="sportWiz.data.freq='1-2';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">1-2×/sem</button>
+        <button class="chip${sportWiz.data.freq==='3-4'?' sel':''}" data-v="3-4" onclick="sportWiz.data.freq='3-4';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">3-4×/sem</button>
+        <button class="chip${sportWiz.data.freq==='5+'?' sel':''}" data-v="5+" onclick="sportWiz.data.freq='5+';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">5+/sem</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🤕 Antécédents de blessures</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px" id="wizInjuries">
+        ${['Genoux','Chevilles','Épaules','Dos','Coude','Hanche','Aucun'].map(b=>`<button class="chip${(sportWiz.data.injuries||[]).includes(b)?' sel':''}" onclick="toggleWizInjury('${b}',this)" style="font-size:12px">${b}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏆 Niveau de pratique</div>
+      <div class="chips" data-group="wizNiveau">
+        <button class="chip${sportWiz.data.niveau==='loisir'?' sel':''}" data-v="loisir" onclick="sportWiz.data.niveau='loisir';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Loisir</button>
+        <button class="chip${sportWiz.data.niveau==='competition'?' sel':''}" data-v="competition" onclick="sportWiz.data.niveau='competition';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Compétition</button>
+        <button class="chip${sportWiz.data.niveau==='elite'?' sel':''}" data-v="elite" onclick="sportWiz.data.niveau='elite';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Élite / Pro</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(1)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="validateSportWizStep(2)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Suivant →</button>
+    </div>`;
+  }
+
+  else if(n===3){
+    // ── ÉTAPE 3 : OBJECTIFS & DEMANDES ──
+    content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">🎯 Vos objectifs</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Qu'attendez-vous de votre protocole sport-santé ?</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏋️ Objectifs principaux <span style="font-weight:400;font-size:12px;color:var(--ink-soft)">(plusieurs possibles)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        ${['Performance','Récupération','Prévention blessures','Perte de poids','Prise de masse','Endurance','Gestion du stress','Sommeil','Anti-dopage AMA'].map(o=>`<button class="chip${(sportWiz.data.objectifs||[]).includes(o)?' sel':''}" onclick="toggleWizObjectif('${o}',this)" style="font-size:12px">${o}</button>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">💬 Contraintes ou informations complémentaires <span style="font-weight:400;font-size:12px;color:var(--ink-soft)">(optionnel)</span></div>
+      <textarea id="wizNotes" placeholder="Ex. allergies, traitements en cours, objectif de compétition, blessure récente…"
+        style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:13px;resize:vertical;min-height:80px;box-sizing:border-box">${sportWiz.data.notes||''}</textarea>
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">🏆 Échéance de compétition</div>
+      <div class="chips" data-group="wizEcheance">
+        <button class="chip${sportWiz.data.echeance==='aucune'?' sel':''}" data-v="aucune" onclick="sportWiz.data.echeance='aucune';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">Aucune</button>
+        <button class="chip${sportWiz.data.echeance==='1mois'?' sel':''}" data-v="1mois" onclick="sportWiz.data.echeance='1mois';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">&lt; 1 mois</button>
+        <button class="chip${sportWiz.data.echeance==='3mois'?' sel':''}" data-v="3mois" onclick="sportWiz.data.echeance='3mois';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel')">1-3 mois</button>
+        <button class="chip${sportWiz.data.echeance==='6mois'?' sel':''}" data-v="6mois" onclick="sportWiz.data.echeance='6mois';this.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel'">&gt; 3 mois</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(2)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Retour</button>
+      <button onclick="sportWiz.data.notes=document.getElementById('wizNotes')?.value||'';generateSportProtocol()" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Générer mon protocole →</button>
+    </div>`;
+  }
+
+  else if(n===4){
+    // ── ÉTAPE 4 : PROTOCOLE GÉNÉRÉ ──
+    const proto=buildSportProtocol(sportWiz.data);
+    content=`<div style="background:linear-gradient(135deg,#EFF6FF,#dbeafe);border:1.5px solid #1F6FEB40;border-radius:16px;padding:18px;margin-bottom:18px">
+      <div style="font-weight:800;font-size:18px;color:#1F6FEB;margin-bottom:4px">💊 Votre protocole personnalisé</div>
+      <div style="font-size:13px;color:#1e40af">Généré pour ${sportWiz.data.sport||'votre sport'} · ${sportWiz.data.niveau||'tout niveau'} · ${(sportWiz.data.objectifs||[]).join(', ')||'objectif général'}</div>
+    </div>
+    ${proto.sections.map(s=>`<div class="card" style="margin-bottom:14px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:#1F6FEB">${s.icon} ${s.titre}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${s.items.map(item=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--grey);border-radius:10px;gap:10px">
+          <div style="flex:1"><div style="font-weight:700;font-size:13.5px">${item.nom}</div><div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">${item.desc}</div>${item.ama?'<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px">✓ Non dopant AMA</span>':''}</div>
+          <button onclick="enterApp('sante')" style="font-family:inherit;font-size:11px;font-weight:700;padding:7px 12px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer;flex:0 0 auto">Commander →</button>
+        </div>`).join('')}
+      </div>
+    </div>`).join('')}
+    ${proto.alertes.length?`<div style="background:#fffbe6;border:1.5px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:13px;color:#92400e;margin-bottom:8px">⚠ Points d'attention</div>
+      ${proto.alertes.map(a=>`<div style="font-size:12.5px;color:#78350f;margin-bottom:4px">• ${a}</div>`).join('')}
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(3)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Modifier</button>
+      <button onclick="setSportWizStep(5)" style="font-family:inherit;font-weight:800;font-size:14px;padding:13px;background:#1F6FEB;color:white;border:none;border-radius:12px;cursor:pointer">Prendre RDV →</button>
+    </div>`;
+  }
+
+  else if(n===5){
+    // ── ÉTAPE 5 : RENDEZ-VOUS ──
+    content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">📅 Rendez-vous avec un professionnel de santé</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Un professionnel de santé référent de votre club examinera votre protocole</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Professionnel de santé du club</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${[
+          {nom:'Dr. Sophie Martin',spec:'Médecin du sport',dispo:'Disponible cette semaine'},
+          {nom:'Julien Renard',spec:'Kinésithérapeute',dispo:'Prochaine dispo : lundi'},
+          {nom:'Camille Perret',spec:'Diététicienne sportive',dispo:'Disponible demain'},
+        ].map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--grey);border-radius:12px;gap:10px">
+          <div>
+            <div style="font-weight:800;font-size:14px">${p.nom}</div>
+            <div style="font-size:12px;color:var(--ink-soft)">${p.spec}</div>
+            <div style="font-size:11px;color:var(--ok);font-weight:700;margin-top:2px">🟢 ${p.dispo}</div>
+          </div>
+          <button onclick="bookSportRdv('${p.nom}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer;flex:0 0 auto">Réserver →</button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="background:#f8f8f7;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12.5px;color:var(--ink-soft)">
+      💡 <b>Pas de professionnel de santé dans votre club ?</b> Contactez votre club pour activer ce service ou écrivez à <a href="mailto:sport@livraisante.fr" style="color:#1F6FEB;font-weight:700">sport@livraisante.fr</a>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="setSportWizStep(4)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">← Protocole</button>
+      <button onclick="setSportWizStep(0)" style="font-family:inherit;font-weight:700;font-size:14px;padding:13px;background:var(--grey);color:var(--ink);border:none;border-radius:12px;cursor:pointer">🔄 Nouveau bilan</button>
+    </div>`;
+  }
+
+  return stepsIcons?stepBar+content:content;
+}
+
+function setSportWizStep(s){ sportWiz.step=s; renderSportApp(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function validateSportWizStep(step){
+  const errFields={1:['sommeil','stress','alim','hydra'],2:['freq','niveau'],3:[]};
+  const fields=errFields[step]||[];
+  for(const f of fields){
+    if(!sportWiz.data[f]){
+      showToast('⚠ Veuillez répondre à toutes les questions','var(--warn)'); return;
+    }
+  }
+  if(step===2&&!sportWiz.data.sport){
+    showToast('⚠ Choisissez votre sport principal','var(--warn)'); return;
+  }
+  setSportWizStep(step+1);
+}
+
+function toggleWizInjury(val,btn){
+  if(!sportWiz.data.injuries) sportWiz.data.injuries=[];
+  const idx=sportWiz.data.injuries.indexOf(val);
+  if(val==='Aucun'){sportWiz.data.injuries=idx>=0?[]:['Aucun'];btn.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));if(idx<0)btn.classList.add('sel');return;}
+  if(idx>=0) sportWiz.data.injuries.splice(idx,1); else sportWiz.data.injuries.push(val);
+  btn.classList.toggle('sel',idx<0);
+  const aucunBtn=[...btn.parentNode.querySelectorAll('.chip')].find(c=>c.textContent==='Aucun');
+  if(aucunBtn){sportWiz.data.injuries=sportWiz.data.injuries.filter(i=>i!=='Aucun');aucunBtn.classList.remove('sel');}
+}
+
+function toggleWizObjectif(val,btn){
+  if(!sportWiz.data.objectifs) sportWiz.data.objectifs=[];
+  const idx=sportWiz.data.objectifs.indexOf(val);
+  if(idx>=0) sportWiz.data.objectifs.splice(idx,1); else sportWiz.data.objectifs.push(val);
+  btn.classList.toggle('sel',idx<0);
+}
+
+function generateSportProtocol(){ setSportWizStep(4); }
+
+function buildSportProtocol(d){
+  const sections=[];
+  const alertes=[];
+  const sport=d.sport||'';
+  const obj=d.objectifs||[];
+  const inj=d.injuries||[];
+  const isCompet=d.niveau==='competition'||d.niveau==='elite';
+  const proche=d.echeance==='1mois';
+
+  // Compléments de base
+  const base={titre:'Compléments de base',icon:'💊',items:[
+    {nom:'Magnésium bisglycinate',desc:'Crampes, récupération musculaire, stress',ama:true},
+    {nom:'Vitamine D3 + K2',desc:'Performance, immunité, osseux',ama:true},
+    {nom:'Oméga-3 EPA/DHA',desc:'Anti-inflammatoire, récupération articulaire',ama:true},
+  ]};
+  sections.push(base);
+
+  // Objectif performance / masse
+  if(obj.includes('Performance')||obj.includes('Prise de masse')){
+    sections.push({titre:'Performance & Force',icon:'💪',items:[
+      {nom:'Créatine monohydrate',desc:'Force, puissance, récupération explosive',ama:true},
+      {nom:'Protéines de lactosérum (Whey)',desc:'Synthèse protéique post-entraînement',ama:true},
+    ]});
+  }
+  // Endurance
+  if(obj.includes('Endurance')||['Natation','Athlétisme','Cyclisme','Running'].includes(sport)){
+    sections.push({titre:'Endurance & Énergie',icon:'⚡',items:[
+      {nom:'Beta-alanine',desc:'Tampon lactique, endurance et HIIT',ama:true},
+      {nom:'Fer (si femme / coureur de fond)',desc:'Transport oxygène, fatigue',ama:true},
+      {nom:'Vitamines B complexe',desc:'Métabolisme énergétique',ama:true},
+    ]});
+  }
+  // Récupération
+  if(obj.includes('Récupération')||d.freq==='5+'){
+    sections.push({titre:'Récupération',icon:'🔄',items:[
+      {nom:'L-Glutamine',desc:'Récupération musculaire, immunité post-effort',ama:true},
+      {nom:'Curcuma + Poivre noir',desc:'Anti-inflammatoire naturel, douleurs musculaires',ama:true},
+    ]});
+  }
+  // Blessures
+  if(inj.length&&!inj.includes('Aucun')){
+    sections.push({titre:'Prévention blessures',icon:'🛡️',items:[
+      {nom:'Collagène hydrolysé + Vit C',desc:'Tendons, ligaments, cartilage',ama:true},
+      {nom:'Glucosamine + Chondroïtine',desc:'Protection articulaire, mobilité',ama:true},
+    ]});
+    if(inj.includes('Genoux')||inj.includes('Épaules')) alertes.push('Blessures aux '+inj.filter(i=>['Genoux','Épaules','Chevilles','Coude'].includes(i)).join(', ')+' : consultez un kinésithérapeute avant de reprendre');
+  }
+  // Stress / sommeil
+  if(d.stress==='eleve'||d.sommeil==='mauvais'||obj.includes('Sommeil')||obj.includes('Gestion du stress')){
+    sections.push({titre:'Bien-être & Récupération nerveuse',icon:'🌙',items:[
+      {nom:'Mélatonine 1 mg',desc:'Endormissement, sommeil réparateur',ama:true},
+      {nom:'Ashwagandha (extrait KSM-66)',desc:'Adaptogène, gestion du stress, cortisol',ama:true},
+      {nom:'Magnésium marin + Vitamine B6',desc:'Relaxation neuromusculaire',ama:true},
+    ]});
+  }
+  // Alertes compétition proche
+  if(proche&&isCompet) alertes.push('Compétition imminente — vérifiez chaque complément sur la liste WADA avant prise');
+  if(d.alim==='insuffisante') alertes.push('Alimentation insuffisante : consultez une diététicienne sportive pour optimiser vos apports');
+  if(d.hydra==='insuffisant') alertes.push('Hydratation insuffisante : visez 2 L/j minimum + boisson isotonique à l\'effort');
+
+  return {sections,alertes};
+}
+
+function bookSportRdv(proNom){
+  showToast(`✅ Demande de RDV envoyée à ${proNom} — vous recevrez une confirmation par email`,'var(--ok)');
 }
 
 function saveSportLicense(){
@@ -3743,9 +4124,7 @@ const PRODUCT_CATALOG={
 /* Corrélations croisées entre symptômes */
 const SYMPTOM_LINKS={
   'tete+diarrhee':'💧 La déshydratation causée par la diarrhée est une cause fréquente de maux de tête. <b>Priorité à la réhydratation (SRO)</b> avant tout autre traitement.',
-  'tete+digestion':'🌀 Les nausées et troubles digestifs peuvent déclencher ou aggraver les céphalées — soigner les deux en parallèle.',
   'tete+sommeil':'😴 Le manque de sommeil est l\'une des premières causes de maux de tête. Corriger le rythme de sommeil peut suffire.',
-  'diarrhee+digestion':'🫃 Diarrhée et brûlures digestives partagent souvent la même origine inflammatoire. Réhydratation + probiotiques doublement indiqués.',
   'rhume+gorge':'🤧 Rhume et mal de gorge forment un tableau d\'infection des voies aériennes supérieures — approche globale recommandée.',
   'allergie+piqure':'⚠️ Une réaction allergique peut s\'aggraver suite à une piqûre — surveiller les signes d\'anaphylaxie. Si gonflement de la gorge : appeler le 15.',
   'courbatures+sommeil':'💤 Les douleurs musculaires perturbent le sommeil et inversement. Le <b>magnésium</b> peut agir sur les deux.',
@@ -3781,15 +4160,6 @@ const AILMENTS=[
      {n:'Spray adoucissant gorge',c:'Dispositif médical',note:'Hydrate et apaise la gorge irritée. Sans médicament, peut être utilisé très souvent.'},
      {n:'Zinc + miel (pastilles adoucissantes)',c:'Complément alimentaire',note:'Pastilles à sucer qui calment la douleur et protègent la gorge.'},
      {n:'Huile essentielle eucalyptus / thym',c:'Complément alimentaire',note:'À diffuser dans la pièce ou à mettre sur un mouchoir. Ne pas avaler pur.'}
-   ]},
-  {id:'digestion',ic:'🫃',name:'Problèmes de ventre',desc:'Ballonnements, brûlures, nausées, digestion difficile',
-   advice:['Mangez lentement, en petites quantités, sans graisses ni épices.','Ne vous allongez pas juste après le repas.','Évitez l\'alcool et le café pendant quelques jours.'],
-   red:['Douleur dans la poitrine qui remonte dans le bras','Vomissements avec du sang ou selles très noires','Douleur intense qui ne passe pas'],
-   prods:[
-     {n:'Probiotiques digestifs',c:'Complément alimentaire',note:'Des bonnes bactéries pour rééquilibrer votre ventre. À prendre entre les repas.'},
-     {n:'Enzymes digestives',c:'Complément alimentaire',note:'Aide votre corps à mieux digérer les graisses, sucres et protéines. Pratique après un repas lourd.'},
-     {n:'Gingembre (extrait standardisé)',c:'Complément alimentaire',note:'Connu depuis des siècles pour calmer les nausées et faciliter la digestion. Éviter avec anticoagulants.'},
-     {n:'Charbon végétal actif',c:'Complément alimentaire',note:'Absorbe les gaz qui causent les ballonnements. À prendre à distance de vos autres médicaments.'}
    ]},
   {id:'diarrhee',ic:'🚽',name:'Diarrhée',desc:'Selles liquides fréquentes, maux de ventre',
    advice:['Buvez beaucoup d\'eau par petites gorgées pour ne pas vous déshydrater.','Mangez du riz blanc, des carottes, des bananes.','Reprenez progressivement votre alimentation normale.'],
@@ -3884,20 +4254,8 @@ const AILMENTS=[
      {n:'Bicarbonate de sodium alimentaire',c:'Complément alimentaire',note:'Alcalinise les urines et rend l\'environnement moins favorable aux bactéries. Réduit aussi les brûlures. 1 cuillère à café dans un grand verre d\'eau.'}
    ]},
 
-  {id:'ventre',ic:'🤢',name:'Douleurs abdominales',
-   desc:'Crampes intestinales, ballonnements, spasmes, ventre tendu',
-   advice:['Appliquez une bouillotte chaude sur le ventre — la chaleur relâche les spasmes.','Mangez lentement, en petites quantités, et évitez les choux et légumineuses.','Réduisez le café, alcool et sodas pendant quelques jours.','Marchez 15 minutes après le repas pour favoriser le transit.'],
-   red:['Douleur intense et soudaine qui ne passe pas en 30 minutes','Fièvre associée aux douleurs de ventre','Ventre rigide et très dur','Sang dans les selles ou vomissements avec du sang'],
-   prods:[
-     {n:'Méprobamate intestinal (antispasmodique doux)',c:'Complément alimentaire',note:'Aide à relâcher les crampes et spasmes intestinaux. À prendre au moment des douleurs.'},
-     {n:'Probiotiques digestifs',c:'Complément alimentaire',note:'Rééquilibre la flore intestinale pour réduire les ballonnements et inconforts chroniques.'},
-     {n:'Huile essentielle de menthe poivrée (vv)',c:'Complément alimentaire',note:'Reconnue pour calmer les spasmes intestinaux. 1 goutte dans une cuillère de miel ou sur un sucre.'},
-     {n:'Cumin / Carvi (extrait)',c:'Complément alimentaire',note:'Plantes carminatives qui réduisent les gaz et ballonnements. Idéal après les repas.'},
-     {n:'Charbon végétal actif',c:'Complément alimentaire',note:'Absorbe les gaz responsables des ballonnements et de la distension abdominale.'}
-   ]},
-
-  {id:'gastrique',ic:'🔥',name:'Brûlures gastriques',
-   desc:'Remontées acides, pyrosis, brûlures d\'estomac, acidité',
+  {id:'gastrique',ic:'🔥',name:'Brûlures d\'estomac',
+   desc:'Remontées acides, pyrosis, brûlures gastriques, acidité',
    advice:['Ne vous allongez pas dans les 2h qui suivent le repas.','Évitez les aliments acides : tomates, agrumes, alcool, café, chocolat.','Mangez en petites quantités plus fréquemment plutôt que de grands repas.','Surélevez légèrement la tête du lit si les brûlures surviennent la nuit.'],
    red:['Douleur dans la poitrine qui remonte dans le bras — peut être cardiaque, urgence','Vomissements avec du sang ou selles très noires','Difficulté à avaler','Brûlures qui ne s\'améliorent pas après 7 jours'],
    prods:[
@@ -4257,8 +4615,7 @@ const AILMENT_COLORS={
   rhume:      {bg:'#DBEAFE',border:'#2563EB',text:'#1E40AF',bar:'#2563EB',light:'#EFF6FF',name:'Rhume / Grippe'},
   gorge:      {bg:'#FFEDD5',border:'#EA580C',text:'#9A3412',bar:'#EA580C',light:'#FFF7ED',name:'Gorge'},
   digestion:  {bg:'#FEF9C3',border:'#CA8A04',text:'#854D0E',bar:'#EAB308',light:'#FEFCE8',name:'Digestion'},
-  ventre:     {bg:'#FEF9C3',border:'#CA8A04',text:'#854D0E',bar:'#EAB308',light:'#FEFCE8',name:'Douleurs abdominales'},
-  gastrique:  {bg:'#FFF7ED',border:'#EA580C',text:'#7C2D12',bar:'#EA580C',light:'#FFF7ED',name:'Brûlures gastriques'},
+  gastrique:  {bg:'#FFF7ED',border:'#EA580C',text:'#7C2D12',bar:'#EA580C',light:'#FFF7ED',name:'Brûlures d\'estomac'},
   vomissement:{bg:'#CCFBF1',border:'#0D9488',text:'#134E4A',bar:'#14B8A6',light:'#F0FDFA',name:'Nausées / Vomissements'},
   diarrhee:   {bg:'#CCFBF1',border:'#0D9488',text:'#134E4A',bar:'#14B8A6',light:'#F0FDFA',name:'Diarrhée'},
   plaie:      {bg:'#FEE2E2',border:'#DC2626',text:'#991B1B',bar:'#EF4444',light:'#FFF5F5',name:'Plaie / Coupure'},
@@ -5957,9 +6314,34 @@ async function doRegister(){
   const pwd=document.getElementById('regPassword')?.value||'';
   const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
   const errEl=document.getElementById('regErr');
-  if(!prenom||!email||pwd.length<6){
-    if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs (mot de passe : 6 caractères min).';}
+  const tel=(document.getElementById('regPhone')?.value||'').trim();
+  if(!prenom||!nom||!email||pwd.length<6){
+    if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs obligatoires (prénom, nom, email, mot de passe ≥ 6 caractères).';}
     return;
+  }
+  // Téléphone obligatoire pour patients, licenciés et livreurs
+  if((role==='patient'||role==='patient_licencie'||role==='livreur')&&!tel){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro de téléphone est obligatoire pour vérifier votre identité.';}
+    document.getElementById('regPhone')?.focus();
+    return;
+  }
+  // Numéro de licence obligatoire pour les sportifs licenciés
+  if(role==='patient_licencie'){
+    const licNum=(document.getElementById('regLicenseNum')?.value||'').trim();
+    if(!licNum){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro de licence sportive est obligatoire pour les sportifs licenciés.';}
+      document.getElementById('regLicenseNum')?.focus();
+      return;
+    }
+  }
+  // Numéro d'identification fédéral obligatoire pour les clubs
+  if(role==='club'){
+    const fedId=(document.getElementById('regFedId')?.value||'').trim();
+    if(!fedId){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro d\'identification fédéral est obligatoire pour les clubs sportifs.';}
+      document.getElementById('regFedId')?.focus();
+      return;
+    }
   }
   // Vérification consentements RGPD
   const cgu=document.getElementById('consentCGU')?.checked;
@@ -5976,10 +6358,25 @@ async function doRegister(){
     if(!profession){if(errEl){errEl.style.display='block';errEl.textContent='Veuillez choisir votre profession.';}return;}
     if(!/^\d{11}$/.test(rpps)){if(errEl){errEl.style.display='block';errEl.textContent='Le numéro RPPS doit contenir exactement 11 chiffres.';}return;}
   }
+  // Extra validation for pharmacien
+  if(role==='pharmacien'){
+    const rpps=(document.getElementById('regRPPSPharma')?.value||'').trim();
+    if(!/^\d{11}$/.test(rpps)){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Votre numéro RPPS est obligatoire (11 chiffres). Cliquez sur "Vérifier" pour le valider.';}
+      document.getElementById('regRPPSPharma')?.focus();
+      return;
+    }
+    const status=document.getElementById('regRPPSPharma')?.dataset.rppsStatus;
+    if(!status){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Veuillez cliquer sur "Vérifier" pour valider votre numéro RPPS avant de créer votre compte.';}
+      return;
+    }
+  }
 
   // ── Supabase auth ────────────────────────────────────────────
   if(window.LS_SB?.SB_READY){
-    const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role});
+    const licenseNum=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
+    const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role,tel,sport_license:licenseNum});
     if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}return;}
     // Create health pro record if needed
     if(role==='professionnel_sante'){
@@ -5989,6 +6386,17 @@ async function doRegister(){
       setTimeout(async()=>{
         await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null});
       },1500);
+    }
+    // Store pharmacist RPPS
+    if(role==='pharmacien'){
+      const rpps=(document.getElementById('regRPPSPharma')?.value||'').trim();
+      const rppsStatus=document.getElementById('regRPPSPharma')?.dataset.rppsStatus||'pending';
+      if(rpps&&window.LS_SB?.getSB){
+        const sb=window.LS_SB.getSB();
+        if(sb) setTimeout(async()=>{
+          await sb.from('profiles').update({rpps,rpps_verified:rppsStatus==='verified',rpps_status:rppsStatus}).eq('id',user.id);
+        },1500);
+      }
     }
     // Create club record if needed
     if(role==='club'){
@@ -6014,7 +6422,8 @@ async function doRegister(){
   }
   const acc={id:'u_'+Date.now(),prenom,nom,email,password:pwd,role,orders:[],cagnotte:{total:0,history:[]},
     consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing:!!document.getElementById('consentMarketing')?.checked};
-  // Champs patient supplémentaires
+  // Sauvegarder le téléphone pour tous les rôles
+  if(tel) acc.tel=tel;
   if(role==='patient'){
     const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
     const height=parseFloat(document.getElementById('regHeight')?.value)||null;
@@ -6026,7 +6435,34 @@ async function doRegister(){
     const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
     const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
     const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
+    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
     acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
+    if(sportLicense) acc.sportLicense=sportLicense;
+  }
+  if(role==='patient_licencie'){
+    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
+    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
+    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
+    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
+    const zip=(document.getElementById('regZip')?.value||'').trim();
+    const city=(document.getElementById('regCity')?.value||'').trim();
+    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
+    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
+    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
+    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
+    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
+    acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
+    if(sportLicense) acc.sportLicense=sportLicense;
+  }
+  if(role==='club'){
+    acc.clubInfo={
+      nom:(document.getElementById('regClubNom')?.value||'').trim(),
+      ville:(document.getElementById('regClubVille')?.value||'').trim(),
+      federation:(document.getElementById('regClubFed')?.value||'').trim(),
+      fedId:(document.getElementById('regFedId')?.value||'').trim(),
+      siret:(document.getElementById('regClubSiret')?.value||'').trim()||null,
+      contactEmail:(document.getElementById('regClubEmail')?.value||'').trim(),
+    };
   }
   ACCOUNTS[email]=acc; saveAccounts();
   currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
@@ -6064,6 +6500,63 @@ function updateAccountChip(){
     avatar.textContent='👤'; label.textContent='Compte';
   }
 }
+function selectCity(nom){
+  const el=document.getElementById('regCity'); if(el) el.value=nom;
+  const dd=document.getElementById('cityDropdown'); if(dd) dd.style.display='none';
+}
+
+function formatPhone(el){
+  let v=el.value.replace(/\D/g,'').slice(0,10);
+  el.value=v.replace(/(.{2})/g,'$1 ').trim();
+}
+
+async function lookupCitiesFromZip(zip){
+  const dropdown=document.getElementById('regCityDropdown');
+  const cityInput=document.getElementById('regCity');
+  if(!dropdown||!cityInput) return;
+  if(zip.length<5){dropdown.style.display='none';cityInput.value='';return;}
+  try{
+    const res=await fetch(`https://geo.api.gouv.fr/communes?codePostal=${zip}&fields=nom&format=json&geometry=centre`);
+    const data=await res.json();
+    if(!data.length){dropdown.style.display='none';cityInput.value='';return;}
+    if(data.length===1){cityInput.value=data[0].nom;dropdown.style.display='none';return;}
+    dropdown.innerHTML=data.map(c=>`<div onclick="selectRegCity('${c.nom.replace(/'/g,"\\'")}')" style="padding:10px 14px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''>${c.nom}</div>`).join('');
+    dropdown.style.display='block';
+  }catch(e){dropdown.style.display='none';}
+}
+function selectRegCity(nom){
+  const el=document.getElementById('regCity'); if(el) el.value=nom;
+  const dd=document.getElementById('regCityDropdown'); if(dd) dd.style.display='none';
+}
+document.addEventListener('click',e=>{
+  const dd=document.getElementById('regCityDropdown');
+  if(dd&&!dd.contains(e.target)&&e.target.id!=='regCity') dd.style.display='none';
+});
+
+async function checkRPPSPro(){
+  const val=(document.getElementById('regRPPSPro')?.value||'').trim();
+  const msgEl=document.getElementById('rppsProMsg');
+  const resEl=document.getElementById('rppsProResult');
+  if(!val||val.length!==11){if(msgEl)msgEl.innerHTML='<span style="color:var(--err)">✗ Le numéro RPPS doit contenir exactement 11 chiffres.</span>';return;}
+  if(msgEl)msgEl.innerHTML='<span style="color:var(--ink-soft)">Vérification en cours…</span>';
+  try{
+    const res=await fetch(`https://annuaire.sante.fr/api/ps?rpps=${val}`);
+    if(res.ok){
+      const data=await res.json();
+      const nom=data?.nomUsage||data?.nomFamille||'—';
+      const prenom=data?.prenom||'—';
+      const prof=data?.profession||'Professionnel de santé';
+      if(msgEl)msgEl.innerHTML='<span style="color:var(--ok)">✓ RPPS valide</span>';
+      if(resEl){resEl.style.display='block';resEl.innerHTML=`<div style="font-weight:700">${prenom} ${nom}</div><div style="color:var(--ink-soft);font-size:12px">${prof}</div>`;}
+    } else {
+      if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ RPPS non trouvé — vérifiez le numéro (la vérification en ligne sera effectuée manuellement)</span>';
+      if(resEl)resEl.style.display='none';
+    }
+  }catch(e){
+    if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ Vérification hors-ligne — le RPPS sera validé manuellement par notre équipe</span>';
+  }
+}
+
 function initRegisterForm(){
   // Populate meds chips
   const medDiv=document.getElementById('regMeds');
@@ -6075,23 +6568,76 @@ function initRegisterForm(){
   if(profSel&&typeof PROFESSIONS_ORDRE!=='undefined'){
     profSel.innerHTML='<option value="">-- Choisir votre profession --</option>'+PROFESSIONS_ORDRE.map(p=>`<option value="${p}">${p}</option>`).join('');
   }
-  // Populate clubs dropdown
-  if(typeof populateClubsDropdown === 'function') populateClubsDropdown();
-
-  // Role toggle hides/shows contextual fields
+  // Role toggle shows/hides contextual fields
   document.querySelectorAll('[data-group="regRole"] .chip').forEach(c=>{
     c.addEventListener('click',()=>{
-      const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
-      const pf=document.getElementById('regPatientFields');
-      const hpf=document.getElementById('regHealthProFields');
-      const clf=document.getElementById('regClubFields');
-      if(pf) pf.style.display=role==='patient'?'block':'none';
-      if(hpf) hpf.style.display=role==='professionnel_sante'?'block':'none';
-      if(clf) clf.style.display=role==='club'?'block':'none';
+      document.querySelectorAll('[data-group="regRole"] .chip').forEach(b=>b.classList.remove('sel'));
+      c.classList.add('sel');
+      const role=c.dataset.v||'patient';
+      const fields={
+        regPatientFields:['patient','patient_licencie'],
+        regPharmacienFields:['pharmacien'],
+        regHealthProFields:['professionnel_sante'],
+        regLivreurFields:['livreur'],
+        regClubFields:['club'],
+        regLicencieFields:['patient_licencie'],
+      };
+      Object.entries(fields).forEach(([id,roles])=>{
+        const el=document.getElementById(id);
+        if(el) el.style.display=roles.includes(role)?'block':'none';
+      });
     });
   });
 }
-function clearRegMeds(btn){document.querySelectorAll('#regMeds .chip').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
+/** Vérifie un numéro RPPS auprès de l'Annuaire Santé national (FHIR API) */
+async function verifyRPPS(rpps){
+  if(!/^\d{11}$/.test(rpps)) return {ok:false,msg:'Format invalide — 11 chiffres requis.'};
+  // Pharmaciens : RPPS commence par 10
+  if(!rpps.startsWith('10')) return {ok:false,msg:'Le RPPS d\'un pharmacien titulaire commence par 10.'};
+  try{
+    const url=`https://gateway.api.esante.gouv.fr/fhir/v1/Practitioner?identifier=http%3A%2F%2Fesante.gouv.fr%2Fnos%2Frpps%7C${rpps}&_format=json`;
+    const res=await fetch(url,{headers:{'Accept':'application/fhir+json'},signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});
+    if(!res.ok) throw new Error('api_unavailable');
+    const data=await res.json();
+    if(!data.total||data.total===0) return {ok:false,msg:'Numéro RPPS non trouvé dans l\'Annuaire Santé national.'};
+    const entry=data.entry?.[0]?.resource;
+    const nom=(entry?.name?.[0]?.family||'').toUpperCase();
+    const prenom=entry?.name?.[0]?.given?.[0]||'';
+    const specialite=entry?.qualification?.[0]?.code?.coding?.[0]?.display||'Pharmacien';
+    return {ok:true,nom,prenom,specialite,msg:`✓ Vérifié : ${prenom} ${nom} — ${specialite}`};
+  }catch(e){
+    // CORS ou réseau indisponible → validation de format uniquement, compte en attente
+    return {ok:true,pending:true,nom:'',prenom:'',specialite:'',msg:'✓ Format valide — vérification RPPS soumise à validation manuelle par l\'équipe Livraisanté sous 24h.'};
+  }
+}
+async function checkRPPSPharma(){
+  const input=document.getElementById('regRPPSPharma');
+  const msgEl=document.getElementById('rppsPharmaMsg');
+  const resEl=document.getElementById('rppsPharmaResult');
+  const rpps=(input?.value||'').trim();
+  if(!msgEl||!resEl) return;
+  msgEl.textContent='⏳ Vérification en cours…';msgEl.style.color='#888';
+  resEl.style.display='none';
+  const result=await verifyRPPS(rpps);
+  if(!result.ok){
+    msgEl.textContent='✗ '+result.msg; msgEl.style.color='var(--err)';
+  } else if(result.pending){
+    msgEl.textContent=result.msg; msgEl.style.color='#92400e';
+    resEl.style.display='block';
+    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">⏳</span><div><div style="font-weight:700;color:#92400e">En attente de vérification</div><div style="font-size:12px;color:#666;margin-top:2px">Notre équipe vérifiera votre RPPS dans l'Annuaire Santé dans les 24h. Votre compte sera activé après validation.</div></div></div>`;
+    if(input) input.dataset.rppsStatus='pending';
+  } else {
+    msgEl.textContent=result.msg; msgEl.style.color='var(--ok)';
+    resEl.style.display='block';
+    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:700;color:var(--ok)">${result.prenom} ${result.nom}</div><div style="font-size:12px;color:#666;margin-top:2px">${result.specialite} · RPPS ${rpps} vérifié dans l'Annuaire Santé national</div></div></div>`;
+    if(input) input.dataset.rppsStatus='verified';
+    // Pré-remplir le prénom/nom si champs vides
+    const prenomEl=document.getElementById('regPrenom');
+    const nomEl=document.getElementById('regNom');
+    if(prenomEl&&!prenomEl.value&&result.prenom) prenomEl.value=result.prenom;
+    if(nomEl&&!nomEl.value&&result.nom) nomEl.value=result.nom;
+  }
+}
 
 /* ---- PROFIL SCREEN ---- */
 function renderProfile(){
@@ -6327,7 +6873,6 @@ const CROSS_SELL_RULES={
   rhume: {icon:'🤧',label:'Rhume',suggest:['Échinacée (extrait standardisé)','Propolis','Vitamine C + Zinc','Huile essentielle eucalyptus / thym']},
   gorge: {icon:'🦠',label:'Gorge',suggest:['Propolis spray (voie locale)','Zinc + miel (pastilles adoucissantes)','Spray adoucissant gorge']},
   digestion:{icon:'🫃',label:'Digestion',suggest:['Probiotiques digestifs','Gingembre (extrait standardisé)','Charbon végétal actif','Enzymes digestives']},
-  ventre:  {icon:'🤢',label:'Douleurs abdominales',suggest:['Méprobamate intestinal (antispasmodique doux)','Probiotiques digestifs','Charbon végétal actif','Huile essentielle de menthe poivrée (vv)','Cumin / Carvi (extrait)']},
   gastrique:{icon:'🔥',label:'Brûlures gastriques',suggest:['Aloe vera (jus/extrait — usage digestif)','Réglisse DGL (déglycyrrhizinée)','Carbonate de calcium (antiacide naturel)','Probiotiques digestifs']},
   vomissement:{icon:'🤮',label:'Nausées / Vomissements',suggest:['Gingembre (extrait standardisé)','Vitamine B6 (anti-nausée)','Solution de réhydratation orale (SRO)']},
   diarrhee:{icon:'💧',label:'Diarrhée',suggest:['Solution de réhydratation orale (SRO)','Probiotiques digestifs','Zinc']},
