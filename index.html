@@ -3369,74 +3369,63 @@ function useMyPositionSante(){
 /* ══════════════════════════════════════════════════════════
    CARTE PHARMACIE — Google Maps + Plan + Horaires
 ══════════════════════════════════════════════════════════ */
+function getRegisteredPharmacies(){
+  const accs=getAccounts();
+  return Object.values(accs).filter(a=>a.role==='pharmacien'&&a.pharmacyInfo?.nom);
+}
+function getFirstPharmacyGPS(){
+  for(const a of getRegisteredPharmacies()){
+    if(a.pharmacyInfo?.lat&&a.pharmacyInfo?.lon) return a.pharmacyInfo;
+  }
+  return null;
+}
 function renderPharmacyCard(){
-  const ph=PHARMACIES_GPS['demo'];
-  if(!ph) return '';
-  const q=encodeURIComponent(`${ph.name} ${ph.adresse}`);
-  const coord=`${ph.lat},${ph.lon}`;
-  // URLs Maps
-  const gmapsSearch=`https://www.google.com/maps/search/?api=1&query=${q}`;
-  const gmapsHours=`https://www.google.com/maps/place/?q=place_id:ChIJ${encodeURIComponent(ph.name+' Grenoble')}`;
-  const gmapsDir=santePos
-    ?`https://www.google.com/maps/dir/?api=1&origin=${santePos.lat},${santePos.lon}&destination=${coord}&travelmode=driving`
-    :gmapsSearch;
-  const appleMaps=santePos
-    ?`https://maps.apple.com/?saddr=${santePos.lat},${santePos.lon}&daddr=${coord}&dirflg=d`
-    :`https://maps.apple.com/?daddr=${coord}&dirflg=d`;
-  const waze=`https://www.waze.com/ul?ll=${coord}&navigate=yes`;
+  const pharmas=getRegisteredPharmacies();
+  if(!pharmas.length) return ''; // Aucune pharmacie inscrite → rien
+  return pharmas.map(a=>{
+    const ph=a.pharmacyInfo;
+    const name=ph.nom||'Pharmacie partenaire';
+    const adresse=`${ph.adresse||''} ${ph.ville?ph.ville:''}`.trim();
+    const tel=ph.tel||'';
+    const coord=ph.lat&&ph.lon?`${ph.lat},${ph.lon}`:null;
+    const q=encodeURIComponent(`${name} ${adresse}`);
+    const gmapsSearch=`https://www.google.com/maps/search/?api=1&query=${q}`;
+    const gmapsDir=santePos&&coord?`https://www.google.com/maps/dir/?api=1&origin=${santePos.lat},${santePos.lon}&destination=${coord}&travelmode=driving`:gmapsSearch;
+    const waze=coord?`https://www.waze.com/ul?ll=${coord}&navigate=yes`:gmapsSearch;
 
-  return `<div style="background:white;border:2px solid var(--ink);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:3px 3px 0 var(--lime)">
-    <!-- En-tête -->
-    <div style="background:var(--ink);padding:12px 16px;display:flex;align-items:center;gap:10px">
-      <svg viewBox="0 0 100 100" width="28" height="28" style="border-radius:7px;background:white;flex:0 0 auto">
-        <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
-        <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
-        <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
-        <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
-        <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
-      </svg>
-      <div>
-        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;color:white">${ph.name}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.6)">${ph.adresse}</div>
+    return `<div style="background:white;border:2px solid var(--ink);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:3px 3px 0 var(--lime)">
+      <div style="background:var(--ink);padding:12px 16px;display:flex;align-items:center;gap:10px">
+        <svg viewBox="0 0 100 100" width="28" height="28" style="border-radius:7px;background:white;flex:0 0 auto">
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+        <div>
+          <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;color:white">${name}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6)">${adresse}</div>
+        </div>
       </div>
-    </div>
-    <!-- Infos + actions -->
-    <div style="padding:14px 16px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13.5px">
-        <span>📞</span>
-        <a href="tel:${ph.tel.replace(/\s/g,'')}" style="font-weight:700;color:var(--ink)">${ph.tel}</a>
-        <span style="color:var(--ink-soft)">· Lun–Sam 08h30–20h00</span>
+      <div style="padding:14px 16px">
+        ${tel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13.5px">
+          <span>📞</span><a href="tel:${tel.replace(/\s/g,'')}" style="font-weight:700;color:var(--ink)">${tel}</a>
+          ${ph.horaires?`<span style="color:var(--ink-soft)">· ${ph.horaires}</span>`:''}
+        </div>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <a href="${gmapsDir}" target="_blank" rel="noopener"
+             style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:#4285F4;color:white;border-radius:11px;font-weight:700;font-size:13.5px;text-decoration:none">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Itinéraire
+          </a>
+          <a href="${waze}" target="_blank" rel="noopener"
+             style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:#33CCFF;color:#000;border-radius:11px;font-weight:700;font-size:13.5px;text-decoration:none">
+            🚗 Waze
+          </a>
+        </div>
       </div>
-      ${deliveryDistanceKm!==null?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13.5px">
-        <span>📏</span>
-        <span style="font-weight:700">Distance estimée : ${deliveryDistanceKm.toFixed(1)} km</span>
-        ${(()=>{const t=getDeliveryTier();return t?`<span style="background:${t.color};color:white;font-size:10px;font-weight:800;padding:2px 8px;border-radius:30px">${t.label} · €${getDeliveryFee().toFixed(2)}</span>`:''})()}
-      </div>`:''}
-      <!-- Boutons maps -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <a href="${gmapsDir}" target="_blank" rel="noopener"
-           style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:#4285F4;color:white;border-radius:11px;font-weight:700;font-size:13.5px;text-decoration:none">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          Google Maps
-        </a>
-        <a href="${appleMaps}" target="_blank" rel="noopener"
-           style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:#000;color:white;border-radius:11px;font-weight:700;font-size:13.5px;text-decoration:none">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          Plan (Apple)
-        </a>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <a href="${waze}" target="_blank" rel="noopener"
-           style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:#33CCFF;color:#000;border-radius:11px;font-weight:700;font-size:13px;text-decoration:none">
-          🚗 Waze
-        </a>
-        <a href="${gmapsSearch}" target="_blank" rel="noopener"
-           style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--lime);color:var(--ink);border:1.5px solid var(--lime-deep);border-radius:11px;font-weight:700;font-size:13px;text-decoration:none">
-          🕐 Horaires d'ouverture
-        </a>
-      </div>
-    </div>
-  </div>`;
+    </div>`;
+  }).join('');
 }
 
 /* ABONNEMENT PATIENT Livraison+ supprimé — livraison à l'acte uniquement */
@@ -5609,7 +5598,7 @@ function setMode(m){
       </div>`:`<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;padding:0 12px">📍 Prix calculé selon votre distance — utilisez le bouton <b>📍 Ma position</b> pour un tarif exact.</div>`}
     </div>
     ${renderPharmacyCard()}
-    <div class="cnc-info" style="margin-bottom:8px">Délai estimé <b>1 à 3 heures</b> selon disponibilité du livreur.</div>`;
+    <div class="cnc-info" style="margin-bottom:8px">Délai estimé <b>1 à 3 heures</b> selon disponibilité du livreur et de la pharmacie partenaire.</div>`;
     if(addrRow) addrRow.style.display='flex';
   }
   renderCart();
@@ -6467,7 +6456,10 @@ function selectSlot(time){
   document.getElementById('modeDetails').innerHTML=renderSlotContent();
 }
 function renderSlotContent(){
-  return `<div class="cnc-info">🏪 <b>Click &amp; Collect :</b> votre commande est préparée par la pharmacie. Délai estimé <b>30 à 60 min</b> selon l'affluence.</div>${renderTimeSlotPicker()}${renderCncCheckin()}`;
+  const pharmCard=renderPharmacyCard();
+  const pharmNote=!pharmCard?`<div style="font-size:13px;color:var(--warn);padding:8px 0">⚠ Aucune pharmacie partenaire inscrite sur la plateforme.</div>`:'';
+  return `<div class="cnc-info">🏪 <b>Click &amp; Collect :</b> votre commande est préparée par la pharmacie. Délai estimé <b>30 à 60 min</b> selon l'affluence.</div>
+  ${pharmNote}${pharmCard}${renderTimeSlotPicker()}`;
 }
 function renderCncCheckin(){
   return `<div id="cncCheckinBox" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-top:12px">
@@ -8065,19 +8057,25 @@ function startCheckIn(orderId){
 }
 function onGeoSuccess(orderId,pos){
   const {latitude:lat,longitude:lon}=pos.coords;
-  const ph=PHARMACIES_GPS['demo'];
-  const dist=Math.round(haversine(lat,lon,ph.lat,ph.lon));
+  const phGPS=getFirstPharmacyGPS(); // Use registered pharmacy GPS
   const btn=document.getElementById(`checkin-btn-${orderId}`);
   const status=document.getElementById(`checkin-status-${orderId}`);
+  if(!phGPS){
+    // No GPS coords on file → go straight to manual code
+    showManualCheckIn(orderId);
+    return;
+  }
+  const phName=phGPS.nom||'la pharmacie';
+  const dist=Math.round(haversine(lat,lon,phGPS.lat,phGPS.lon));
   if(dist<=CHECKIN_RADIUS_OK){
     confirmCheckIn(orderId,dist,lat,lon);
   } else if(dist<=CHECKIN_RADIUS_NEAR){
     if(btn){btn.disabled=false;btn.innerHTML='📍 Je suis à l\'officine — Signaler ma présence';}
-    if(status) status.innerHTML=`<div class="checkin-distance">🚶 Vous êtes à <b>${dist} m</b> de ${ph.name} — encore quelques pas !</div>`;
+    if(status) status.innerHTML=`<div class="checkin-distance">🚶 Vous êtes à <b>${dist} m</b> de ${phName} — encore quelques pas !</div>`;
   } else {
     if(btn){btn.disabled=false;btn.innerHTML='📍 Je suis à l\'officine — Signaler ma présence';}
-    const d=dist>=1000?(dist/1000).toFixed(1)+'km':dist+'m';
-    if(status) status.innerHTML=`<div class="checkin-distance" style="color:var(--err)">📍 Vous êtes à <b>${d}</b> de ${ph.name}. Rapprochez-vous pour signaler votre arrivée.</div>`;
+    const d=dist>=1000?(dist/1000).toFixed(1)+' km':dist+' m';
+    if(status) status.innerHTML=`<div class="checkin-distance" style="color:var(--err)">📍 Vous êtes à <b>${d}</b> de ${phName}. Rapprochez-vous pour signaler votre arrivée.</div>`;
   }
 }
 function onGeoError(orderId,err){
@@ -8118,14 +8116,27 @@ function showArrivalToast(o){
 }
 function renderCheckInBlock(o){
   if(!o||o.kind!=='click-collect') return '';
+  // Already checked in
   if(o.arrival?.checkedIn){
     return `<div class="checkin-section" id="checkin-section-${o.id}"><div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${o.arrival.timeLabel}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${o.arrival.dist>0?`Confirmé à <b>${o.arrival.dist}m</b>.`:'Validé par le pharmacien.'} Commande en cours de préparation.</div></div>`;
   }
-  if(['prete','en_livraison'].includes(o.status)||o.status==='validee'){
-    return `<div class="checkin-section" id="checkin-section-${o.id}"><div style="font-weight:700;font-size:15px;margin-bottom:4px">🏪 Vous êtes devant l'officine ?</div><div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Signalez votre présence pour que le pharmacien prépare votre commande en priorité.</div><button class="checkin-btn" id="checkin-btn-${o.id}" onclick="startCheckIn('${o.id}')">📍 Je suis à l'officine — Signaler ma présence</button><div id="checkin-status-${o.id}"></div><div style="font-size:12px;color:var(--ink-soft);margin-top:10px;text-align:center">Ou <button onclick="showManualCheckIn('${o.id}')" style="font-family:inherit;font-weight:700;font-size:12px;color:var(--pharma);background:none;border:none;cursor:pointer;text-decoration:underline">utiliser le code de présence</button> si la localisation est désactivée</div></div>`;
+  // ✅ Pharmacist has PREPARED (status = 'prete') → patient can now check in
+  if(o.status==='prete'){
+    return `<div class="checkin-section" id="checkin-section-${o.id}">
+      <div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-weight:800;font-size:14px;color:#15803d;margin-bottom:2px">✅ Commande prête !</div>
+        <div style="font-size:13px;color:#166534">Le pharmacien a préparé votre commande. Rendez-vous à la pharmacie.</div>
+      </div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">🏪 Vous êtes devant l'officine ?</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Signalez votre présence pour finaliser le retrait.</div>
+      <button class="checkin-btn" id="checkin-btn-${o.id}" onclick="startCheckIn('${o.id}')">📍 Je suis à l'officine — Signaler ma présence</button>
+      <div id="checkin-status-${o.id}"></div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:10px;text-align:center">Ou <button onclick="showManualCheckIn('${o.id}')" style="font-family:inherit;font-weight:700;font-size:12px;color:var(--pharma);background:none;border:none;cursor:pointer;text-decoration:underline">utiliser le code de présence</button></div>
+    </div>`;
   }
-  if(o.status==='nouvelle'){
-    return `<div style="font-size:13px;color:var(--ink-soft);margin-top:10px;padding:10px;background:var(--paper-2);border-radius:10px">⏳ En attente de validation par le pharmacien…</div>`;
+  // Waiting for pharmacist to validate
+  if(['nouvelle','en_cours'].includes(o.status)){
+    return `<div style="font-size:13px;color:var(--ink-soft);margin-top:10px;padding:10px 14px;background:var(--paper-2);border:1px solid var(--line);border-radius:10px">⏳ Le pharmacien prépare votre commande — vous serez notifié(e) dès qu'elle sera prête.</div>`;
   }
   return '';
 }
