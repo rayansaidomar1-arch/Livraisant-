@@ -6260,11 +6260,18 @@ function warnHtml(w){
 /* ---- Triage obligatoire ---- */
 function showTriage(){
   const saved=patientProfile||{};
+  const loggedIn=!!currentUser;
   const medChips=CHRONIC_MEDS.map(m=>`<button class="chip${saved.meds?.includes(m.id)?' sel':''}" data-group="meds" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12.5px">${m.label}<br><span style="font-size:10px;opacity:.6">${m.ex}</span></button>`).join('');
+  let qn=0;
   document.getElementById('santeContent').innerHTML=`
-    <div class="sec-head"><div class="num">🩺</div><div><h2>Votre profil de santé</h2><p>Ces informations sécurisent vos conseils. Stockées uniquement sur votre appareil.</p></div></div>
+    <div class="sec-head"><div class="num">🩺</div><div><h2>Nouvelle consultation</h2><p>${loggedIn?'Complétez les informations spécifiques à cette consultation.':'Ces informations sécurisent vos conseils. Stockées uniquement sur votre appareil.'}</p></div></div>
     <div class="triage-wrap">
 
+      ${loggedIn?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:11px 14px;margin-bottom:16px;font-size:13px;color:#15803d">
+        ✓ <b>Compte connecté</b> — Âge, données physiques et adresse sont gérés dans l'onglet <a href="#" onclick="handleAccountClick();return false;" style="color:#15803d;font-weight:700;text-decoration:underline">Compte</a>.
+      </div>`:''}
+
+      ${!loggedIn?`
       <div class="triage-q">
         <label>1. Votre tranche d'âge</label>
         <div class="triage-chips chips" data-group="age">
@@ -6273,10 +6280,10 @@ function showTriage(){
           <button class="chip${(!saved.age||saved.age==='18-64')?' sel':''}" data-v="18-64">18 à 64 ans</button>
           <button class="chip${saved.age==='65+'?' sel':''}" data-v="65+">65 ans et +</button>
         </div>
-      </div>
+      </div>`:''}
 
       <div class="triage-q">
-        <label>2. Depuis combien de temps avez-vous ces symptômes ?</label>
+        <label>${!loggedIn?'2':'1'}. Depuis combien de temps avez-vous ces symptômes ?</label>
         <div class="triage-chips chips" data-group="duration">
           <button class="chip" data-v="lt24h">Moins de 24h</button>
           <button class="chip" data-v="1-3j">1 à 3 jours</button>
@@ -6286,7 +6293,7 @@ function showTriage(){
       </div>
 
       <div class="triage-q">
-        <label>3. Grossesse ou allaitement ?</label>
+        <label>${!loggedIn?'3':'2'}. Grossesse ou allaitement ?</label>
         <div class="triage-chips chips" data-group="pregnancy">
           <button class="chip${(!saved.pregnancy||saved.pregnancy==='non')?' sel':''}" data-v="non">Non</button>
           <button class="chip${saved.pregnancy==='enceinte'?' sel':''}" data-v="enceinte">Enceinte 🤰</button>
@@ -6295,10 +6302,11 @@ function showTriage(){
       </div>
 
       <div class="triage-q">
-        <label>4. Traitements chroniques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(tout ce qui s'applique)</span></label>
+        <label>${!loggedIn?'4':'3'}. Traitements chroniques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(en cas de changement récent)</span></label>
         <div class="triage-chips" style="display:flex;flex-wrap:wrap;gap:8px">${medChips}<button class="chip" data-v="aucun" onclick="clearMedChips(this)" style="font-size:12.5px">Aucun</button></div>
       </div>
 
+      ${!loggedIn?`
       <div class="triage-q">
         <label>5. Informations physiques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(optionnel — utile pour le conseil)</span></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
@@ -6334,7 +6342,7 @@ function showTriage(){
               style="padding:11px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
           </div>
         </div>
-      </div>
+      </div>`:''}
 
       <div id="triageAlert"></div>
       <button class="btn primary" style="width:100%;font-size:16px;padding:14px" onclick="submitTriage()">Voir mes conseils →</button>
@@ -6346,11 +6354,13 @@ function showTriage(){
     }));
   });
 
-  // Calcul IMC en temps réel
-  ['triageWeight','triageHeight'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('input',updateBMI);
-  });
-  if(saved.weight&&saved.height) updateBMI();
+  // Calcul IMC en temps réel (only relevant for non-logged-in)
+  if(!loggedIn){
+    ['triageWeight','triageHeight'].forEach(id=>{
+      document.getElementById(id)?.addEventListener('input',updateBMI);
+    });
+    if(saved.weight&&saved.height) updateBMI();
+  }
 }
 function updateBMI(){
   const w=parseFloat(document.getElementById('triageWeight')?.value)||0;
@@ -6366,24 +6376,29 @@ function updateBMI(){
 }
 
 function submitTriage(){
-  const age=document.querySelector('[data-group="age"] .chip.sel')?.dataset.v;
+  const loggedIn=!!currentUser;
+  const existing=patientProfile||currentUser?.healthProfile||{};
+  // Age: from birthdate (logged in) or from form chips
+  const ageFromChip=document.querySelector('[data-group="age"] .chip.sel')?.dataset.v;
+  const age=loggedIn?(currentUser?.birthdate?birthdateToAgeId(currentUser.birthdate):(existing.age||'18-64')):ageFromChip;
   const dur=document.querySelector('[data-group="duration"] .chip.sel')?.dataset.v;
   const preg=document.querySelector('[data-group="pregnancy"] .chip.sel')?.dataset.v||'non';
-  const alert=document.getElementById('triageAlert');
-  if(!age||!dur){alert.innerHTML='<div class="warn-caution" style="margin-bottom:12px"><b>⚠</b> Merci de répondre aux questions 1 et 2.</div>';return;}
+  const alertEl=document.getElementById('triageAlert');
+  if(!loggedIn&&!age){if(alertEl)alertEl.innerHTML='<div class="warn-caution" style="margin-bottom:12px"><b>⚠</b> Merci de répondre aux questions 1 et 2.</div>';return;}
+  if(!dur){if(alertEl)alertEl.innerHTML='<div class="warn-caution" style="margin-bottom:12px"><b>⚠</b> Merci d\'indiquer la durée des symptômes.</div>';return;}
   if(age==='lt15'){
     document.getElementById('santeContent').innerHTML=`<div class="age-block"><div style="font-size:64px">🔞</div><h2>Application réservée aux 15 ans et plus</h2><p>En cas de besoin pour un enfant, consultez un pédiatre ou médecin traitant.</p><button class="btn ghost" style="margin-top:20px;color:var(--paper);border-color:rgba(255,255,255,.4)" onclick="santeHome()">← Retour</button></div>`;
     return;
   }
   const meds=[...document.querySelectorAll('.triage-chips .chip.sel[data-v]')].map(c=>c.dataset.v).filter(v=>v&&v!=='aucun'&&v!=='non');
-  // Poids, taille, adresse
-  const weight=parseFloat(document.getElementById('triageWeight')?.value)||null;
-  const height=parseFloat(document.getElementById('triageHeight')?.value)||null;
-  const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
-  const addr1=(document.getElementById('triageAddr1')?.value||'').trim();
-  const zip=(document.getElementById('triageZip')?.value||'').trim();
-  const city=(document.getElementById('triageCity')?.value||'').trim();
-  const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
+  // Physical & address: from account when logged in, from form otherwise
+  const weight=parseFloat(document.getElementById('triageWeight')?.value)||existing.weight||null;
+  const height=parseFloat(document.getElementById('triageHeight')?.value)||existing.height||null;
+  const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):(existing.bmi||null);
+  const addr1=((document.getElementById('triageAddr1')?.value||'').trim())||(existing.address?.line1||'');
+  const zip=((document.getElementById('triageZip')?.value||'').trim())||(existing.address?.zip||'');
+  const city=((document.getElementById('triageCity')?.value||'').trim())||(existing.address?.city||'');
+  const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:(existing.address||null);
 
   const profile={age,duration:dur,pregnancy:preg,meds,weight,height,bmi,address};
   saveProfile(profile);
@@ -7083,9 +7098,10 @@ function renderProClubChips(){
   </div>`).join('');
 }
 
-async function lookupCitiesFromZip(zip){
-  const dropdown=document.getElementById('regCityDropdown');
-  const cityInput=document.getElementById('regCity');
+async function lookupCitiesFromZip(zip, cityId, dropdownId){
+  const cId=cityId||'regCity', dId=dropdownId||'regCityDropdown';
+  const dropdown=document.getElementById(dId);
+  const cityInput=document.getElementById(cId);
   if(!dropdown||!cityInput) return;
   if(zip.length<5){dropdown.style.display='none';cityInput.value='';return;}
   try{
@@ -7093,17 +7109,20 @@ async function lookupCitiesFromZip(zip){
     const data=await res.json();
     if(!data.length){dropdown.style.display='none';cityInput.value='';return;}
     if(data.length===1){cityInput.value=data[0].nom;dropdown.style.display='none';return;}
-    dropdown.innerHTML=data.map(c=>`<div onclick="selectRegCity('${c.nom.replace(/'/g,"\\'")}')" style="padding:10px 14px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''>${c.nom}</div>`).join('');
+    dropdown.innerHTML=data.map(c=>`<div onclick="selectCity('${c.nom.replace(/'/g,"\\'")}','${cId}','${dId}')" style="padding:10px 14px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''>${c.nom}</div>`).join('');
     dropdown.style.display='block';
   }catch(e){dropdown.style.display='none';}
 }
-function selectRegCity(nom){
-  const el=document.getElementById('regCity'); if(el) el.value=nom;
-  const dd=document.getElementById('regCityDropdown'); if(dd) dd.style.display='none';
+function selectCity(nom, cityId, dropdownId){
+  const el=document.getElementById(cityId||'regCity'); if(el) el.value=nom;
+  const dd=document.getElementById(dropdownId||'regCityDropdown'); if(dd) dd.style.display='none';
 }
+function selectRegCity(nom){selectCity(nom,'regCity','regCityDropdown');}
 document.addEventListener('click',e=>{
-  const dd=document.getElementById('regCityDropdown');
-  if(dd&&!dd.contains(e.target)&&e.target.id!=='regCity') dd.style.display='none';
+  ['regCityDropdown','editCityDropdown'].forEach(id=>{
+    const dd=document.getElementById(id);
+    if(dd&&!dd.contains(e.target)&&e.target.id!==id.replace('Dropdown','')) dd.style.display='none';
+  });
 });
 
 async function checkRPPSPro(){
@@ -7258,7 +7277,7 @@ function renderProfile(){
     </div>
 
     <div class="profile-section">
-      <h3>📊 Données physiques <button onclick="patientProfile=hp;showTriage()" style="font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer;margin-left:8px">Modifier</button></h3>
+      <h3>📊 Données physiques <button onclick="toggleEditPhysique()" style="font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer;margin-left:8px">Modifier</button></h3>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
         <div style="text-align:center;padding:12px;background:var(--grey);border-radius:12px">
           <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:900;font-size:22px;color:var(--ink)">${hp.weight?hp.weight+' kg':'—'}</div>
@@ -7273,7 +7292,53 @@ function renderProfile(){
           <div style="font-size:11px;color:${bmiColor};margin-top:2px;font-weight:700">${hp.bmi?bmiLabel:'IMC'}</div>
         </div>
       </div>
-      ${hp.address?.line1?`<div class="pfield"><span class="pk">📍 Adresse</span><span class="pv">${hp.address.line1}, ${hp.address.zip} ${hp.address.city}</span></div>`:`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">📍 Aucune adresse enregistrée — <button onclick="patientProfile=hp;showTriage()" style="font-family:inherit;font-size:13px;font-weight:700;color:var(--pharma);background:none;border:none;cursor:pointer;padding:0">Ajouter →</button></div>`}
+      <div id="editPhysiquePanel" style="display:none;background:#f8f8f7;border-radius:12px;padding:14px;margin-top:8px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Modifier mes données physiques</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">⚖️ Poids</label>
+            <div style="display:flex;align-items:center;border:2px solid var(--line-strong);border-radius:10px;overflow:hidden;background:white">
+              <input id="editWeight" type="number" min="20" max="300" value="${hp.weight||''}" placeholder="Ex. 70" style="flex:1;padding:9px 12px;border:none;outline:none;font-family:inherit;font-size:15px;font-weight:700;width:0" oninput="updateProfileBMI()">
+              <span style="padding:0 10px;font-size:12px;font-weight:700;color:var(--ink-soft)">kg</span>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">📏 Taille</label>
+            <div style="display:flex;align-items:center;border:2px solid var(--line-strong);border-radius:10px;overflow:hidden;background:white">
+              <input id="editHeight" type="number" min="100" max="250" value="${hp.height||''}" placeholder="Ex. 175" style="flex:1;padding:9px 12px;border:none;outline:none;font-family:inherit;font-size:15px;font-weight:700;width:0" oninput="updateProfileBMI()">
+              <span style="padding:0 10px;font-size:12px;font-weight:700;color:var(--ink-soft)">cm</span>
+            </div>
+          </div>
+        </div>
+        <div id="profileBmiDisplay" style="margin-bottom:10px"></div>
+        <button onclick="savePhysique()" style="font-family:inherit;font-weight:800;font-size:14px;padding:10px 20px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Enregistrer →</button>
+        <div id="editPhysiqueMsg" style="font-size:12px;color:var(--ok);margin-top:6px;min-height:14px"></div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <h3>🏋️ Club partenaire</h3>
+      ${(()=>{
+        const accs=getAccounts();
+        const clubs=Object.values(accs).filter(a=>a.role==='club');
+        const currentClubId=hp.clubId||u.clubId||'';
+        const currentClub=clubs.find(c=>c.id===currentClubId);
+        if(currentClub){
+          return `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;margin-bottom:10px">
+            <span style="font-size:24px">🏆</span>
+            <div><div style="font-weight:800;font-size:15px;color:#1d4ed8">${currentClub.clubInfo?.nom||currentClub.email}</div>
+            <div style="font-size:12px;color:var(--ink-soft)">${currentClub.clubValidated?'✅ Club partenaire vérifié':'⏳ Adhésion en attente de validation'}</div></div>
+          </div>`;
+        }
+        if(!clubs.length){
+          return `<div style="font-size:13px;color:var(--ink-soft);padding:4px 0">Aucun club partenaire disponible pour le moment. <br><span style="font-style:italic">Parlez-en à votre club pour qu'il rejoigne Livraisanté.</span></div>`;
+        }
+        return `<select id="profileClubSelect" onchange="saveClubFromProfile(this.value)" style="width:100%;padding:9px 12px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
+          <option value="">-- Sélectionner mon club --</option>
+          ${clubs.map(c=>`<option value="${c.id}">${c.clubInfo?.nom||c.email}${c.clubValidated?' ✅':' (en attente)'}</option>`).join('')}
+        </select>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:6px">5% de chaque commande est reversé à votre club (programme B2B2C)</div>`;
+      })()}
     </div>
 
     <div class="profile-section">
@@ -7535,6 +7600,37 @@ function renderProfile(){
   }));
 }
 function toggleEditHealth(){const p=document.getElementById('editHealthPanel'); if(p) p.classList.toggle('on');}
+function toggleEditPhysique(){const p=document.getElementById('editPhysiquePanel'); if(p) p.style.display=p.style.display==='none'?'block':'none';}
+function updateProfileBMI(){
+  const w=parseFloat(document.getElementById('editWeight')?.value)||0;
+  const h=parseFloat(document.getElementById('editHeight')?.value)||0;
+  const el=document.getElementById('profileBmiDisplay'); if(!el) return;
+  if(!w||!h){el.innerHTML='';return;}
+  const bmi=+(w/((h/100)**2)).toFixed(1);
+  const cat=bmi<18.5?{l:'Insuffisance pondérale',c:'#2563EB'}:bmi<25?{l:'Poids normal ✓',c:'#16A34A'}:bmi<30?{l:'Surpoids',c:'#D97706'}:{l:'Obésité',c:'#DC2626'};
+  el.innerHTML=`<div style="display:inline-flex;align-items:center;gap:10px;background:${cat.c}15;border:1.5px solid ${cat.c}40;border-radius:10px;padding:7px 12px;font-size:13px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:900;font-size:17px;color:${cat.c}">${bmi}</span><span style="font-weight:700;color:${cat.c}">IMC — ${cat.l}</span></div>`;
+}
+function savePhysique(){
+  if(!currentUser) return;
+  const w=parseFloat(document.getElementById('editWeight')?.value)||null;
+  const h=parseFloat(document.getElementById('editHeight')?.value)||null;
+  const bmi=w&&h?+(w/((h/100)**2)).toFixed(1):null;
+  if(!currentUser.healthProfile) currentUser.healthProfile={};
+  if(w) currentUser.healthProfile.weight=w;
+  if(h) currentUser.healthProfile.height=h;
+  if(bmi) currentUser.healthProfile.bmi=bmi;
+  patientProfile={...(patientProfile||{}), ...currentUser.healthProfile};
+  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const msg=document.getElementById('editPhysiqueMsg'); if(msg){msg.textContent='✓ Données mises à jour';setTimeout(()=>{if(msg)msg.textContent='';},2000);}
+  setTimeout(()=>renderProfile(),600);
+}
+function saveClubFromProfile(clubId){
+  if(!currentUser) return;
+  if(!currentUser.healthProfile) currentUser.healthProfile={};
+  currentUser.healthProfile.clubId=clubId;
+  patientProfile={...(patientProfile||{}), clubId};
+  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+}
 function toggleDurationEdit(){ const p=document.getElementById('durationEditPanel'); if(p) p.style.display=p.style.display==='none'?'block':'none'; }
 function endPregnancy(){
   const chips=document.querySelectorAll('[data-group="editPreg"] .chip');
