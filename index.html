@@ -1258,7 +1258,7 @@
       <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="drNom" placeholder="Ex. Benali"></div>
     </div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" max="" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
+      <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
     </div>
     <div class="row2">
@@ -5883,6 +5883,16 @@ function dsGo(n){
   document.querySelectorAll('[id^="ds1"],[id^="ds2"],[id^="ds3"]').forEach(el=>el.classList.remove('on'));
   document.getElementById('ds'+n)?.classList.add('on');
   document.querySelectorAll('#dsprogress .sp-seg').forEach(seg=>{const s=+seg.dataset.s;seg.className='sp-seg'+(s<n?' done':s===n?' active':'');});
+  // Initialiser les bornes du champ date de naissance (majorité 18 ans)
+  if(n===1){
+    const bdInput=document.getElementById('drBirthdate');
+    if(bdInput){
+      const maxD=new Date(); maxD.setFullYear(maxD.getFullYear()-18);
+      bdInput.max=maxD.toISOString().split('T')[0];
+      const minD=new Date(); minD.setFullYear(minD.getFullYear()-100);
+      bdInput.min=minD.toISOString().split('T')[0];
+    }
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function driverShowTab(tab){
