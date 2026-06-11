@@ -3324,11 +3324,15 @@ function _navPush(path,replace){
   else        history.pushState({path},'',path);
 }
 function _restoreRoute(path){
+  function _nr(fn){
+    _noRoutePush=true;
+    try{ fn(); }finally{ _noRoutePush=false; }
+  }
   // 1. Routes statiques
   if(PATH_TO_VIEW.hasOwnProperty(path)){
     const view=PATH_TO_VIEW[path];
-    if(!view||view==='home'){_noRoutePush=true;showHome();_noRoutePush=false;return;}
-    _noRoutePush=true;enterRole(view);_noRoutePush=false;
+    if(!view||view==='home'){ _nr(showHome); return; }
+    _nr(()=>enterRole(view));
     const ex=PATH_TO_STEP[path];
     if(ex){
       if(ex.fn==='dsGo') setTimeout(()=>dsGo(ex.s),0);
@@ -3346,7 +3350,7 @@ function _restoreRoute(path){
   m=path.match(/^\/sport\/([^/]+)\/bilan\/(\d+)$/);
   if(m){
     var _sid=m[1],_ss=parseInt(m[2]);
-    _noRoutePush=true;enterRole('sportif');_noRoutePush=false;
+    _nr(()=>enterRole('sportif'));
     setTimeout(()=>{selectSport(_sid);setTimeout(()=>setSportWizStep(_ss),20);},80);
     return;
   }
@@ -3354,28 +3358,28 @@ function _restoreRoute(path){
   m=path.match(/^\/sport\/([^/]+)$/);
   if(m){
     var _sid2=m[1];
-    _noRoutePush=true;enterRole('sportif');_noRoutePush=false;
+    _nr(()=>enterRole('sportif'));
     setTimeout(()=>selectSport(_sid2),80);
     return;
   }
-  // /sante/conseils/:ailmentId (multi-ailment, page courante)
+  // /sante/conseils/:ailmentId
   m=path.match(/^\/sante\/conseils\/([^/]+)$/);
   if(m){
     var _aid=m[1];
-    _noRoutePush=true;enterRole('sante');_noRoutePush=false;
+    _nr(()=>enterRole('sante'));
     setTimeout(()=>{selectedAilments.clear();selectedAilments.add(_aid);showCombinedConseil();},80);
     return;
   }
-  // /sante/:ailmentId (conseil spécifique)
+  // /sante/:ailmentId
   m=path.match(/^\/sante\/([^/]+)$/);
   if(m&&m[1]!=='conseils'){
     var _aid2=m[1];
-    _noRoutePush=true;enterRole('sante');_noRoutePush=false;
+    _nr(()=>enterRole('sante'));
     setTimeout(()=>{selectedAilments.clear();selectedAilments.add(_aid2);showCombinedConseil();},80);
     return;
   }
-  // Fallback
-  _noRoutePush=true;showHome();_noRoutePush=false;
+  // Fallback → accueil
+  _nr(showHome);
 }
 /* ================================================================ */
 
@@ -8677,34 +8681,25 @@ window.addEventListener('DOMContentLoaded',()=>{
     return;
   }
 
-  // Routage au démarrage — URL en priorité, localStorage en fallback
+  // Routage au démarrage — URL en priorité, toujours
   const _initPath=window.location.pathname;
-  const _savedView=localStorage.getItem('livraisante_last_view')||null;
-  if(_initPath!=='/'&&PATH_TO_VIEW[_initPath]){
-    // Refresh ou accès direct sur une URL de route → restaurer depuis l'URL
+  if(_initPath!=='/'){
+    // Toute URL non-racine → _restoreRoute gère statique + dynamique + fallback home
     _restoreRoute(_initPath);
   } else if(currentUser){
+    // Racine (/) + utilisateur connecté → tableau de bord selon le rôle
     if(currentUser.role==='admin') enterRole('admin');
-    else if(currentUser.role==='pharmacien') enterRole(_savedView==='pro'?'pro':'pro');
-    else if(currentUser.role==='livreur') enterRole(_savedView==='driverSignup'?'driverSignup':'livreur');
+    else if(currentUser.role==='pharmacien') enterRole('pro');
+    else if(currentUser.role==='livreur') enterRole('livreur');
     else if(currentUser.role==='professionnel_sante') enterRole('healthPro');
     else if(currentUser.role==='club') enterRole('club');
     else {
       if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
-      // Patient : restaurer vue sante ou sportif ou profileScreen
-      // Si l'URL est la racine (/), afficher l'accueil d'abord
-      if(_initPath==='/'){_noRoutePush=true;showHome();_noRoutePush=false;}
-      else{
-        const patientViews=new Set(['sante','sportif','profileScreen']);
-        enterRole(_savedView&&patientViews.has(_savedView)?_savedView:'sante');
-      }
+      _noRoutePush=true;showHome();_noRoutePush=false;
     }
   } else {
-    // Non connecté : restaurer seulement sante ou sportif (pas les vues authentifiées)
-    // Si l'URL est la racine (/), toujours afficher l'accueil — ne pas restaurer la dernière vue
-    const guestViews=new Set(['sante','sportif']);
-    if(_initPath!=='/'&&_savedView&&guestViews.has(_savedView)) enterRole(_savedView);
-    else showHome();
+    // Racine (/) + non connecté → toujours accueil
+    showHome();
   }
   // Bannière cookies (1ère visite)
   setTimeout(showCookieBanner, 1200);
