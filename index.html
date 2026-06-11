@@ -60,11 +60,17 @@
   /* Topbar — barre noire sticky */
   .topbar{display:none!important}
   /* ── HEADER GLOBAL FIXE ── */
-  #appHeader{position:fixed;top:0;left:0;right:0;z-index:2000;background:#0D0E09;height:54px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;justify-content:space-between;padding-left:16px;padding-right:16px;border-bottom:1px solid rgba(255,255,255,.08)}
-  #appHeader .h-brand{display:flex;align-items:center;gap:10px}
+  #appHeader{position:fixed;top:0;left:0;right:0;z-index:2000;background:#0D0E09;height:54px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;gap:10px;padding-left:16px;padding-right:16px;border-bottom:1px solid rgba(255,255,255,.08)}
+  #appHeader .h-brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
   #appHeader .h-brand span{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;color:white;letter-spacing:-.03em}
+  #appHeader .h-account{flex:0 0 auto}
   #appHeader .h-account button{font-family:'Hanken Grotesk',sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:7px 14px;cursor:pointer}
   #appHeader .h-avatar{width:34px;height:34px;background:#C2F23E;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#0D0E09;cursor:pointer;border:none}
+  /* Barre de recherche inline dans le header */
+  #headerSearchPill{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:22px;height:36px;padding:0 14px;cursor:pointer;transition:background .15s}
+  #headerSearchPill:hover{background:rgba(255,255,255,.16)}
+  #headerSearchPill .hsp-icon{font-size:14px;flex:0 0 auto;opacity:.7}
+  #headerSearchPill .hsp-text{font-size:13px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Hanken Grotesk',sans-serif}
   /* ── BOTTOM NAV FIXE ── */
   #appNav{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:#0D0E09;border-top:1px solid rgba(255,255,255,.1);display:flex;padding-bottom:env(safe-area-inset-bottom);max-width:100%}
   .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.38);font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:700;transition:.15s;letter-spacing:.01em}
@@ -722,6 +728,25 @@
   .arrival-notif{background:linear-gradient(135deg,#d7f0db,#b8e8bc);border:2.5px solid #16A34A;border-radius:16px;padding:16px 18px;margin-bottom:14px}
   .arrival-alert{position:fixed;top:80px;right:16px;z-index:9999;background:#16A34A;color:white;padding:14px 20px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);font-weight:700;font-size:14px;display:flex;align-items:flex-start;gap:12px;max-width:320px;animation:slideDown .35s ease}
   @keyframes slideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+
+  /* ── Barre de recherche globale ── */
+  #searchOverlay{position:fixed;inset:0;background:#fff;z-index:9999;display:none;flex-direction:column;animation:srFadeIn .18s ease}
+  #searchOverlay.open{display:flex}
+  @keyframes srFadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  #searchBar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:2px solid #0D0E09;background:#fff;position:sticky;top:0;z-index:2}
+  #searchInput{flex:1;border:none;font-size:17px;outline:none;font-family:inherit;color:#0D0E09;background:transparent}
+  #searchInput::placeholder{color:#aaa}
+  #searchResults{flex:1;overflow-y:auto;padding:16px}
+  .sr-section-label{font-size:11px;font-weight:800;color:#aaa;letter-spacing:.09em;text-transform:uppercase;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #f0f0f0}
+  .sr-section-label:first-child{margin-top:0}
+  .sr-item{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .12s}
+  .sr-item:hover,.sr-item:active{background:#fafafa;border-radius:10px}
+  .sr-icon{width:42px;height:42px;background:#f3f3f3;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+  .sr-body{flex:1;min-width:0}
+  .sr-name{font-weight:700;font-size:15px;color:#0D0E09;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sr-sub{font-size:12px;color:#999;margin-top:2px}
+  .sr-price{font-weight:800;font-size:14px;color:#0D0E09;flex:0 0 auto}
+  #searchEmpty{text-align:center;padding:48px 20px;color:#bbb;font-size:15px}
 </style>
 </head>
 <body>
@@ -739,10 +764,27 @@
     </svg>
     <span>Livraisanté</span>
   </div>
+  <div id="headerSearchPill" onclick="showSearch()" role="search" aria-label="Ouvrir la recherche">
+    <span class="hsp-icon">🔍</span>
+    <span class="hsp-text">Médicament, symptôme, labo…</span>
+  </div>
   <div class="h-account" id="headerAccount">
     <button onclick="handleAccountClick()">Se connecter</button>
   </div>
 </header>
+
+<!-- ═══════════════ SEARCH OVERLAY ═══════════════ -->
+<div id="searchOverlay" role="dialog" aria-modal="true" aria-label="Rechercher">
+  <div id="searchBar">
+    <button onclick="closeSearch()" title="Fermer" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;line-height:1;flex:0 0 auto;color:#0D0E09">←</button>
+    <input id="searchInput" type="search" placeholder="Médicament, symptôme, laboratoire…"
+           oninput="performSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button onclick="document.getElementById('searchInput').value='';performSearch('')" title="Effacer" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px;color:#bbb;flex:0 0 auto">✕</button>
+  </div>
+  <div id="searchResults">
+    <div id="searchEmpty">🔍 Recherchez un médicament, un symptôme ou un laboratoire</div>
+  </div>
+</div>
 
 <!-- ═══════════════ BOTTOM NAV FIXE ═══════════════ -->
 <nav id="appNav">
@@ -872,7 +914,6 @@
 
       <!-- Confiance -->
       <div style="display:flex;justify-content:center;gap:20px;margin-top:16px">
-        <span style="font-size:12px;color:#aaa">🏥 54 labos partenaires</span>
         <span style="font-size:12px;color:#aaa">⚡ Livraison 1–3h</span>
         <span style="font-size:12px;color:#aaa">🛡️ ANSM · CNIL</span>
       </div>
@@ -1476,7 +1517,9 @@
         <div class="form-group"><label class="form-label">Tranche d'âge</label>
           <div class="chips" data-group="regAge">
             <button class="chip" data-v="15-17">15-17 ans</button>
-            <button class="chip sel" data-v="18-64">18-64 ans</button>
+            <button class="chip sel" data-v="18-25">18-25 ans</button>
+            <button class="chip" data-v="26-45">26-45 ans</button>
+            <button class="chip" data-v="46-65">46-65 ans</button>
             <button class="chip" data-v="65+">65 ans et +</button>
           </div>
         </div>
@@ -2555,6 +2598,7 @@ function showHome(){
   Object.values(APPS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.getElementById('homeScreen').style.display='block';
   currentView='home';
+  if(!_noRoutePush&&window.location.pathname!=='/') _navPush('/');
   renderHeader();
   renderBottomNav();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -2854,7 +2898,15 @@ function renderLicencieTab(){
   return stepsIcons?stepBar+content:content;
 }
 
-function setSportWizStep(s){ sportWiz.step=s; renderSportApp(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setSportWizStep(s){
+  sportWiz.step=s;
+  if(!_noRoutePush&&currentSport){
+    var _sp=s===0?'/sport/'+currentSport.id:'/sport/'+currentSport.id+'/bilan/'+s;
+    _navPush(_sp,true); // replaceState : étape dans un même contexte sport
+  }
+  renderSportApp();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
 function validateSportWizStep(step){
   const errFields={1:['sommeil','stress','alim','hydra'],3:['freq','niveau'],4:[]};
@@ -3230,9 +3282,109 @@ function showCookieBanner(){
 function showHub(){ enterRole('sante'); }
 // Vues persistées sur localStorage (exclut les écrans transients)
 const PERSISTENT_VIEWS=new Set(['sante','pro','livreur','sportif','healthPro','club','admin','profileScreen','driverSignup']);
+
+/* ===================================================================
+   ROUTEUR SPA — History API
+   URLs propres : /sante  /sport  /livreur/inscription/2  etc.
+   Refresh conserve la vue courante. Retour navigateur fonctionne.
+=================================================================== */
+const VIEW_TO_PATH_MAP={
+  home:'/',sante:'/sante',sportif:'/sport',pro:'/pro',livreur:'/livreur',
+  driverSignup:'/livreur/inscription',pharmacySignup:'/pharmacie/inscription',
+  registerScreen:'/inscription',loginScreen:'/connexion',profileScreen:'/profil',
+  healthPro:'/sante-pro',club:'/club',admin:'/admin',proHub:'/pro',sportGate:'/sport'
+};
+const PATH_TO_VIEW={
+  '/':'home','/sante':'sante','/sport':'sportif','/pro':'pro','/livreur':'livreur',
+  '/livreur/inscription':'driverSignup',
+  '/livreur/inscription/2':'driverSignup',
+  '/livreur/inscription/3':'driverSignup',
+  '/pharmacie/inscription':'pharmacySignup',
+  '/pharmacie/inscription/2':'pharmacySignup',
+  '/pharmacie/inscription/3':'pharmacySignup',
+  '/inscription':'registerScreen',
+  '/inscription/patient':'registerScreen',
+  '/inscription/livreur':'driverSignup',
+  '/connexion':'loginScreen',
+  '/profil':'profileScreen',
+  '/sante-pro':'healthPro',
+  '/club':'club',
+  '/admin':'admin'
+};
+const PATH_TO_STEP={
+  '/livreur/inscription/2':{fn:'dsGo',s:2},
+  '/livreur/inscription/3':{fn:'dsGo',s:3},
+  '/pharmacie/inscription/2':{fn:'psGo',s:2},
+  '/pharmacie/inscription/3':{fn:'psGo',s:3},
+  '/inscription/patient':{role:'patient'}
+};
+var _noRoutePush=false; // verrou anti-push circulaire (var = hoisted)
+function _navPush(path,replace){
+  if(replace) history.replaceState({path},'',path);
+  else        history.pushState({path},'',path);
+}
+function _restoreRoute(path){
+  // 1. Routes statiques
+  if(PATH_TO_VIEW.hasOwnProperty(path)){
+    const view=PATH_TO_VIEW[path];
+    if(!view||view==='home'){_noRoutePush=true;showHome();_noRoutePush=false;return;}
+    _noRoutePush=true;enterRole(view);_noRoutePush=false;
+    const ex=PATH_TO_STEP[path];
+    if(ex){
+      if(ex.fn==='dsGo') setTimeout(()=>dsGo(ex.s),0);
+      if(ex.fn==='psGo') setTimeout(()=>psGo(ex.s),0);
+      if(ex.role==='patient') setTimeout(()=>{
+        const c=document.querySelector('[data-group="regRole"] .chip[data-v="patient"]');
+        if(c&&!c.classList.contains('sel'))c.click();
+      },50);
+    }
+    return;
+  }
+  // 2. Routes dynamiques
+  var m;
+  // /sport/:sportId/bilan/:step
+  m=path.match(/^\/sport\/([^/]+)\/bilan\/(\d+)$/);
+  if(m){
+    var _sid=m[1],_ss=parseInt(m[2]);
+    _noRoutePush=true;enterRole('sportif');_noRoutePush=false;
+    setTimeout(()=>{selectSport(_sid);setTimeout(()=>setSportWizStep(_ss),20);},80);
+    return;
+  }
+  // /sport/:sportId
+  m=path.match(/^\/sport\/([^/]+)$/);
+  if(m){
+    var _sid2=m[1];
+    _noRoutePush=true;enterRole('sportif');_noRoutePush=false;
+    setTimeout(()=>selectSport(_sid2),80);
+    return;
+  }
+  // /sante/conseils/:ailmentId (multi-ailment, page courante)
+  m=path.match(/^\/sante\/conseils\/([^/]+)$/);
+  if(m){
+    var _aid=m[1];
+    _noRoutePush=true;enterRole('sante');_noRoutePush=false;
+    setTimeout(()=>{selectedAilments.clear();selectedAilments.add(_aid);showCombinedConseil();},80);
+    return;
+  }
+  // /sante/:ailmentId (conseil spécifique)
+  m=path.match(/^\/sante\/([^/]+)$/);
+  if(m&&m[1]!=='conseils'){
+    var _aid2=m[1];
+    _noRoutePush=true;enterRole('sante');_noRoutePush=false;
+    setTimeout(()=>{selectedAilments.clear();selectedAilments.add(_aid2);showCombinedConseil();},80);
+    return;
+  }
+  // Fallback
+  _noRoutePush=true;showHome();_noRoutePush=false;
+}
+/* ================================================================ */
+
 function enterRole(r){
   if(r==='home'){ showHome(); return; }
   currentView=r;
+  // Mettre à jour l'URL (History API)
+  const _rp=VIEW_TO_PATH_MAP[r]||'/sante';
+  if(!_noRoutePush&&window.location.pathname!==_rp) _navPush(_rp);
   // Sauvegarder la vue courante pour restauration au rafraîchissement
   if(PERSISTENT_VIEWS.has(r)) try{localStorage.setItem('livraisante_last_view',r);}catch(e){}
   Object.values(APPS).forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
@@ -5543,6 +5695,7 @@ function goToConseilPage(idx){
   _conseilIds=_conseilIds||[...selectedAilments];
   if(idx<0||idx>=_conseilIds.length) return;
   currentConseilPage=idx;
+  if(!_noRoutePush&&_conseilIds.length>1) _navPush('/sante/conseils/'+_conseilIds[idx],true);
   // Tabs
   document.querySelectorAll('.path-tab').forEach((t,i)=>{
     t.classList.toggle('on',i===idx);
@@ -5587,6 +5740,11 @@ function showCombinedConseil(){
   _conseilIds=ids;
   currentConseilPage=0;
   currentAilmentId=ids[0];
+  // URL : /sante/:ailmentId (1 seul) ou /sante/conseils (multi)
+  if(!_noRoutePush){
+    var _cp=ids.length===1?'/sante/'+ids[0]:'/sante/conseils';
+    _navPush(_cp, window.location.pathname.startsWith('/sante')); // replace si déjà dans /sante
+  }
   // Reset swipe state pour nouvelle session
   
 
@@ -5880,6 +6038,7 @@ function dsNext(from){
   }
 }
 function dsGo(n){
+  _navPush(n===1?'/livreur/inscription':'/livreur/inscription/'+n, true);
   driverShowTab('dossier');
   document.querySelectorAll('[id^="ds1"],[id^="ds2"],[id^="ds3"]').forEach(el=>el.classList.remove('on'));
   document.getElementById('ds'+n)?.classList.add('on');
@@ -5945,6 +6104,7 @@ function psNext(from){
   }
 }
 function psGo(n){
+  _navPush(n===1?'/pharmacie/inscription':'/pharmacie/inscription/'+n, true);
   document.querySelectorAll('[id^="ps"]').forEach(el=>el.classList.remove('on'));
   document.getElementById('ps'+n)?.classList.add('on');
   document.querySelectorAll('#psprogress .sp-seg').forEach(seg=>{const s=+seg.dataset.s;seg.className='sp-seg'+(s<n?' done':s===n?' active':'');});
@@ -6105,6 +6265,7 @@ function filterSports(q){
 }
 function selectSport(id){
   currentSport=FRENCH_SPORTS.find(s=>s.id===id)||null;
+  if(!_noRoutePush&&currentSport) _navPush('/sport/'+currentSport.id);
   document.querySelectorAll('.sport-btn').forEach(b=>b.classList.toggle('sel',b.textContent.trim().startsWith(currentSport?.n)));
   const sel=document.getElementById('sportSelected');
   if(currentSport&&sel){
@@ -6480,7 +6641,9 @@ function showTriage(){
         <div class="triage-chips chips" data-group="age">
           <button class="chip" data-v="lt15">Moins de 15 ans</button>
           <button class="chip${saved.age==='15-17'?' sel':''}" data-v="15-17">15 à 17 ans</button>
-          <button class="chip${(!saved.age||saved.age==='18-64')?' sel':''}" data-v="18-64">18 à 64 ans</button>
+          <button class="chip${(!saved.age||saved.age==='18-64'||saved.age==='18-25')?' sel':''}" data-v="18-25">18 à 25 ans</button>
+          <button class="chip${saved.age==='26-45'?' sel':''}" data-v="26-45">26 à 45 ans</button>
+          <button class="chip${saved.age==='46-65'?' sel':''}" data-v="46-65">46 à 65 ans</button>
           <button class="chip${saved.age==='65+'?' sel':''}" data-v="65+">65 ans et +</button>
         </div>
       </div>`:''}
@@ -6583,7 +6746,7 @@ function submitTriage(){
   const existing=patientProfile||currentUser?.healthProfile||{};
   // Age: from birthdate (logged in) or from form chips
   const ageFromChip=document.querySelector('[data-group="age"] .chip.sel')?.dataset.v;
-  const age=loggedIn?(currentUser?.birthdate?birthdateToAgeId(currentUser.birthdate):(existing.age||'18-64')):ageFromChip;
+  const age=loggedIn?(currentUser?.birthdate?birthdateToAgeId(currentUser.birthdate):(existing.age||'18-25')):ageFromChip;
   const dur=document.querySelector('[data-group="duration"] .chip.sel')?.dataset.v;
   const preg=document.querySelector('[data-group="pregnancy"] .chip.sel')?.dataset.v||'non';
   const alertEl=document.getElementById('triageAlert');
@@ -7148,7 +7311,7 @@ async function doRegister(){
     const zip=(document.getElementById('regZip')?.value||'').trim();
     const city=(document.getElementById('regCity')?.value||'').trim();
     const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
-    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
+    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-25';
     const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
     const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
     const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
@@ -7662,7 +7825,7 @@ function renderProfile(){
 
     <div class="profile-section">
       <h3>🩺 Profil de santé <button onclick="toggleEditHealth()">Modifier</button></h3>
-      <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-64':'18–64 ans','65+':'65 ans et +'}[hp.age||hp.ageRange]||'—'}</span></div>
+      <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-25':'18–25 ans','26-45':'26–45 ans','46-65':'46–65 ans','65+':'65 ans et +','18-64':'18–64 ans'}[hp.age||hp.ageRange]||'—'}</span></div>
       <div class="pfield"><span class="pk">Grossesse / Allaitement</span><span class="pv ${hp.pregnancy==='enceinte'||hp.pregnancy==='allaitement'?'highlight':''}">${pregnancyLabel}</span></div>
       <div class="pfield"><span class="pk">Traitements chroniques</span><span class="pv">${meds}</span></div>
       <div class="pfield" style="align-items:flex-start">
@@ -7822,7 +7985,7 @@ function renderProfile(){
     </div>
     <div class="profile-section">
       <h3>🩺 Profil de santé <button onclick="toggleEditHealth()">Modifier</button></h3>
-      <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-64':'18–64 ans','65+':'65 ans et +'}[hp.age||hp.ageRange]||'—'}</span></div>
+      <div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv">${{lt15:'< 15 ans','15-17':'15–17 ans','18-25':'18–25 ans','26-45':'26–45 ans','46-65':'46–65 ans','65+':'65 ans et +','18-64':'18–64 ans'}[hp.age||hp.ageRange]||'—'}</span></div>
       <div class="pfield"><span class="pk">Grossesse / Allaitement</span><span class="pv">${pregnancyLabel}</span></div>
       <div class="pfield"><span class="pk">Traitements chroniques</span><span class="pv">${meds}</span></div>
       <div class="edit-inline" id="editHealthPanel">
@@ -8049,19 +8212,23 @@ async function saveHealthProfile(){
   setTimeout(()=>renderProfile(),700);
 }
 function birthdateToAgeRange(bd){
-  if(!bd) return '18-64';
+  if(!bd) return '18-25 ans';
   const age=Math.floor((Date.now()-new Date(bd))/(365.25*24*3600*1000));
   if(age<15) return '< 15 ans';
   if(age<=17) return '15-17 ans';
-  if(age<=64) return '18-64 ans';
+  if(age<=25) return '18-25 ans';
+  if(age<=45) return '26-45 ans';
+  if(age<=65) return '46-65 ans';
   return '65 ans et +';
 }
 function birthdateToAgeId(bd){
-  if(!bd) return '18-64';
+  if(!bd) return '18-25';
   const age=Math.floor((Date.now()-new Date(bd))/(365.25*24*3600*1000));
   if(age<15) return 'lt15';
   if(age<=17) return '15-17';
-  if(age<=64) return '18-64';
+  if(age<=25) return '18-25';
+  if(age<=45) return '26-45';
+  if(age<=65) return '46-65';
   return '65+';
 }
 function showEditPersonalInfo(){
@@ -8144,7 +8311,7 @@ function showAbandonSurvey(){
 }
 function submitAbandon(reason){ logAbandon(reason); santeHome(); }
 function backFromConseil(){
-  if(patientCart.length||currentPatientOrderId){ santeHome(); return; }
+  if(patientCart.length||currentPatientOrderId){ enterRole('sante'); return; }
   showAbandonSurvey();
 }
 
@@ -8455,6 +8622,17 @@ function markServed(orderId){const o=ORDERS[orderId];if(!o)return;o.arrival.serv
 if(bc){const _bc=bc.onmessage;bc.onmessage=e=>{if(e.data?.type==='patient_arrived'){ORDERS[e.data.orderId]=e.data.order;showArrivalToast(e.data.order);if(currentView==='pro')renderPro();}else{if(_bc)_bc(e);else refreshViews();}};}
 
 window.addEventListener('DOMContentLoaded',()=>{
+  // ── Restaurer chemin depuis redirect 404.html (avant premier SW) ──
+  const _r404=sessionStorage.getItem('lv_404redirect');
+  if(_r404){try{sessionStorage.removeItem('lv_404redirect');}catch(e){}
+    history.replaceState({path:_r404},'',_r404);
+  }
+  // ── Popstate : retour / avance navigateur ─────────────────────────
+  window.addEventListener('popstate',e=>{
+    const p=(e.state&&e.state.path)||window.location.pathname;
+    _restoreRoute(p);
+  });
+
   initDemoAccounts();
   restoreSession();
   santeHome();
@@ -8462,18 +8640,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   updateAccountChip();
   renderHeader();
 
-  // ── Deep link : inscription livreur ─────────────────────────
+  // ── Deep link hash : inscription livreur (rétro-compat QR codes) ──
   if(window.location.hash === '#inscription-livreur' && !currentUser){
-    history.replaceState(null,'',window.location.pathname);
-    enterRole('driverSignup');
+    history.replaceState({path:'/livreur/inscription'},'','/livreur/inscription');
+    _noRoutePush=true; enterRole('driverSignup'); _noRoutePush=false;
     return;
   }
 
-  // ── Deep link : inscription patient ─────────────────────────
+  // ── Deep link hash : inscription patient (rétro-compat QR codes) ──
   if(window.location.hash === '#inscription-patient' && !currentUser){
-    history.replaceState(null,'',window.location.pathname); // nettoie le hash
-    enterRole('registerScreen');
-    // Sélectionner automatiquement le rôle "patient"
+    history.replaceState({path:'/inscription/patient'},'','/inscription/patient');
+    _noRoutePush=true; enterRole('registerScreen'); _noRoutePush=false;
     setTimeout(()=>{
       const patChip=document.querySelector('[data-group="regRole"] .chip[data-v="patient"]');
       if(patChip&&!patChip.classList.contains('sel')) patChip.click();
@@ -8500,9 +8677,13 @@ window.addEventListener('DOMContentLoaded',()=>{
     return;
   }
 
-  // Routage au démarrage — restaure la dernière vue si l'utilisateur rafraîchit
+  // Routage au démarrage — URL en priorité, localStorage en fallback
+  const _initPath=window.location.pathname;
   const _savedView=localStorage.getItem('livraisante_last_view')||null;
-  if(currentUser){
+  if(_initPath!=='/'&&PATH_TO_VIEW[_initPath]){
+    // Refresh ou accès direct sur une URL de route → restaurer depuis l'URL
+    _restoreRoute(_initPath);
+  } else if(currentUser){
     if(currentUser.role==='admin') enterRole('admin');
     else if(currentUser.role==='pharmacien') enterRole(_savedView==='pro'?'pro':'pro');
     else if(currentUser.role==='livreur') enterRole(_savedView==='driverSignup'?'driverSignup':'livreur');
@@ -8511,13 +8692,18 @@ window.addEventListener('DOMContentLoaded',()=>{
     else {
       if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
       // Patient : restaurer vue sante ou sportif ou profileScreen
-      const patientViews=new Set(['sante','sportif','profileScreen']);
-      enterRole(_savedView&&patientViews.has(_savedView)?_savedView:'sante');
+      // Si l'URL est la racine (/), afficher l'accueil d'abord
+      if(_initPath==='/'){_noRoutePush=true;showHome();_noRoutePush=false;}
+      else{
+        const patientViews=new Set(['sante','sportif','profileScreen']);
+        enterRole(_savedView&&patientViews.has(_savedView)?_savedView:'sante');
+      }
     }
   } else {
     // Non connecté : restaurer seulement sante ou sportif (pas les vues authentifiées)
+    // Si l'URL est la racine (/), toujours afficher l'accueil — ne pas restaurer la dernière vue
     const guestViews=new Set(['sante','sportif']);
-    if(_savedView&&guestViews.has(_savedView)) enterRole(_savedView);
+    if(_initPath!=='/'&&_savedView&&guestViews.has(_savedView)) enterRole(_savedView);
     else showHome();
   }
   // Bannière cookies (1ère visite)
@@ -9581,6 +9767,221 @@ async function validateMember(memberId, validated){
   showToast(validated?'✓ Membre validé':'Membre refusé',validated?'var(--ok)':'var(--err)');
   renderClubDashboard();
 }
+
+/* ═══════════════════════════════════════════════════════
+   RECHERCHE GLOBALE — barre de recherche fullscreen
+   ═══════════════════════════════════════════════════════ */
+
+var _searchIndex = null;   // construit à la 1ère ouverture
+
+function _buildSearchIndex(){
+  if(_searchIndex) return;
+  _searchIndex = [];
+
+  // 1. Produits depuis PRODUCT_CATALOG  ─────────────────
+  if(typeof PRODUCT_CATALOG !== 'undefined'){
+    Object.keys(PRODUCT_CATALOG).forEach(substance => {
+      (PRODUCT_CATALOG[substance] || []).forEach(prod => {
+        _searchIndex.push({
+          type   : 'product',
+          icon   : '💊',
+          name   : prod.name,
+          sub    : prod.lab + ' · ' + prod.dosage,
+          badge  : prod.prix ? prod.prix.toFixed(2) + ' €' : '',
+          substance : substance,
+          lab    : prod.lab,
+          prix   : prod.prix || 0,
+          _search: (prod.name + ' ' + substance + ' ' + prod.lab + ' ' + (prod.dosage||'')).toLowerCase()
+        });
+      });
+    });
+  }
+
+  // 2. Symptômes / conseils depuis AILMENTS  ─────────────
+  if(typeof AILMENTS !== 'undefined'){
+    AILMENTS.forEach(ail => {
+      _searchIndex.push({
+        type   : 'ailment',
+        icon   : ail.ic || '🩺',
+        name   : ail.name,
+        sub    : ail.desc || '',
+        badge  : '',
+        ailId  : ail.id,
+        _search: (ail.name + ' ' + (ail.desc||'')).toLowerCase()
+      });
+    });
+  }
+
+  // 3. Laboratoires partenaires  ─────────────────────────
+  if(typeof PARTNER_LABS !== 'undefined'){
+    PARTNER_LABS.forEach(lab => {
+      _searchIndex.push({
+        type   : 'lab',
+        icon   : '🏭',
+        name   : lab,
+        sub    : 'Laboratoire partenaire',
+        badge  : '',
+        lab    : lab,
+        _search: lab.toLowerCase()
+      });
+    });
+  }
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showSearch(){
+  _buildSearchIndex();
+  var ov = document.getElementById('searchOverlay');
+  if(!ov) return;
+  ov.classList.add('open');
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){
+    var inp = document.getElementById('searchInput');
+    if(inp){ inp.value = ''; inp.focus(); }
+    var res = document.getElementById('searchResults');
+    if(res) res.innerHTML = '<div id="searchEmpty">🔍 Recherchez un médicament, un symptôme ou un laboratoire</div>';
+  }, 50);
+  // Optional URL flag (no back-button side-effects — use replaceState)
+  // history.replaceState({path: window.location.pathname, search: true}, '', window.location.pathname);
+}
+
+function closeSearch(){
+  var ov = document.getElementById('searchOverlay');
+  if(!ov) return;
+  ov.classList.remove('open');
+  document.body.style.overflow = '';
+  var inp = document.getElementById('searchInput');
+  if(inp) inp.value = '';
+}
+
+function performSearch(query){
+  var res = document.getElementById('searchResults');
+  if(!res) return;
+
+  var q = (query || '').trim().toLowerCase();
+
+  if(!q){
+    res.innerHTML = '<div id="searchEmpty">🔍 Recherchez un médicament, un symptôme ou un laboratoire</div>';
+    return;
+  }
+
+  // Score & filter
+  var hits = [];
+  (_searchIndex || []).forEach(function(item){
+    var idx = item._search.indexOf(q);
+    if(idx === -1) return;
+    var score = idx === 0 ? 0 : (item._search.startsWith(q + ' ') ? 1 : 2);
+    hits.push({item: item, score: score});
+  });
+  hits.sort(function(a,b){ return a.score - b.score || a.item.name.localeCompare(b.item.name); });
+
+  if(!hits.length){
+    res.innerHTML = '<div id="searchEmpty">Aucun résultat pour « ' + escHtml(query) + ' »</div>';
+    return;
+  }
+
+  // Group by type
+  var groups = {product: [], ailment: [], lab: []};
+  hits.slice(0, 60).forEach(function(h){ groups[h.item.type].push(h.item); });
+
+  var html = '';
+
+  if(groups.ailment.length){
+    html += '<div class="sr-section-label">Symptômes & conseils</div>';
+    groups.ailment.forEach(function(item){
+      html += '<div class="sr-item" onclick="srOpenAilment(\'' + escHtml(item.ailId) + '\')">'
+            + '<div class="sr-icon">' + item.icon + '</div>'
+            + '<div class="sr-body">'
+            +   '<div class="sr-name">' + escHtml(item.name) + '</div>'
+            +   '<div class="sr-sub">' + escHtml(item.sub) + '</div>'
+            + '</div>'
+            + '</div>';
+    });
+  }
+
+  if(groups.product.length){
+    html += '<div class="sr-section-label">Produits</div>';
+    groups.product.forEach(function(item){
+      html += '<div class="sr-item" onclick="srOpenProduct(\'' + escHtml(item.substance) + '\')">'
+            + '<div class="sr-icon">' + item.icon + '</div>'
+            + '<div class="sr-body">'
+            +   '<div class="sr-name">' + escHtml(item.name) + '</div>'
+            +   '<div class="sr-sub">' + escHtml(item.sub) + '</div>'
+            + '</div>'
+            + (item.badge ? '<div class="sr-price">' + escHtml(item.badge) + '</div>' : '')
+            + '</div>';
+    });
+  }
+
+  if(groups.lab.length){
+    html += '<div class="sr-section-label">Laboratoires</div>';
+    groups.lab.forEach(function(item){
+      html += '<div class="sr-item" onclick="srOpenLab(\'' + escHtml(item.lab) + '\')">'
+            + '<div class="sr-icon">' + item.icon + '</div>'
+            + '<div class="sr-body">'
+            +   '<div class="sr-name">' + escHtml(item.name) + '</div>'
+            +   '<div class="sr-sub">' + escHtml(item.sub) + '</div>'
+            + '</div>'
+            + '</div>';
+    });
+  }
+
+  res.innerHTML = html;
+}
+
+/* ── Actions depuis les résultats ── */
+function srOpenAilment(ailId){
+  closeSearch();
+  _noRoutePush = false;
+  enterRole('sante');
+  setTimeout(function(){
+    selectedAilments.clear();
+    selectedAilments.add(ailId);
+    showCombinedConseil();
+  }, 120);
+}
+
+function srOpenProduct(substance){
+  closeSearch();
+  // Ouvrir la vue sante avec le bon produit sélectionné
+  // Si un ailment utilise cette substance, on l'ouvre directement
+  var targetAil = null;
+  if(typeof AILMENTS !== 'undefined'){
+    for(var i = 0; i < AILMENTS.length; i++){
+      var ail = AILMENTS[i];
+      if((ail.prods || []).some(function(p){ return p.n === substance; })){
+        targetAil = ail.id;
+        break;
+      }
+    }
+  }
+  if(targetAil){
+    srOpenAilment(targetAil);
+  } else {
+    // Afficher la page sante générique
+    _noRoutePush = false;
+    enterRole('sante');
+  }
+}
+
+function srOpenLab(labName){
+  closeSearch();
+  // Naviguer vers la vue pro/pharmacie qui liste les labos
+  _noRoutePush = false;
+  enterRole('pro');
+}
+
+// Fermer la recherche avec Escape
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    var ov = document.getElementById('searchOverlay');
+    if(ov && ov.classList.contains('open')) closeSearch();
+  }
+});
 
 /* ---------- PWA : service worker ---------- */
 if('serviceWorker' in navigator){

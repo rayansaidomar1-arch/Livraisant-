@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Livraisanté</title>
+<script>
+  /* Redirect SPA — GitHub Pages
+     Quand un utilisateur accède directement à /sante, /livreur/inscription, etc.
+     sans SW actif, GitHub Pages renvoie cette 404.
+     On sauvegarde le chemin dans sessionStorage et on redirige vers /
+     pour que index.html prenne le relais via _restoreRoute(). */
+  var path = window.location.pathname + window.location.search + window.location.hash;
+  try { sessionStorage.setItem('lv_404redirect', path); } catch(e) {}
+  window.location.replace('/');
+</script>

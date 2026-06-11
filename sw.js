@@ -1,5 +1,5 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v81';
+const CACHE = 'livraisante-v83';
 const SHELL = [
   '/',
   '/index.html',
@@ -29,9 +29,18 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  // Ne pas intercepter les requêtes Supabase (auth, API)
   const url = new URL(e.request.url);
+  // Ne pas intercepter les requêtes Supabase (auth, API)
   if (url.hostname.includes('supabase.co') || url.hostname.includes('jsdelivr.net')) return;
+
+  // Navigation directe / refresh sur une URL de route (ex. /sante, /livreur/inscription)
+  // → toujours servir index.html depuis le cache (SPA History API)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.match('/index.html').then(c => c || fetch('/index.html'))
+    );
+    return;
+  }
 
   e.respondWith(
     caches.match(e.request).then(cached => {
