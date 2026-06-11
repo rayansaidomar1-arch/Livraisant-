@@ -1275,7 +1275,7 @@
     </div>
     <div class="help-box">🎁 <b>Programme de parrainage</b> En parrainant un nouveau livreur, tu gagnes <b>50 € par livreur inscrit et actif</b>. Ton code unique te sera remis à la fin de l'inscription.</div>
     <div id="dsErr1" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
-    <div class="nav" style="border-top:2px solid var(--ink)"><span></span><button class="btn primary" onclick="dsNext(1)">Continuer →</button></div>
+    <div class="nav" style="border-top:2px solid var(--ink);position:sticky;bottom:72px;background:white;z-index:50;padding-bottom:12px"><span></span><button class="btn primary" onclick="dsNext(1)">Continuer →</button></div>
   </div>
 
   <!-- Étape 2 -->
@@ -1304,7 +1304,7 @@
       </div>
     </div>
     <div class="form-group"><label class="form-label">IBAN (paiements des courses)</label><input type="text" id="drIban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" oninput="formatIban(this)"><div class="field-msg" id="ibanMsg"></div></div>
-    <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="dsGo(1)">← Retour</button><button class="btn primary" onclick="dsNext(2)">Continuer →</button></div>
+    <div class="nav" style="border-top:2px solid var(--ink);position:sticky;bottom:72px;background:white;z-index:50;padding-bottom:12px"><button class="btn ghost" onclick="dsGo(1)">← Retour</button><button class="btn primary" onclick="dsNext(2)">Continuer →</button></div>
   </div>
 
   <!-- Étape 3 — Récap + code parrainage -->
@@ -5826,21 +5826,22 @@ function dsNext(from){
     const zip=document.getElementById('drAddrZip').value.trim();
     const city=document.getElementById('drAddrCity').value.trim();
     // Champs obligatoires
-    if(!prenom||!nom){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Prénom et nom sont obligatoires.';}return;}
-    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Adresse email invalide.';}return;}
-    if(!tel){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Numéro de téléphone obligatoire.';}return;}
-    if(!birthdate){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Date de naissance obligatoire.';}document.getElementById('drBirthdate').focus();return;}
+    const showErr1=(msg,focusId)=>{if(errEl){errEl.style.display='block';errEl.textContent=msg;errEl.scrollIntoView({behavior:'smooth',block:'center'});}if(focusId)document.getElementById(focusId)?.focus();};
+    if(!prenom||!nom){showErr1('⚠ Prénom et nom sont obligatoires.','drPrenom');return;}
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr1('⚠ Adresse email invalide.','drEmail');return;}
+    if(!tel){showErr1('⚠ Numéro de téléphone obligatoire.','drTel');return;}
+    if(!birthdate){showErr1('⚠ Date de naissance obligatoire.','drBirthdate');return;}
     // Vérification majorité (18 ans révolus)
     const birth=new Date(birthdate);
     const today=new Date();
     const age=today.getFullYear()-birth.getFullYear()-(today.getMonth()<birth.getMonth()||(today.getMonth()===birth.getMonth()&&today.getDate()<birth.getDate())?1:0);
     if(age<18){
-      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Vous devez être majeur(e) (18 ans révolus) pour devenir livreur Livraisanté.';}
+      showErr1('⚠ Vous devez être majeur(e) (18 ans révolus) pour devenir livreur Livraisanté.','drBirthdate');
       const bdMsg=document.getElementById('dsBirthdateMsg');
       if(bdMsg){bdMsg.className='field-msg err';bdMsg.textContent='✗ Vous devez avoir au moins 18 ans.';}
       return;
     }
-    if(!addr1||!city){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Adresse de facturation complète obligatoire (rue et ville).';}return;}
+    if(!addr1||!city){showErr1('⚠ Adresse de facturation complète obligatoire (rue et ville).','drAddr1');return;}
     if(errEl) errEl.style.display='none';
     const bdMsg=document.getElementById('dsBirthdateMsg');
     if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
