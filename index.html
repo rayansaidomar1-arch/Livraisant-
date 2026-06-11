@@ -4945,11 +4945,23 @@ const AILMENTS=[
 
 
 function santeHome(){
+  const selArr=[...selectedAilments];
+  const selCount=selArr.length;
+  // Barre d'action affichée AU-DESSUS de la liste (pas en sticky) pour ne jamais couvrir les boutons
+  const actionBar=selCount>0?`
+    <div style="background:var(--ink);border-radius:14px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <span style="color:white;font-size:13px;font-weight:700">${selCount} symptôme${selCount>1?'s':''} sélectionné${selCount>1?'s':''}</span>
+      <button onclick="showCombinedConseil()" style="font-family:inherit;font-size:13px;font-weight:800;padding:9px 18px;background:var(--accent);color:var(--ink);border:none;border-radius:20px;cursor:pointer;white-space:nowrap">
+        Voir mes conseils →
+      </button>
+    </div>`:'';
   document.getElementById('santeContent').innerHTML=`
-    <div style="padding:4px 0 20px">
+    <div style="padding:4px 0 16px">
       <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.03em;margin-bottom:6px">Quel est votre problème ?</h2>
       <p style="font-size:15px;color:var(--ink-soft);line-height:1.5">Choisissez un ou plusieurs symptômes. Votre pharmacien vous propose les meilleures solutions <b>sans ordonnance</b>.</p>
     </div>
+
+    ${actionBar}
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
       ${AILMENTS.map(a=>{
@@ -4966,13 +4978,7 @@ function santeHome(){
       }).join('')}
     </div>
 
-    ${selectedAilments.size>0?`<div style="position:sticky;bottom:86px;display:flex;justify-content:center;margin-bottom:10px;pointer-events:none">
-      <button onclick="showCombinedConseil()" style="pointer-events:all;font-family:inherit;font-size:13px;font-weight:700;padding:11px 22px;background:var(--ink);color:white;border:none;border-radius:30px;cursor:pointer;box-shadow:0 3px 14px rgba(13,14,9,.28)">
-        Voir mes conseils →
-      </button>
-    </div>`:''}
-
-    <div style="font-size:12.5px;color:var(--ink-soft);padding:12px 14px;background:var(--paper-2);border-radius:10px;line-height:1.5">
+    <div style="font-size:12.5px;color:var(--ink-soft);padding:12px 14px;background:var(--paper-2);border-radius:10px;line-height:1.5;margin-bottom:20px">
       ℹ️ Ces conseils sont pour des <b>problèmes bénins qui passent en quelques jours</b>. Si vous vous sentez très mal, si les symptômes sont intenses ou persistent, <b>consultez votre médecin</b>.
     </div>`;
 }
