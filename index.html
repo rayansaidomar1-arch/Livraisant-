@@ -1236,6 +1236,14 @@
 </svg><div><b>Livraisanté</b><small>Inscription livreur</small></div></div>
     <button class="switch" onclick="showHub()">⇄ Retour</button>
   </div>
+  <!-- Tabs Dossier / Facturation -->
+  <div id="dsTabBar" style="display:flex;gap:0;border-bottom:2px solid var(--line-strong);margin:0 0 0">
+    <button id="dsTabDossier" onclick="driverShowTab('dossier')" style="flex:1;padding:12px 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px;border:none;border-bottom:3px solid var(--ink);background:white;cursor:pointer;color:var(--ink)">📋 Mon dossier</button>
+    <button id="dsTabFacturation" onclick="driverShowTab('facturation')" style="flex:1;padding:12px 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;border:none;border-bottom:3px solid transparent;background:white;cursor:pointer;color:var(--ink-soft)">🧾 Facturation</button>
+  </div>
+
+  <!-- Contenu dossier -->
+  <div id="dsDossierArea">
   <div class="signup-progress" id="dsprogress">
     <div class="sp-seg active" data-s="1"></div>
     <div class="sp-seg" data-s="2"></div>
@@ -1244,17 +1252,29 @@
 
   <!-- Étape 1 -->
   <div class="step-block on" id="ds1">
-    <div class="sec-head"><div class="num">01</div><div><h2>Identité</h2><p>Infos personnelles et code de parrainage éventuel.</p></div></div>
+    <div class="sec-head"><div class="num">01</div><div><h2>Identité</h2><p>Infos personnelles et adresse de facturation.</p></div></div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Prénom</label><input type="text" id="drPrenom" placeholder="Ex. Karim"></div>
-      <div class="form-group"><label class="form-label">Nom</label><input type="text" id="drNom" placeholder="Ex. Benali"></div>
+      <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="drPrenom" placeholder="Ex. Karim"></div>
+      <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="drNom" placeholder="Ex. Benali"></div>
     </div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Email</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="drTel" placeholder="06 00 00 00 00"></div>
+      <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" max="" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
+      <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
     </div>
-    <div class="form-group"><label class="form-label">Code de parrainage <span class="opt">(facultatif — si un livreur t'a recommandé)</span></label><div class="input-row"><input type="text" id="drRefCode" placeholder="Ex. LIV-A3F7K2" style="text-transform:uppercase"><button class="btn ghost" style="padding:11px 16px;font-size:13px" onclick="validateRefCode()">Vérifier</button></div><div class="field-msg" id="refCodeMsg"></div></div>
+    <div class="row2">
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
+      <div class="form-group"><label class="form-label">Code de parrainage <span class="opt">(facultatif)</span></label><div class="input-row" style="flex-wrap:nowrap"><input type="text" id="drRefCode" placeholder="LIV-A3F7K2" style="text-transform:uppercase"><button class="btn ghost" style="padding:11px 14px;font-size:13px;white-space:nowrap" onclick="validateRefCode()">Vérifier</button></div><div class="field-msg" id="refCodeMsg"></div></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adresse de facturation *</label>
+      <input type="text" id="drAddr1" placeholder="N° et nom de la rue" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;margin-bottom:8px">
+      <div style="display:flex;gap:8px">
+        <input type="text" id="drAddrZip" inputmode="numeric" maxlength="5" placeholder="Code postal" style="flex:0 0 110px;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+        <input type="text" id="drAddrCity" placeholder="Ville" style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+      </div>
+    </div>
     <div class="help-box">🎁 <b>Programme de parrainage</b> En parrainant un nouveau livreur, tu gagnes <b>50 € par livreur inscrit et actif</b>. Ton code unique te sera remis à la fin de l'inscription.</div>
+    <div id="dsErr1" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
     <div class="nav" style="border-top:2px solid var(--ink)"><span></span><button class="btn primary" onclick="dsNext(1)">Continuer →</button></div>
   </div>
 
@@ -1274,10 +1294,13 @@
       <div class="input-row"><input type="text" id="drSiret" placeholder="Ex. 12345678901234" maxlength="17" oninput="formatSiret(this)"><button class="btn ghost" style="padding:11px 16px;font-size:13px" onclick="checkSiret()">Valider</button></div>
       <div class="field-msg" id="siretMsg"></div>
       <div class="help-box" style="margin-top:10px">
-        <b>Pas encore d'auto-entrepreneur ? 3 étapes simples :</b>
-        1. Créer ton compte sur <a href="https://www.autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr</a><br>
-        2. Choisir la catégorie <em>« Transport de marchandises à livraison express »</em> (Code APE 5320Z)<br>
-        3. Ton SIRET arrive par courrier sous 7 à 14 jours. En attendant, tu peux soumettre ta candidature — Livraisanté t'activera dès réception.
+        <b>Pas encore auto-entrepreneur ?</b> Crée ton statut en quelques minutes sur le portail officiel de l'État :<br>
+        <a href="https://formalites.entreprises.gouv.fr" target="_blank" rel="noopener" style="color:var(--pharma);font-weight:700">👉 formalites.entreprises.gouv.fr →</a><br>
+        <span style="font-size:12px;color:var(--ink-soft)">Choisir la catégorie <em>« Transport de marchandises / livraison express »</em> (Code APE 5320Z). Ton SIRET arrive par courrier sous 7 à 14 jours — tu peux soumettre ta candidature maintenant, Livraisanté t'activera dès réception.</span>
+      </div>
+      <div id="dsNoSiretBanner" style="display:none;background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 14px;margin-top:10px;font-size:13px;color:#92400e">
+        ⚠ <b>SIRET non renseigné.</b> Vous devez créer votre statut d'auto-entrepreneur ou de société avant de pouvoir livrer.
+        <a href="https://formalites.entreprises.gouv.fr" target="_blank" rel="noopener" style="color:#b45309;font-weight:700;display:block;margin-top:6px">Créer mon statut sur formalites.entreprises.gouv.fr →</a>
       </div>
     </div>
     <div class="form-group"><label class="form-label">IBAN (paiements des courses)</label><input type="text" id="drIban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" oninput="formatIban(this)"><div class="field-msg" id="ibanMsg"></div></div>
@@ -1295,6 +1318,14 @@
     </div>
     <div class="note">📄 <div><b>Documents à envoyer par email.</b> Pour finaliser ton inscription, transmets à <b>livreurs@livraisante.fr</b> : pièce d'identité, carte grise ou attestation de véhicule, attestation RC Pro, et extrait Kbis / avis SIRET URSSAF.</div></div>
     <div class="nav" style="border-top:2px solid var(--ink);justify-content:flex-end"><button class="btn primary" onclick="enterRole('livreur')">Accéder à mon espace livreur →</button></div>
+  </div>
+  </div><!-- fin dsDossierArea -->
+
+  <!-- Section facturation -->
+  <div id="dsFacturationArea" style="display:none;padding:0 4px">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;margin:20px 0 4px">🧾 Mes factures mensuelles</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">Retrouvez ici l'ensemble de vos relevés de courses et téléchargez vos factures PDF.</div>
+    <div id="dsFacturationContent"><div style="color:var(--ink-soft);font-size:14px;padding:20px 0">Chargement…</div></div>
   </div>
 </div>
 
@@ -3197,9 +3228,13 @@ function showCookieBanner(){
 }
 
 function showHub(){ enterRole('sante'); }
+// Vues persistées sur localStorage (exclut les écrans transients)
+const PERSISTENT_VIEWS=new Set(['sante','pro','livreur','sportif','healthPro','club','admin','profileScreen','driverSignup']);
 function enterRole(r){
   if(r==='home'){ showHome(); return; }
   currentView=r;
+  // Sauvegarder la vue courante pour restauration au rafraîchissement
+  if(PERSISTENT_VIEWS.has(r)) try{localStorage.setItem('livraisante_last_view',r);}catch(e){}
   Object.values(APPS).forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
   const target=document.getElementById(APPS[r]); if(target) target.style.display='block';
   if(r==='sante') santeHome();
@@ -5774,11 +5809,46 @@ function selectVehicle(btn){document.querySelectorAll('#vehicleCards .statute-ca
 
 function dsNext(from){
   if(from===1){
-    if(!document.getElementById('drPrenom').value.trim()||!document.getElementById('drNom').value.trim()){alert('Merci de renseigner ton prénom et ton nom.');return;}
+    const errEl=document.getElementById('dsErr1');
+    const prenom=document.getElementById('drPrenom').value.trim();
+    const nom=document.getElementById('drNom').value.trim();
+    const email=document.getElementById('drEmail').value.trim();
+    const tel=document.getElementById('drTel').value.trim();
+    const birthdate=document.getElementById('drBirthdate').value;
+    const addr1=document.getElementById('drAddr1').value.trim();
+    const zip=document.getElementById('drAddrZip').value.trim();
+    const city=document.getElementById('drAddrCity').value.trim();
+    // Champs obligatoires
+    if(!prenom||!nom){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Prénom et nom sont obligatoires.';}return;}
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Adresse email invalide.';}return;}
+    if(!tel){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Numéro de téléphone obligatoire.';}return;}
+    if(!birthdate){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Date de naissance obligatoire.';}document.getElementById('drBirthdate').focus();return;}
+    // Vérification majorité (18 ans révolus)
+    const birth=new Date(birthdate);
+    const today=new Date();
+    const age=today.getFullYear()-birth.getFullYear()-(today.getMonth()<birth.getMonth()||(today.getMonth()===birth.getMonth()&&today.getDate()<birth.getDate())?1:0);
+    if(age<18){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Vous devez être majeur(e) (18 ans révolus) pour devenir livreur Livraisanté.';}
+      const bdMsg=document.getElementById('dsBirthdateMsg');
+      if(bdMsg){bdMsg.className='field-msg err';bdMsg.textContent='✗ Vous devez avoir au moins 18 ans.';}
+      return;
+    }
+    if(!addr1||!city){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Adresse de facturation complète obligatoire (rue et ville).';}return;}
+    if(errEl) errEl.style.display='none';
+    const bdMsg=document.getElementById('dsBirthdateMsg');
+    if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
     dsGo(2);
   } else if(from===2){
     const siret=document.getElementById('drSiret').value.replace(/\s/g,'');
-    if(siret && !luhnSiret(siret)){const ok=confirm('Le format SIRET semble invalide. Continuer quand même (tu pourras le corriger plus tard) ?');if(!ok)return;}
+    const noSiretBanner=document.getElementById('dsNoSiretBanner');
+    if(!siret){
+      // Pas de SIRET → afficher la bannière de redirection et bloquer
+      if(noSiretBanner) noSiretBanner.style.display='block';
+      document.getElementById('drSiret').focus();
+      return;
+    }
+    if(noSiretBanner) noSiretBanner.style.display='none';
+    if(!luhnSiret(siret)){const ok=confirm('Le format SIRET semble invalide. Continuer quand même (tu pourras le corriger plus tard) ?');if(!ok)return;}
     const code=generateDriverCode();
     document.getElementById('myRefCode').textContent=code;
     const name=document.getElementById('drPrenom').value+' '+document.getElementById('drNom').value;
@@ -5786,16 +5856,46 @@ function dsNext(from){
       const txt=encodeURIComponent(`Rejoins Livraisanté comme livreur indépendant ! Utilise mon code ${code} lors de ton inscription et reçois un bonus à l'activation : https://rayansaidomar1-arch.github.io/livraisante/#livreur`);
       window.open('https://wa.me/?text='+txt,'_blank');
     };
-    // store driver locally
-    try{const d=JSON.parse(localStorage.getItem('livraisante_driver')||'{}');d.code=code;d.name=name;d.vehicle=selectedVehicle();d.siret=siret;d.referrals=d.referrals||[];localStorage.setItem('livraisante_driver',JSON.stringify(d));}catch(e){}
+    // Stocker toutes les données du dossier livreur
+    try{
+      const d=JSON.parse(localStorage.getItem('livraisante_driver')||'{}');
+      d.code=code; d.name=name; d.vehicle=selectedVehicle(); d.siret=siret;
+      d.email=document.getElementById('drEmail').value.trim();
+      d.tel=document.getElementById('drTel').value.trim();
+      d.birthdate=document.getElementById('drBirthdate').value;
+      d.iban=document.getElementById('drIban').value.replace(/\s/g,'');
+      d.address={line1:document.getElementById('drAddr1').value.trim(),zip:document.getElementById('drAddrZip').value.trim(),city:document.getElementById('drAddrCity').value.trim()};
+      d.referrals=d.referrals||[];
+      localStorage.setItem('livraisante_driver',JSON.stringify(d));
+    }catch(e){}
     dsGo(3);
   }
 }
 function dsGo(n){
-  document.querySelectorAll('[id^="ds"]').forEach(el=>el.classList.remove('on'));
+  driverShowTab('dossier');
+  document.querySelectorAll('[id^="ds1"],[id^="ds2"],[id^="ds3"]').forEach(el=>el.classList.remove('on'));
   document.getElementById('ds'+n)?.classList.add('on');
   document.querySelectorAll('#dsprogress .sp-seg').forEach(seg=>{const s=+seg.dataset.s;seg.className='sp-seg'+(s<n?' done':s===n?' active':'');});
   window.scrollTo({top:0,behavior:'smooth'});
+}
+function driverShowTab(tab){
+  const dossier=document.getElementById('dsDossierArea');
+  const facturation=document.getElementById('dsFacturationArea');
+  const tabD=document.getElementById('dsTabDossier');
+  const tabF=document.getElementById('dsTabFacturation');
+  if(tab==='facturation'){
+    if(dossier) dossier.style.display='none';
+    if(facturation) facturation.style.display='block';
+    if(tabD){tabD.style.borderBottomColor='transparent';tabD.style.color='var(--ink-soft)';tabD.style.fontWeight='700';}
+    if(tabF){tabF.style.borderBottomColor='var(--ink)';tabF.style.color='var(--ink)';tabF.style.fontWeight='800';}
+    // Charger les factures
+    renderDriverInvoicesSection('dsFacturationContent');
+  } else {
+    if(dossier) dossier.style.display='';
+    if(facturation) facturation.style.display='none';
+    if(tabD){tabD.style.borderBottomColor='var(--ink)';tabD.style.color='var(--ink)';tabD.style.fontWeight='800';}
+    if(tabF){tabF.style.borderBottomColor='transparent';tabF.style.color='var(--ink-soft)';tabF.style.fontWeight='700';}
+  }
 }
 function copyRefCode(){
   const code=document.getElementById('myRefCode').textContent;
@@ -8363,16 +8463,25 @@ window.addEventListener('DOMContentLoaded',()=>{
     return;
   }
 
-  // Routage au démarrage
+  // Routage au démarrage — restaure la dernière vue si l'utilisateur rafraîchit
+  const _savedView=localStorage.getItem('livraisante_last_view')||null;
   if(currentUser){
     if(currentUser.role==='admin') enterRole('admin');
-    else if(currentUser.role==='pharmacien') enterRole('pro');
-    else if(currentUser.role==='livreur') enterRole('livreur');
+    else if(currentUser.role==='pharmacien') enterRole(_savedView==='pro'?'pro':'pro');
+    else if(currentUser.role==='livreur') enterRole(_savedView==='driverSignup'?'driverSignup':'livreur');
     else if(currentUser.role==='professionnel_sante') enterRole('healthPro');
     else if(currentUser.role==='club') enterRole('club');
-    else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); }
+    else {
+      if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
+      // Patient : restaurer vue sante ou sportif ou profileScreen
+      const patientViews=new Set(['sante','sportif','profileScreen']);
+      enterRole(_savedView&&patientViews.has(_savedView)?_savedView:'sante');
+    }
   } else {
-    showHome();
+    // Non connecté : restaurer seulement sante ou sportif (pas les vues authentifiées)
+    const guestViews=new Set(['sante','sportif']);
+    if(_savedView&&guestViews.has(_savedView)) enterRole(_savedView);
+    else showHome();
   }
   // Bannière cookies (1ère visite)
   setTimeout(showCookieBanner, 1200);
