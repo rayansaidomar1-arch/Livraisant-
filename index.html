@@ -1422,7 +1422,7 @@
 </svg><div><b>Créer mon compte</b><small>Livraisanté</small></div></div>
       <button class="switch" onclick="enterRole('loginScreen')">← Connexion</button>
     </div>
-    <div class="login-box" style="border-radius:16px">
+    <div class="login-box" style="border-radius:16px" id="regFormBox">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="regPrenom" placeholder="Ex. Marie"></div>
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="regNom" placeholder="Ex. Dupont"></div>
@@ -1566,19 +1566,86 @@
 
       <!-- Champs club -->
       <div id="regClubFields" style="display:none">
-        <div style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:14px;margin-bottom:14px">
-          <div style="font-weight:800;font-size:14px;color:#7c3aed;margin-bottom:8px">🏋️ Vérification club sportif</div>
-          <div style="font-size:13px;color:#6d28d9;margin-bottom:12px">Renseignez le numéro d'identification de votre fédération sportive. Ce numéro sera vérifié avant l'activation de votre espace club.</div>
+        <div style="background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:16px;margin-bottom:14px">
+          <div style="font-weight:800;font-size:14px;color:#7c3aed;margin-bottom:4px">🏋️ Informations du club sportif</div>
+          <div style="font-size:12px;color:#6d28d9;margin-bottom:14px">Ces informations seront vérifiées avant l'activation de votre espace club.</div>
+
           <div class="form-group" style="margin-bottom:10px">
-            <label class="form-label">N° d'affiliation fédérale <span style="font-weight:400;color:#666">(ex. 123456 ou CLUB-A7K3MX)</span></label>
-            <input id="regFedId" type="text" placeholder="Numéro d'identification fédération"
-              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;box-sizing:border-box">
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">Nom du club</label>
-            <input id="regClubName" type="text" placeholder="Ex. AS Grenoble Football"
+            <label class="form-label">Nom du club *</label>
+            <input id="regClubNom" type="text" placeholder="Ex. AS Grenoble Football, Club Athlé 93…"
               style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
           </div>
+
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Adresse du club *</label>
+            <input id="regClubAdresse" type="text" placeholder="N° et nom de la rue"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+          </div>
+
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0;flex:0 0 110px">
+              <label class="form-label">Code postal *</label>
+              <input id="regClubZip" type="text" inputmode="numeric" maxlength="5" placeholder="75000"
+                oninput="lookupCitiesFromZip(this.value,'regClubVille','regClubCityDropdown')"
+                style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+            </div>
+            <div class="form-group" style="margin-bottom:0;flex:1;position:relative">
+              <label class="form-label">Ville *</label>
+              <input id="regClubVille" type="text" placeholder="Ville du club"
+                style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+              <div id="regClubCityDropdown" style="display:none;position:absolute;z-index:999;background:white;border:2px solid var(--line-strong);border-radius:10px;width:100%;max-height:160px;overflow-y:auto;top:calc(100% + 2px);left:0;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Fonction de l'interlocuteur privilégié</label>
+            <input id="regClubContactRole" type="text" placeholder="Ex. Président, Directeur sportif, Médecin…"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+          </div>
+
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Fédération d'affiliation *</label>
+            <select id="regClubFed"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white;box-sizing:border-box">
+              <option value="">— Choisir une fédération —</option>
+              <option value="FFA">FFA — Athlétisme</option>
+              <option value="FFBB">FFBB — Basketball</option>
+              <option value="FFBoxe">FFBoxe — Boxe</option>
+              <option value="FFC">FFC — Cyclisme</option>
+              <option value="FFE">FFE — Équitation</option>
+              <option value="FFF">FFF — Football</option>
+              <option value="FFG">FFG — Golf</option>
+              <option value="FFH">FFH — Handball</option>
+              <option value="FFHG">FFHG — Hockey sur Glace</option>
+              <option value="FFJ">FFJ — Judo</option>
+              <option value="FFKAMA">FFKAMA — Karaté</option>
+              <option value="FFN">FFN — Natation</option>
+              <option value="FFR">FFR — Rugby</option>
+              <option value="FFS">FFS — Ski</option>
+              <option value="FFT">FFT — Tennis</option>
+              <option value="FFTRI">FFTRI — Triathlon</option>
+              <option value="FFVB">FFVB — Volley-Ball</option>
+              <option value="FFVOILE">FFVoile — Voile</option>
+              <option value="AUTRE">Autre fédération</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Sport principal *</label>
+            <input id="regClubSport" type="text" placeholder="Ex. Football, Natation, Rugby, Athlétisme…"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">N° d'affiliation fédérale *</label>
+            <input id="regFedId" type="text" placeholder="Numéro officiel d'identification fédération"
+              style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:15px;font-weight:700;box-sizing:border-box">
+          </div>
+
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;font-size:13px;line-height:1.4">
+            <input type="checkbox" id="regClubCNC" style="width:16px;height:16px;margin-top:2px;accent-color:var(--ok);flex:0 0 auto">
+            <span><b>Click &amp; Collect pour licenciés</b> — Nous acceptons que nos licenciés retirent leurs commandes en pharmacie partenaire dans le cadre de la dispensation de compléments alimentaires.</span>
+          </label>
         </div>
       </div>
 
@@ -1621,6 +1688,8 @@
 
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px;margin-top:6px" onclick="doRegister()">Créer mon compte →</button>
     </div>
+    <!-- Panneau de vérification email + téléphone -->
+    <div id="verifyPanel" style="display:none;padding:24px 20px;background:white;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08)"></div>
   </div>
 </div>
 
@@ -6856,9 +6925,9 @@ async function doRegister(){
     if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs obligatoires (prénom, nom, email, mot de passe ≥ 6 caractères).';}
     return;
   }
-  // Téléphone obligatoire pour patients, licenciés et livreurs
-  if((role==='patient'||role==='patient_licencie'||role==='livreur')&&!tel){
-    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro de téléphone est obligatoire pour vérifier votre identité.';}
+  // Téléphone obligatoire pour tous les rôles (vérification par code SMS)
+  if(!tel){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro de téléphone est obligatoire pour vérifier votre identité par SMS.';}
     document.getElementById('regPhone')?.focus();
     return;
   }
@@ -6871,14 +6940,20 @@ async function doRegister(){
       return;
     }
   }
-  // Numéro d'identification fédéral obligatoire pour les clubs
+  // Validation complète pour les clubs
   if(role==='club'){
-    const fedId=(document.getElementById('regFedId')?.value||'').trim();
-    if(!fedId){
-      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro d\'identification fédéral est obligatoire pour les clubs sportifs.';}
-      document.getElementById('regFedId')?.focus();
-      return;
-    }
+    const _clubNom=(document.getElementById('regClubNom')?.value||'').trim();
+    const _clubAdresse=(document.getElementById('regClubAdresse')?.value||'').trim();
+    const _clubVille=(document.getElementById('regClubVille')?.value||'').trim();
+    const _clubFed=(document.getElementById('regClubFed')?.value||'').trim();
+    const _clubSport=(document.getElementById('regClubSport')?.value||'').trim();
+    const _fedId=(document.getElementById('regFedId')?.value||'').trim();
+    if(!_clubNom){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le nom du club est obligatoire.';}document.getElementById('regClubNom')?.focus();return;}
+    if(!_clubAdresse){if(errEl){errEl.style.display='block';errEl.textContent='⚠ L\'adresse du club est obligatoire.';}document.getElementById('regClubAdresse')?.focus();return;}
+    if(!_clubVille){if(errEl){errEl.style.display='block';errEl.textContent='⚠ La ville du club est obligatoire.';}document.getElementById('regClubVille')?.focus();return;}
+    if(!_clubFed){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Veuillez choisir la fédération d\'affiliation.';}document.getElementById('regClubFed')?.focus();return;}
+    if(!_clubSport){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le sport principal est obligatoire.';}document.getElementById('regClubSport')?.focus();return;}
+    if(!_fedId){if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro d\'affiliation fédérale est obligatoire.';}document.getElementById('regFedId')?.focus();return;}
   }
   // Vérification consentements RGPD
   const cgu=document.getElementById('consentCGU')?.checked;
@@ -6910,24 +6985,142 @@ async function doRegister(){
     }
   }
 
-  // ── Supabase auth ────────────────────────────────────────────
+  // ── Vérification email obligatoire ──────────────────────────
+  loadAccounts();
+  if(ACCOUNTS[email]){
+    if(errEl){errEl.style.display='block';errEl.textContent='Cet email est déjà utilisé. Connectez-vous.';}
+    return;
+  }
+
+  // Collecter toutes les données du formulaire dans pendingReg
+  const _consentMarketing=!!document.getElementById('consentMarketing')?.checked;
+  let _roleData={};
+  if(role==='patient'||role==='patient_licencie'){
+    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
+    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
+    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
+    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
+    const zip=(document.getElementById('regZip')?.value||'').trim();
+    const city=(document.getElementById('regCity')?.value||'').trim();
+    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
+    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
+    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
+    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
+    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
+    _roleData={weight,height,bmi,addr1,zip,city,address,ageChip,pregChip,medsChips,sportLicense};
+  }
+  if(role==='club'){
+    _roleData={
+      clubNom:(document.getElementById('regClubNom')?.value||'').trim(),
+      clubAdresse:(document.getElementById('regClubAdresse')?.value||'').trim(),
+      clubZip:(document.getElementById('regClubZip')?.value||'').trim(),
+      clubVille:(document.getElementById('regClubVille')?.value||'').trim(),
+      clubFed:(document.getElementById('regClubFed')?.value||'').trim(),
+      clubSport:(document.getElementById('regClubSport')?.value||'').trim(),
+      fedId:(document.getElementById('regFedId')?.value||'').trim(),
+      contactRole:(document.getElementById('regClubContactRole')?.value||'').trim(),
+      cnc:!!document.getElementById('regClubCNC')?.checked,
+    };
+  }
+  if(role==='professionnel_sante'){
+    _roleData={
+      rpps:(document.getElementById('regRPPS')?.value||'').trim(),
+      profession:document.getElementById('regProfession')?.value||'',
+      clubId:document.getElementById('regClubHP')?.value||null,
+      partnerClubs:[...regProSelectedClubs],
+    };
+  }
+  if(role==='pharmacien'){
+    _roleData={
+      rpps:(document.getElementById('regRPPSPharma')?.value||'').trim(),
+      rppsStatus:document.getElementById('regRPPSPharma')?.dataset.rppsStatus||'pending',
+    };
+  }
+
+  pendingReg={prenom,nom,email,pwd,role,tel,consentMarketing:_consentMarketing,roleData:_roleData,
+    emailCode:generateCode(6),phoneCode:generateCode(6)};
+  showVerificationPanel();
+}
+
+function generateCode(n){return String(Math.floor(Math.random()*Math.pow(10,n))).padStart(n,'0');}
+let pendingReg=null;
+
+function showVerificationPanel(){
+  const formBox=document.getElementById('regFormBox');
+  const panel=document.getElementById('verifyPanel');
+  if(!formBox||!panel||!pendingReg) return;
+  formBox.style.display='none';
+  panel.style.display='block';
+  const telDisplay=pendingReg.tel?pendingReg.tel.replace(/(\d{2})(?=\d)/g,'$1 '):'numéro renseigné';
+  panel.innerHTML=`
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:8px">📬</div>
+      <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Vérification en 2 étapes</h2>
+      <p style="font-size:13px;color:#666;margin:0">Saisissez les codes reçus par email et par SMS<br>pour activer votre compte.</p>
+    </div>
+    <div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#92400e">
+      🔧 <b>Mode développement</b> — Les codes sont affichés ici directement (en production, ils seront envoyés par email et SMS) :<br>
+      <span style="font-family:monospace">Email : <b>${pendingReg.emailCode}</b> &nbsp;|&nbsp; SMS : <b>${pendingReg.phoneCode}</b></span>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code email <span style="color:#666;font-weight:400">(${pendingReg.email})</span></label>
+      <input id="verifyEmailCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
+        style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
+        oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code SMS <span style="color:#666;font-weight:400">(${telDisplay})</span></label>
+      <input id="verifyPhoneCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
+        style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
+        oninput="this.value=this.value.replace(/\D/g,'')">
+    </div>
+    <div id="verifyErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
+    <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="confirmVerification()">Confirmer et créer mon compte →</button>
+    <button onclick="cancelVerification()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:#666;font-size:13px;cursor:pointer;text-decoration:underline">← Retour au formulaire</button>
+  `;
+}
+
+function cancelVerification(){
+  pendingReg=null;
+  const formBox=document.getElementById('regFormBox');
+  const panel=document.getElementById('verifyPanel');
+  if(formBox) formBox.style.display='';
+  if(panel){panel.style.display='none';panel.innerHTML='';}
+}
+
+async function confirmVerification(){
+  if(!pendingReg) return;
+  const emailIn=(document.getElementById('verifyEmailCode')?.value||'').trim();
+  const phoneIn=(document.getElementById('verifyPhoneCode')?.value||'').trim();
+  const errEl=document.getElementById('verifyErr');
+  if(emailIn!==pendingReg.emailCode){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Code email incorrect. Vérifiez et réessayez.';}
+    return;
+  }
+  if(pendingReg.tel&&phoneIn!==pendingReg.phoneCode){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Code SMS incorrect. Vérifiez et réessayez.';}
+    return;
+  }
+  await completeRegistration();
+}
+
+async function completeRegistration(){
+  if(!pendingReg) return;
+  const {prenom,nom,email,pwd,role,tel,consentMarketing,roleData}=pendingReg;
+  const errEl=document.getElementById('verifyErr')||document.getElementById('regErr');
+
+  // ── Supabase auth ─────────────────────────────────────────────
   if(window.LS_SB?.SB_READY){
-    const licenseNum=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
+    const licenseNum=roleData?.sportLicense||null;
     const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role,tel,sport_license:licenseNum});
-    if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}return;}
-    // Create health pro record if needed
+    if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}cancelVerification();return;}
     if(role==='professionnel_sante'){
-      const rpps=(document.getElementById('regRPPS')?.value||'').trim();
-      const profession=document.getElementById('regProfession')?.value||'';
-      const clubId=document.getElementById('regClubHP')?.value||null;
       setTimeout(async()=>{
-        await window.LS_SB.sbUpsertHealthPro(user.id,{profession,rpps,club_id:clubId||null,partner_clubs:regProSelectedClubs});
+        await window.LS_SB.sbUpsertHealthPro(user.id,{profession:roleData.profession,rpps:roleData.rpps,club_id:roleData.clubId||null,partner_clubs:roleData.partnerClubs});
       },1500);
     }
-    // Store pharmacist RPPS
     if(role==='pharmacien'){
-      const rpps=(document.getElementById('regRPPSPharma')?.value||'').trim();
-      const rppsStatus=document.getElementById('regRPPSPharma')?.dataset.rppsStatus||'pending';
+      const {rpps,rppsStatus}=roleData;
       if(rpps&&window.LS_SB?.getSB){
         const sb=window.LS_SB.getSB();
         if(sb) setTimeout(async()=>{
@@ -6935,82 +7128,48 @@ async function doRegister(){
         },1500);
       }
     }
-    // Create club record if needed
     if(role==='club'){
-      const clubNom=(document.getElementById('regClubNom')?.value||'').trim();
-      const ville=(document.getElementById('regClubVille')?.value||'').trim();
-      const federation=(document.getElementById('regClubFed')?.value||'').trim();
-      const siret=(document.getElementById('regClubSiret')?.value||'').trim();
-      const contactEmail=(document.getElementById('regClubEmail')?.value||'').trim();
+      const rd=roleData;
       setTimeout(async()=>{
-        await window.LS_SB.sbUpsertClub(user.id,{nom:clubNom,ville,federation,siret:siret||null,contact_email:contactEmail});
+        await window.LS_SB.sbUpsertClub(user.id,{
+          nom:rd.clubNom,adresse:rd.clubAdresse,zip:rd.clubZip,ville:rd.clubVille,
+          federation:rd.clubFed,sport:rd.clubSport,fed_id:rd.fedId,
+          contact_role:rd.contactRole,click_collect:rd.cnc,
+        });
       },1500);
     }
-    showToast('Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
+    pendingReg=null;
+    showToast('✅ Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
     enterRole('loginScreen');
     return;
   }
 
-  // ── Fallback localStorage ────────────────────────────────────
-  loadAccounts();
-  if(ACCOUNTS[email]){
-    if(errEl){errEl.style.display='block';errEl.textContent='Cet email est déjà utilisé. Connectez-vous.';}
-    return;
-  }
+  // ── Fallback localStorage ──────────────────────────────────────
   const acc={id:'u_'+Date.now(),prenom,nom,email,password:pwd,role,orders:[],cagnotte:{total:0,history:[]},
-    consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing:!!document.getElementById('consentMarketing')?.checked};
-  // Sauvegarder le téléphone pour tous les rôles
+    consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing};
   if(tel) acc.tel=tel;
-  if(role==='patient'){
-    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
-    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
-    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
-    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
-    const zip=(document.getElementById('regZip')?.value||'').trim();
-    const city=(document.getElementById('regCity')?.value||'').trim();
-    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
-    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
-    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
-    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
-    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
-    acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
-    if(sportLicense) acc.sportLicense=sportLicense;
-  }
-  if(role==='patient_licencie'){
-    const weight=parseFloat(document.getElementById('regWeight')?.value)||null;
-    const height=parseFloat(document.getElementById('regHeight')?.value)||null;
-    const bmi=weight&&height?+(weight/((height/100)**2)).toFixed(1):null;
-    const addr1=(document.getElementById('regAddr1')?.value||'').trim();
-    const zip=(document.getElementById('regZip')?.value||'').trim();
-    const city=(document.getElementById('regCity')?.value||'').trim();
-    const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
-    const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-64';
-    const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
-    const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
-    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
-    acc.healthProfile={ageRange:ageChip,pregnancy:pregChip,meds:medsChips,weight,height,bmi,address};
-    if(sportLicense) acc.sportLicense=sportLicense;
+  if(role==='patient'||role==='patient_licencie'){
+    const rd=roleData;
+    acc.healthProfile={ageRange:rd.ageChip,pregnancy:rd.pregChip,meds:rd.medsChips,weight:rd.weight,height:rd.height,bmi:rd.bmi,address:rd.address};
+    if(rd.sportLicense) acc.sportLicense=rd.sportLicense;
   }
   if(role==='club'){
-    acc.clubInfo={
-      nom:(document.getElementById('regClubNom')?.value||'').trim(),
-      ville:(document.getElementById('regClubVille')?.value||'').trim(),
-      federation:(document.getElementById('regClubFed')?.value||'').trim(),
-      fedId:(document.getElementById('regFedId')?.value||'').trim(),
-      siret:(document.getElementById('regClubSiret')?.value||'').trim()||null,
-      contactEmail:(document.getElementById('regClubEmail')?.value||'').trim(),
-    };
+    const rd=roleData;
+    acc.clubInfo={nom:rd.clubNom,adresse:rd.clubAdresse,zip:rd.clubZip,ville:rd.clubVille,
+      federation:rd.clubFed,sport:rd.clubSport,fedId:rd.fedId,contactRole:rd.contactRole,cnc:rd.cnc};
   }
   if(role==='professionnel_sante'){
-    const rpps=(document.getElementById('regRPPSPro')?.value||'').trim();
-    const profession=document.getElementById('regProfession')?.value||'';
-    acc.rpps=rpps; acc.profession=profession;
-    acc.partnerClubs=regProSelectedClubs;
+    acc.rpps=roleData.rpps; acc.profession=roleData.profession;
+    acc.partnerClubs=roleData.partnerClubs;
+  }
+  if(role==='pharmacien'){
+    acc.rpps=roleData.rpps; acc.rppsStatus=roleData.rppsStatus;
   }
   ACCOUNTS[email]=acc; saveAccounts();
   if(role==='patient_licencie'&&acc.sportLicense){
     pushNotification('club',`🎽 Nouveau licencié inscrit : ${prenom} ${nom} — numéro de licence ${acc.sportLicense}`,{type:'new_member',email});
   }
+  pendingReg=null;
   currentUser=acc; if(acc.healthProfile) patientProfile=acc.healthProfile;
   updateAccountChip(); enterRole('sante');
 }
