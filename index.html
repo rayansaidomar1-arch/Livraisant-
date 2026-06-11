@@ -8462,6 +8462,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   updateAccountChip();
   renderHeader();
 
+  // ── Deep link : inscription livreur ─────────────────────────
+  if(window.location.hash === '#inscription-livreur' && !currentUser){
+    history.replaceState(null,'',window.location.pathname);
+    enterRole('driverSignup');
+    return;
+  }
+
   // ── Deep link : inscription patient ─────────────────────────
   if(window.location.hash === '#inscription-patient' && !currentUser){
     history.replaceState(null,'',window.location.pathname); // nettoie le hash
