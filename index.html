@@ -925,7 +925,7 @@
   <div style="padding:0 16px 10px">
     <div style="font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;margin-bottom:10px">Je suis…</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button onclick="enterApp('pro')" style="font-family:inherit;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.15);border-radius:18px;padding:16px 14px;text-align:left;cursor:pointer">
+      <button onclick="enterPharmacienFromHome()" style="font-family:inherit;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.15);border-radius:18px;padding:16px 14px;text-align:left;cursor:pointer">
         <div style="font-size:22px;margin-bottom:8px">💊</div>
         <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;color:white;line-height:1.1">Pharmacien</div>
         <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px">Tableau de bord &amp; commandes</div>
@@ -1294,6 +1294,7 @@
   <!-- Étape 1 -->
   <div class="step-block on" id="ds1">
     <div class="sec-head"><div class="num">01</div><div><h2>Identité</h2><p>Infos personnelles et adresse de facturation.</p></div></div>
+    <div id="dsErr1" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 14px;font-size:13px;color:#b91c1c;margin-bottom:16px"></div>
     <div class="row2">
       <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="drPrenom" placeholder="Ex. Karim"></div>
       <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="drNom" placeholder="Ex. Benali"></div>
@@ -1302,10 +1303,7 @@
       <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
     </div>
-    <div class="row2">
-      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
-      <div class="form-group"><label class="form-label">Code de parrainage <span class="opt">(facultatif)</span></label><div class="input-row" style="flex-wrap:nowrap"><input type="text" id="drRefCode" placeholder="LIV-A3F7K2" style="text-transform:uppercase"><button class="btn ghost" style="padding:11px 14px;font-size:13px;white-space:nowrap" onclick="validateRefCode()">Vérifier</button></div><div class="field-msg" id="refCodeMsg"></div></div>
-    </div>
+    <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
     <div class="form-group">
       <label class="form-label">Adresse de facturation *</label>
       <input type="text" id="drAddr1" placeholder="N° et nom de la rue" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;margin-bottom:8px">
@@ -1314,8 +1312,6 @@
         <input type="text" id="drAddrCity" placeholder="Ville" style="flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box">
       </div>
     </div>
-    <div class="help-box">🎁 <b>Programme de parrainage</b> En parrainant un nouveau livreur, tu gagnes <b>50 € par livreur inscrit et actif</b>. Ton code unique te sera remis à la fin de l'inscription.</div>
-    <div id="dsErr1" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
     <div class="nav" style="border-top:2px solid var(--ink);position:sticky;bottom:72px;background:white;z-index:50;padding-bottom:12px"><span></span><button class="btn primary" onclick="dsNext(1)">Continuer →</button></div>
   </div>
 
@@ -1348,15 +1344,48 @@
     <div class="nav" style="border-top:2px solid var(--ink);position:sticky;bottom:72px;background:white;z-index:50;padding-bottom:12px"><button class="btn ghost" onclick="dsGo(1)">← Retour</button><button class="btn primary" onclick="dsNext(2)">Continuer →</button></div>
   </div>
 
-  <!-- Étape 3 — Récap + code parrainage -->
+  <!-- Étape 3 — Récap + statut AE + code parrainage -->
   <div class="step-block" id="ds3">
-    <div class="sec-head"><div class="num">03</div><div><h2>Confirmation</h2><p>Ta candidature est envoyée. Voici ton espace livreur.</p></div></div>
+    <div class="sec-head"><div class="num">03</div><div><h2>Dossier envoyé ✅</h2><p>Ta candidature est en cours de traitement. Voici ton récapitulatif.</p></div></div>
+
+    <!-- Statut auto-entrepreneur -->
+    <div id="ds3AeCard" style="background:#0D0E09;border-radius:16px;padding:20px;margin-bottom:16px;color:white">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:44px;height:44px;background:#C2F23E;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto">🏛️</div>
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px">Statut Auto-Entrepreneur</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">Code APE 5320Z — Transport &amp; livraison express</div>
+        </div>
+        <div id="ds3AeBadge" style="margin-left:auto;flex:0 0 auto;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;background:#fef3c7;color:#92400e">⏳ En attente SIRET</div>
+      </div>
+      <div id="ds3SiretDisplay" style="background:rgba(255,255,255,.07);border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:13px;color:rgba(255,255,255,.8)">
+        <span style="font-weight:700">SIRET :</span> <span id="ds3SiretVal" style="font-family:monospace;letter-spacing:1px">—</span>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,.45);line-height:1.6">Pas encore auto-entrepreneur ? Crée ton statut gratuitement en 10 min :<br>
+        <a href="https://formalites.entreprises.gouv.fr" target="_blank" rel="noopener" style="color:#C2F23E;font-weight:700">👉 formalites.entreprises.gouv.fr →</a>
+        <span style="display:block;margin-top:4px">Catégorie <em>Transport de marchandises / livraison express</em> · ton SIRET arrive sous 7–14 jours. Livraisanté t'activera dès réception.</span>
+      </div>
+    </div>
+
+    <!-- Code de parrainage (généré après validation) -->
     <div class="ref-hero">
       <span class="eyebrow">Ton code de parrainage</span>
       <h3>Gagne 50 € par livreur recruté 🎁</h3>
       <p style="font-size:14px;color:rgba(255,255,255,.75)">Partage ce code à tes contacts. Pour chaque livreur inscrit et actif via ton code, tu reçois 50 € directement sur ton IBAN.</p>
       <div class="ref-code"><div class="code" id="myRefCode">—</div><button onclick="copyRefCode()">📋 Copier</button><button id="waShareBtn">💬 WhatsApp</button></div>
     </div>
+
+    <!-- Entrer le code de parrainage d'un collègue -->
+    <div style="background:#f8f9fa;border:1.5px solid var(--line-strong);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px">🤝 A-t-on parrainé ton inscription ?</div>
+      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Saisis ici le code du livreur qui t'a recommandé — il recevra 50 € à ton activation.</div>
+      <div class="input-row" style="flex-wrap:nowrap">
+        <input type="text" id="drRefCode" placeholder="LIV-A3F7K2" style="text-transform:uppercase;flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
+        <button class="btn ghost" style="padding:11px 14px;font-size:13px;white-space:nowrap" onclick="validateRefCode()">Valider</button>
+      </div>
+      <div class="field-msg" id="refCodeMsg" style="margin-top:6px"></div>
+    </div>
+
     <div class="note">📄 <div><b>Documents à envoyer par email.</b> Pour finaliser ton inscription, transmets à <b>livreurs@livraisante.fr</b> : pièce d'identité, carte grise ou attestation de véhicule, attestation RC Pro, et extrait Kbis / avis SIRET URSSAF.</div></div>
     <div class="nav" style="border-top:2px solid var(--ink);justify-content:flex-end"><button class="btn primary" onclick="enterRole('livreur')">Accéder à mon espace livreur →</button></div>
   </div>
@@ -2530,6 +2559,14 @@ function enterApp(type){
     case 'sportif':   enterRole('sportif');break;
     case 'healthPro': currentUser?enterRole('healthPro'):enterRole('loginScreen'); break;
     default:          showHome();
+  }
+}
+/* ── Pastille Pharmacien sur la page d'accueil ── */
+function enterPharmacienFromHome(){
+  if(currentUser && currentUser.role==='pharmacien'){
+    enterRole('pro');
+  } else {
+    enterRole('pharmacySignup');
   }
 }
 /* ═══════════════════════════════════════════════════════════
@@ -5988,7 +6025,7 @@ function dsNext(from){
     const zip=document.getElementById('drAddrZip').value.trim();
     const city=document.getElementById('drAddrCity').value.trim();
     // Champs obligatoires
-    const showErr1=(msg,focusId)=>{if(errEl){errEl.style.display='block';errEl.textContent=msg;errEl.scrollIntoView({behavior:'smooth',block:'center'});}if(focusId)document.getElementById(focusId)?.focus();};
+    const showErr1=(msg,focusId)=>{if(errEl){errEl.style.display='block';errEl.textContent=msg;try{errEl.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}}if(focusId){const f=document.getElementById(focusId);if(f){f.style.borderColor='var(--err)';f.focus();}}};
     if(!prenom||!nom){showErr1('⚠ Prénom et nom sont obligatoires.','drPrenom');return;}
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr1('⚠ Adresse email invalide.','drEmail');return;}
     if(!tel){showErr1('⚠ Numéro de téléphone obligatoire.','drTel');return;}
@@ -6039,6 +6076,17 @@ function dsNext(from){
       localStorage.setItem('livraisante_driver',JSON.stringify(d));
     }catch(e){}
     dsGo(3);
+    // Populate the auto-entrepreneur card in step 3
+    const siretVal=document.getElementById('ds3SiretVal');
+    const aeBadge=document.getElementById('ds3AeBadge');
+    if(siretVal) siretVal.textContent=siret?siret.replace(/(\d{3})(\d{3})(\d{3})(\d{5})/,'$1 $2 $3 $4'):'—';
+    if(aeBadge){
+      if(siret&&luhnSiret(siret)){
+        aeBadge.style.background='#d1fae5';aeBadge.style.color='#065f46';aeBadge.textContent='✅ SIRET enregistré';
+      } else {
+        aeBadge.style.background='#fef3c7';aeBadge.style.color='#92400e';aeBadge.textContent='⏳ En attente SIRET';
+      }
+    }
   }
 }
 function dsGo(n){
