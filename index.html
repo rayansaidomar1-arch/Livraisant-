@@ -8462,6 +8462,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   updateAccountChip();
   renderHeader();
 
+  // ── Deep link : inscription patient ─────────────────────────
+  if(window.location.hash === '#inscription-patient' && !currentUser){
+    history.replaceState(null,'',window.location.pathname); // nettoie le hash
+    enterRole('registerScreen');
+    // Sélectionner automatiquement le rôle "patient"
+    setTimeout(()=>{
+      const patChip=document.querySelector('[data-group="regRole"] .chip[data-v="patient"]');
+      if(patChip&&!patChip.classList.contains('sel')) patChip.click();
+    },50);
+    return;
+  }
+
   // ── Accès admin direct via hash ─────────────────────────────
   const hashAdmin = window.location.hash === '#admin-lv2026';
   if(hashAdmin){
