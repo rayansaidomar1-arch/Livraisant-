@@ -5794,7 +5794,8 @@ function checkSiret(){
 function validateRefCode(){
   const v=document.getElementById('drRefCode').value.toUpperCase().trim();
   const msg=document.getElementById('refCodeMsg');
-  if(/^LIV-[A-Z0-9]{6}$/.test(v)&&v!==myDriverCode){msg.className='field-msg ok';msg.textContent='✓ Code valide — le parrain sera notifié à ton activation.';} 
+  if(!v){msg.className='';msg.textContent='';return;} // Champ vide → aucun message (code facultatif)
+  if(/^LIV-[A-Z0-9]{6}$/.test(v)&&v!==myDriverCode){msg.className='field-msg ok';msg.textContent='✓ Code valide — le parrain sera notifié à ton activation.';}
   else{msg.className='field-msg err';msg.textContent='✗ Code non reconnu — vérifie avec le livreur qui t\'a recommandé.';}
 }
 
