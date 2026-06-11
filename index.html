@@ -2091,6 +2091,16 @@ function getDeliveryTier(){
   if(deliveryDistanceKm===null) return null;
   return DELIVERY_TIERS.find(t=>deliveryDistanceKm<=t.maxKm)||DELIVERY_TIERS[3];
 }
+/** Retourne le compte club du patient licencié si le club a activé le Click & Collect, sinon null */
+function getClubCNCForUser(){
+  if(!currentUser) return null;
+  const hp=currentUser.healthProfile||{};
+  const clubId=hp.clubId||null;
+  if(!clubId) return null;
+  const accs=getAccounts();
+  const club=Object.values(accs).find(a=>a.role==='club'&&a.id===clubId);
+  return (club?.clubInfo?.cnc===true)?club:null;
+}
 const PRODUCT_PRIX={
   // Santé du quotidien
   'Magnésium':10.50,
@@ -3071,7 +3081,7 @@ function showRgpdModal(section='intro'){
   const existing=document.getElementById('rgpdModal'); if(existing) existing.remove();
   const sections={
     intro:`<h3>Politique de confidentialité</h3>
-      <p><b>Responsable de traitement :</b> Livraisanté SAS — SIRET 000 000 000 00000<br><b>DPO :</b> dpo@livraisante.fr · 04 76 00 00 00</p>
+      <p><b>Responsable de traitement :</b> Livraisanté SAS — RCS 933 484 917 R.C.S. Lyon · 1 Rue des Vergers, 69120 Vaulx-en-Velin<br><b>DPO :</b> <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a></p>
       <p><b>Données collectées :</b> Prénom, email, profil de santé (âge, grossesse, traitements chroniques), historique de commandes, position GPS (livraison uniquement, non conservée).</p>
       <p><b>Base légale :</b> Consentement explicite (Art. 6§1a et Art. 9§2a RGPD) pour les données de santé. Exécution du contrat (Art. 6§1b) pour les commandes.</p>
       <p><b>Durée de conservation :</b> Données de santé supprimées 3 ans après la dernière connexion. Données de commande conservées 5 ans (obligation légale comptable).</p>
@@ -3095,10 +3105,10 @@ function showRgpdModal(section='intro'){
         <button onclick="setCookieConsent('essential');document.getElementById('rgpdModal').remove()" style="font-family:inherit;font-weight:700;font-size:13px;padding:10px 18px;background:var(--ink);color:white;border:none;border-radius:10px;cursor:pointer">Essentiels uniquement</button>
       </div>`,
     mentions:`<h3>Mentions légales</h3>
-      <p><b>Éditeur :</b> Livraisanté SAS<br>Capital : 10 000 €<br>Siège : 115 Ter Avenue Jean Perrot, 38100 Grenoble<br>SIRET : 000 000 000 00000<br>RCS Grenoble</p>
-      <p><b>Directeur de publication :</b> Rayan Saidomar</p>
+      <p><b>Éditeur :</b> Livraisanté SAS<br>Forme juridique : Société par actions simplifiée (SAS)<br>Capital social : 1 000,00 €<br>Siège social : 1 Rue des Vergers, 69120 Vaulx-en-Velin<br>RCS : 933 484 917 R.C.S. Lyon<br>Date d'immatriculation : 11/10/2024<br>N° de gestion : 2024B08990</p>
+      <p><b>Directeur de publication :</b> Archad Sidi Saïd Omar, Président</p>
+      <p><b>Contact :</b> <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a></p>
       <p><b>Hébergement statique :</b> GitHub Inc. — GitHub Pages (HTTPS). <b>Données de santé :</b> Supabase (infrastructure AWS eu-west-3 Paris). Une migration vers un hébergeur HDS certifié ARS (OVH Healthcare, Microsoft Azure HDS ou Cegedim Health Data) est planifiée avant tout traitement de données de santé en production clinique.</p>
-      <p><b>Pharmacie partenaire :</b> Pharmacie 115 · FINESS : 380007891 · N° Ordre : 10102156014</p>
       <p><b>Avertissement médical :</b> L'application Livraisanté propose des conseils en compléments alimentaires et dispositifs médicaux pour des affections bénignes. Elle ne constitue pas un acte médical et ne remplace pas une consultation médicale.</p>
       <p><b>Données de santé :</b> Livraisanté traite des données de santé (Art. 9 RGPD). Le responsable de traitement s'engage à mettre en place les mesures techniques et organisationnelles appropriées conformément au RGPD et aux recommandations de la CNIL.</p>`,
     cgu:`<h3>Conditions Générales d'Utilisation</h3>
@@ -3148,8 +3158,8 @@ function showRgpdModal(section='intro'){
       <p>La Société se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés par notification dans l'application. La poursuite de l'utilisation après modification vaut acceptation des nouvelles CGU.</p>
 
       <h4 style="margin:14px 0 6px">Article 8 — Droit applicable et juridiction</h4>
-      <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige, et après tentative de résolution amiable, les tribunaux compétents sont ceux du ressort du Tribunal de Commerce de Grenoble.</p>
-      <p style="margin-top:14px;font-size:12px;color:#888">Contact : contact@livraisante.fr · Livraisanté SAS, 115 Ter Avenue Jean Perrot, 38100 Grenoble</p>`,
+      <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige, et après tentative de résolution amiable, les tribunaux compétents sont ceux du ressort du Tribunal de Commerce de Lyon.</p>
+      <p style="margin-top:14px;font-size:12px;color:#888">Contact : <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> · Livraisanté SAS, 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 R.C.S. Lyon</p>`,
   };
   const modal=document.createElement('div');
   modal.id='rgpdModal';
@@ -4973,13 +4983,14 @@ function renderCart(){
 
   // Ligne livraison
   let feeLine='';
-  if(deliveryMode==='livraison'){
+  if(deliveryMode==='livraison'||deliveryMode==='cnc_club'){
     const feeLabel=deliveryDistanceKm!==null
         ?`<span style="font-weight:800;color:${tier?.color||'var(--ink)'}">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">${tier?.label||''}</span>`
         :`<span style="font-weight:700">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">distance à calculer</span>`;
     const distLabel=deliveryDistanceKm!==null?` · ${deliveryDistanceKm.toFixed(1)} km`:'';
+    const modeIcon=deliveryMode==='cnc_club'?'🏟️ Livraison au club':'🛵 Livraison';
     feeLine=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #eee;font-size:13.5px">
-      <span style="color:var(--ink-soft)">🛵 Livraison${distLabel}</span>
+      <span style="color:var(--ink-soft)">${modeIcon}${distLabel}</span>
       <div style="text-align:right">${feeLabel}</div>
     </div>`;
   } else {
@@ -5022,8 +5033,8 @@ function renderCart(){
       </div>`:''}
     </div>
     <div class="cart-total-row">
-      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
-      ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
+      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':deliveryMode==='cnc_club'?'Retrait au club':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
+      ${(deliveryMode==='livraison'||deliveryMode==='cnc_club')&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
       <div class="cart-grand-total">€${total.toFixed(2)}</div>
     </div>`;
   // Charger les options club en asynchrone après le rendu
@@ -5605,6 +5616,7 @@ function showCombinedConseil(){
       <div class="delivery-mode">
         <button class="mode-btn ${deliveryMode==='livraison'?'on':''}" onclick="setMode('livraison')">🛵 Livraison à domicile</button>
         <button class="mode-btn ${deliveryMode==='cnc'?'on':''}" onclick="setMode('cnc')">🏪 Click &amp; Collect</button>
+        ${getClubCNCForUser()?`<button class="mode-btn ${deliveryMode==='cnc_club'?'on':''}" onclick="setMode('cnc_club')">🏟️ Retrait Club</button>`:''}
       </div>
       <div id="modeDetails"></div>
       <div class="order-row"><input type="text" id="santeName" placeholder="Votre prénom"></div>
@@ -5645,6 +5657,18 @@ function setMode(m){
   if(m==='cnc'){
     details.innerHTML=renderSlotContent();
     if(addrRow) addrRow.style.display='none';
+  } else if(m==='cnc_club'){
+    const club=getClubCNCForUser();
+    const clubNom=club?.clubInfo?.nom||'votre club';
+    const clubAdresse=[club?.clubInfo?.adresse,club?.clubInfo?.zip,club?.clubInfo?.ville].filter(Boolean).join(' ');
+    details.innerHTML=`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13.5px;margin-bottom:6px">🏟️ Retrait au club — ${esc(clubNom)}</div>
+      ${clubAdresse?`<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">📍 ${esc(clubAdresse)}</div>`:''}
+      <div style="font-size:12.5px;color:#166534;line-height:1.5">Un livreur Livraisanté déposera votre commande directement à votre club sportif.<br>Les <b>frais de livraison s'appliquent</b> (même tarif qu'une livraison à domicile).</div>
+    </div>
+    ${renderPharmacyCard()}
+    <div class="cnc-info" style="margin-bottom:8px">Délai estimé <b>2 à 4 heures</b> selon disponibilité du livreur et de la pharmacie partenaire.</div>`;
+    if(addrRow) addrRow.style.display='none';
   } else {
     // Grille tarifaire colorée
     const tiersHtml=DELIVERY_TIERS.map(t=>{
@@ -5676,7 +5700,10 @@ function setMode(m){
 function placeOrderSante(){
   if(!patientCart.length){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Ajoutez au moins un produit au panier.</div>';return;}
   if(deliveryMode==='cnc'&&!selectedSlot){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card warn-caution">Sélectionnez un créneau Click &amp; Collect.</div>';return;}
-  const addr=deliveryMode==='cnc'?`Click & Collect · Créneau ${selectedSlot}`:(document.getElementById('santeAddr')?.value||'').trim();
+  const _cncClub=deliveryMode==='cnc_club'?getClubCNCForUser():null;
+  const addr=deliveryMode==='cnc'?`Click & Collect · Créneau ${selectedSlot}`:
+    deliveryMode==='cnc_club'?`Retrait Club · ${_cncClub?.clubInfo?.nom||'Club'}${_cncClub?.clubInfo?.adresse?' · '+_cncClub.clubInfo.adresse:''}`:
+    (document.getElementById('santeAddr')?.value||'').trim();
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
   const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
   const assocObj=donationEnabled?getCurrentAssoc():null;
@@ -5693,7 +5720,7 @@ function placeOrderSante(){
       addCagnotteContribution(club.id, 'order-'+Date.now(), orderTotal);
     }
   });
-  createOrder({items, kind:deliveryMode==='cnc'?'click-collect':'santé',
+  createOrder({items, kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
     patient:{name:document.getElementById('santeName')?.value.trim()||'Patient',pos:santePos,addr,donation:donInfo},
     trackId:'santeOrderTrack', btn:document.getElementById('santeOrderBtn')});
 }
