@@ -1418,41 +1418,66 @@
     <div class="sp-seg" data-s="3"></div>
   </div>
 
-  <!-- Étape 1 -->
+  <!-- Étape 1 : Informations officine + titulaire -->
   <div class="step-block on" id="ps1">
     <div class="sec-head"><div class="num">01</div><div><h2>Votre pharmacie</h2><p>Informations générales de l'officine.</p></div></div>
-    <div class="form-group"><label class="form-label">Nom de la pharmacie</label><input type="text" id="phNom" placeholder="Ex. Pharmacie du Centre"></div>
-    <div class="form-group"><label class="form-label">Adresse complète</label><input type="text" id="phAddr" placeholder="12 rue de la Paix, 32000 Auch"></div>
+    <div class="form-group"><label class="form-label">Nom de la pharmacie *</label><input type="text" id="phNom" placeholder="Ex. Pharmacie du Centre"></div>
+    <div class="form-group"><label class="form-label">Adresse (rue) *</label><input type="text" id="phRue" placeholder="Ex. 12 rue de la Paix"></div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Email</label><input type="email" id="phEmail" placeholder="contact@pharmacie.fr"></div>
+      <div class="form-group"><label class="form-label">Code postal *</label><input type="text" id="phCp" placeholder="32000" maxlength="5" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+      <div class="form-group"><label class="form-label">Ville *</label><input type="text" id="phVille" placeholder="Ex. Auch"></div>
+    </div>
+    <div class="row2">
+      <div class="form-group"><label class="form-label">Email de contact</label><input type="email" id="phEmail" placeholder="contact@pharmacie.fr"></div>
       <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="phTel" placeholder="05 62 00 00 00"></div>
     </div>
-    <div class="form-group"><label class="form-label">Zone de livraison (rayon)</label>
-      <div class="chips" data-group="phZone">
-        <button class="chip sel" data-v="5">5 km</button>
-        <button class="chip" data-v="10">10 km</button>
-        <button class="chip" data-v="20">20 km</button>
-        <button class="chip" data-v="30">30 km et +</button>
+
+    <div style="margin:22px 0 6px;padding:16px 18px 18px;background:var(--paper-2);border:2px solid var(--ink);border-radius:14px">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px">🧑‍⚕️ Pharmacien titulaire — interlocuteur privilégié</div>
+      <div class="row2">
+        <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="phTitPrenom" placeholder="Ex. Jean"></div>
+        <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="phTitNom" placeholder="Ex. Martin"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">N° RPPS du titulaire * <span class="opt">(11 chiffres)</span></label>
+        <input type="text" id="phRpps" placeholder="Ex. 21000123456" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
+        <div class="field-msg" id="rppsMsg"></div>
+        <div class="help-box">Identifiant national du professionnel de santé. <a href="https://annuaire.sante.fr" target="_blank" rel="noopener">Annuaire Santé →</a></div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Email de facturation * <span class="opt">(demandes patients & livreurs, factures)</span></label>
+        <input type="email" id="phFactEmail" placeholder="facturation@pharmacie.fr">
+        <div class="field-msg" id="factEmailMsg"></div>
       </div>
     </div>
+
     <div class="nav" style="border-top:2px solid var(--ink)"><span></span><button class="btn primary" onclick="psNext(1)">Continuer →</button></div>
   </div>
 
-  <!-- Étape 2 : Identification professionnelle -->
+  <!-- Étape 2 : Abonnements -->
   <div class="step-block" id="ps2">
-    <div class="sec-head"><div class="num">02</div><div><h2>Identification professionnelle</h2><p>Ces identifiants permettent de vérifier l'enregistrement de votre officine auprès des autorités de santé.</p></div></div>
+    <div class="sec-head"><div class="num">02</div><div><h2>Choisissez votre abonnement</h2><p>3 niveaux d'engagement — <strong>2 mois offerts</strong> pour tout engagement annuel.</p></div></div>
+    <div class="plans-toggle">
+      <button class="toggle-btn on" id="toggleMens" onclick="setPlanToggle('mens')">Mensuel</button>
+      <button class="toggle-btn" id="toggleAnn" onclick="setPlanToggle('ann')">Annuel</button>
+      <span class="save-tag">2 mois offerts</span>
+    </div>
+    <div class="plans-grid" id="plansGrid">
+      <!-- rendered by JS -->
+    </div>
+    <div class="note">💳 <div><b>Sans engagement pour le mensuel.</b> L'abonnement annuel est renouvelable automatiquement avec une réduction de <b>2 mois offerts</b>. Résiliation possible à tout moment avec 30 jours de préavis pour le mensuel.</div></div>
+    <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(1)">← Retour</button></div>
+  </div>
+
+  <!-- Étape 3 : Identification professionnelle -->
+  <div class="step-block" id="ps3">
+    <div class="sec-head"><div class="num">03</div><div><h2>Identification professionnelle</h2><p>Ces identifiants permettent de vérifier l'enregistrement de votre officine auprès des autorités de santé.</p></div></div>
     <div class="id-grid">
       <div class="form-group">
         <label class="form-label">Numéro FINESS de l'établissement <span class="opt">(9 chiffres)</span></label>
         <input type="text" id="phFiness" placeholder="Ex. 320012345" maxlength="9" oninput="this.value=this.value.replace(/\D/g,'')">
         <div class="field-msg" id="finessMsg"></div>
         <div class="help-box">Identifie votre officine en tant qu'établissement de santé. <a href="https://finess.sante.gouv.fr" target="_blank" rel="noopener">Consulter l'annuaire FINESS →</a></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Numéro RPPS du pharmacien titulaire <span class="opt">(11 chiffres)</span></label>
-        <input type="text" id="phRpps" placeholder="Ex. 21000123456" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
-        <div class="field-msg" id="rppsMsg"></div>
-        <div class="help-box">Identifiant du professionnel de santé. <a href="https://annuaire.sante.fr" target="_blank" rel="noopener">Annuaire Santé →</a></div>
       </div>
     </div>
     <div class="row2">
@@ -1467,23 +1492,8 @@
         <div class="field-msg" id="phIbanMsg"></div>
       </div>
     </div>
-    <div class="help-box">🔒 <b>Vérification automatique.</b> Les numéros FINESS et RPPS sont vérifiés auprès des bases Annuaire Santé et RPPS. Un conseiller Livraisanté peut également vous accompagner : <a href="tel:0562000000">05 62 00 00 00</a>.</div>
-    <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(1)">← Retour</button><button class="btn primary" onclick="psNext(2)">Choisir mon abonnement →</button></div>
-  </div>
-
-  <!-- Étape 3 : Abonnements -->
-  <div class="step-block" id="ps3">
-    <div class="sec-head"><div class="num">03</div><div><h2>Choisissez votre abonnement</h2><p>3 niveaux d'engagement — <strong>2 mois offerts</strong> pour tout engagement annuel.</p></div></div>
-    <div class="plans-toggle">
-      <button class="toggle-btn on" id="toggleMens" onclick="setPlanToggle('mens')">Mensuel</button>
-      <button class="toggle-btn" id="toggleAnn" onclick="setPlanToggle('ann')">Annuel</button>
-      <span class="save-tag">2 mois offerts</span>
-    </div>
-    <div class="plans-grid" id="plansGrid">
-      <!-- rendered by JS -->
-    </div>
-    <div class="note">💳 <div><b>Sans engagement pour le mensuel.</b> L'abonnement annuel est renouvelable automatiquement avec une réduction de <b>2 mois offerts</b>. Résiliation possible à tout moment avec 30 jours de préavis pour le mensuel.</div></div>
-    <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(2)">← Retour</button></div>
+    <div class="help-box">🔒 <b>Vérification automatique.</b> Le numéro FINESS est vérifié auprès de l'Annuaire Santé. Un conseiller Livraisanté peut également vous accompagner : <a href="tel:0562000000">05 62 00 00 00</a>.</div>
+    <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(2)">← Retour</button><button class="btn primary" onclick="psNext(3)">Envoyer mon dossier →</button></div>
   </div>
 </div>
 
@@ -3026,12 +3036,6 @@ const LAB_CATALOG={
 {n:'Ixora Chrome 200 µg',s:'Chrome picolinate',cat:'CA',f:'gélules'},
 ],
 'Haleon':[
-{n:'Voltarène Emulgel 1%',s:'Diclofénac diéthylamine 1%',cat:'DM',f:'gel'},
-{n:'Voltarène Emulgel 2%',s:'Diclofénac diéthylamine 2%',cat:'DM',f:'gel'},
-{n:'Voltarène Spray Cutané',s:'Diclofénac diéthylamine 1,16%',cat:'DM',f:'spray'},
-{n:'Advil 200 mg',s:'Ibuprofène 200 mg',cat:'DM',f:'comprimés'},
-{n:'Advil 400 mg',s:'Ibuprofène 400 mg',cat:'DM',f:'comprimés'},
-{n:'Advil Migraine',s:'Ibuprofène lysinate 400 mg',cat:'DM',f:'capsules'},
 {n:'Centrum Multi Adulte',s:'Multivitamines + minéraux complet',cat:'CA',f:'comprimés'},
 {n:'Centrum Silver 50+',s:'Multivitamines + minéraux senior',cat:'CA',f:'comprimés'},
 {n:'Otrivin Spray Nasal',s:'Xylométazoline 0,1%',cat:'DM',f:'spray nasal'},
@@ -3049,10 +3053,6 @@ const LAB_CATALOG={
 {n:'Aspro 500 mg',s:'Acide acétylsalicylique 500 mg',cat:'DM',f:'comprimés effervescents'},
 ],
 'Reckitt':[
-{n:'Nurofen 200 mg',s:'Ibuprofène 200 mg',cat:'DM',f:'comprimés'},
-{n:'Nurofen 400 mg',s:'Ibuprofène 400 mg',cat:'DM',f:'comprimés'},
-{n:'Nurofen Flashtab 400 mg',s:'Ibuprofène 400 mg',cat:'DM',f:'comprimés orodispersibles'},
-{n:'Nurofen Gel 5%',s:'Ibuprofène 5%',cat:'DM',f:'gel'},
 {n:'Strepsils Miel Citron',s:'Dichlorobenzyl alcool + Amylmétacrésol',cat:'DM',f:'pastilles'},
 {n:'Strepsils Lidocaïne',s:'Lidocaïne + Dichlorobenzyl alcool',cat:'DM',f:'pastilles'},
 {n:'Gaviscon Suspension',s:'Alginate de sodium + Bicarbonate',cat:'DM',f:'suspension buvable'},
@@ -3069,11 +3069,6 @@ const LAB_CATALOG={
 {n:'Neutrogena Luminous Boost Sérum Vitamine C',s:'Vitamine C + Acide hyaluronique',cat:'DM',f:'sérum'},
 {n:'Listerine Total Care Bain de Bouche',s:'Eucalyptol + Menthol + Thymol',cat:'CA',f:'solution buccale'},
 {n:'Listerine Zero Alcool',s:'Fluorure de sodium + Menthol',cat:'CA',f:'solution buccale'},
-{n:'Nicorette Patch 14 mg',s:'Nicotine 14 mg/24h',cat:'DM',f:'patch transdermique'},
-{n:'Nicorette Patch 21 mg',s:'Nicotine 21 mg/24h',cat:'DM',f:'patch transdermique'},
-{n:'Nicorette Gomme 2 mg',s:'Nicotine 2 mg',cat:'DM',f:'gomme à mâcher'},
-{n:'Nicorette Gomme 4 mg',s:'Nicotine 4 mg',cat:'DM',f:'gomme à mâcher'},
-{n:'Nicorette Spray Buccal 1 mg',s:'Nicotine 1 mg/dose',cat:'DM',f:'spray buccal'},
 {n:'Aveeno Skin Relief Baume',s:'Avoine colloïdale Active Naturals',cat:'DM',f:'baume'},
 {n:'Aveeno Daily Moisturising Lotion',s:'Avoine colloïdale + Glycérine',cat:'DM',f:'lotion'},
 ],
@@ -3277,7 +3272,7 @@ function toggleLab(lab){
   if(!activeLabs.has(lab)){
     if(maxLabs!==null && activeLabs.size>=maxLabs){
       const msg=document.getElementById('labLimitMsg');
-      if(msg){msg.innerHTML=`<div class="limit-warn"><b>⚠ Limite atteinte :</b> votre plan <b>${PLANS.find(p=>p.id===planId)?.name||'Essai gratuit'}</b> permet ${maxLabs} laboratoire${maxLabs>1?'s':''} max. <a href="#" onclick="psGo(3);setPlanToggle('mens')" style="color:var(--err);font-weight:700">Passer au niveau supérieur →</a></div>`;setTimeout(()=>{if(msg)msg.innerHTML='';},5000);}
+      if(msg){msg.innerHTML=`<div class="limit-warn"><b>⚠ Limite atteinte :</b> votre plan <b>${PLANS.find(p=>p.id===planId)?.name||'Essai gratuit'}</b> permet ${maxLabs} laboratoire${maxLabs>1?'s':''} max. <a href="#" onclick="psGo(2);setPlanToggle('mens')" style="color:var(--err);font-weight:700">Passer au niveau supérieur →</a></div>`;setTimeout(()=>{if(msg)msg.innerHTML='';},5000);}
       return;
     }
   }
@@ -4892,7 +4887,7 @@ function renderPriorityWidget(){
             ${priorityLabs.length} / ${maxPL}
           </span>
         </div>
-        ${!canAddLabs?`<div style="font-size:13px;color:var(--warn);font-weight:600">⚠ Labs prioritaires disponibles dès le plan <b>Démarrage</b>. <a href="#" onclick="psGo(3)" style="color:var(--pharma)">Passer à un abonnement →</a></div>`:
+        ${!canAddLabs?`<div style="font-size:13px;color:var(--warn);font-weight:600">⚠ Labs prioritaires disponibles dès le plan <b>Démarrage</b>. <a href="#" onclick="psGo(2)" style="color:var(--pharma)">Passer à un abonnement →</a></div>`:
         `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">Sélectionnez jusqu'à <b>${maxPL} laboratoires</b> — leurs produits apparaîtront en premier dans les recommandations patients.</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${PARTNER_LABS.map(l=>`<button onclick="togglePriorityLab('${l.replace(/'/g,"\\'")}')"
@@ -7004,23 +6999,60 @@ function copyRefCode(){
 /* ---- Steps pharmacie ---- */
 function psNext(from){
   if(from===1){
-    if(!document.getElementById('phNom').value.trim()){alert('Merci de renseigner le nom de votre pharmacie.');return;}
+    const nom=document.getElementById('phNom').value.trim();
+    const rue=document.getElementById('phRue').value.trim();
+    const cp=document.getElementById('phCp').value.trim();
+    const ville=document.getElementById('phVille').value.trim();
+    const titPrenom=document.getElementById('phTitPrenom').value.trim();
+    const titNom=document.getElementById('phTitNom').value.trim();
+    const rpps=document.getElementById('phRpps').value.trim();
+    const factEmail=document.getElementById('phFactEmail').value.trim();
+    if(!nom){alert('Merci de renseigner le nom de votre pharmacie.');return;}
+    if(!rue){alert('Merci de renseigner l\'adresse (rue).');return;}
+    if(!/^\d{5}$/.test(cp)){alert('Le code postal doit comporter exactement 5 chiffres.');return;}
+    if(!ville){alert('Merci de renseigner la ville.');return;}
+    if(!titPrenom||!titNom){alert('Merci de renseigner le prénom et le nom du pharmacien titulaire.');return;}
+    if(!/^\d{11}$/.test(rpps)){
+      document.getElementById('rppsMsg').className='field-msg err';
+      document.getElementById('rppsMsg').textContent='✗ Le RPPS doit comporter exactement 11 chiffres.';
+      document.getElementById('phRpps').focus();
+      return;
+    }
+    if(!rpps.startsWith('21')){document.getElementById('rppsMsg').className='field-msg warn';document.getElementById('rppsMsg').textContent='⚠ Pour un pharmacien, le RPPS commence généralement par 21.';}
+    else{document.getElementById('rppsMsg').className='field-msg ok';document.getElementById('rppsMsg').textContent='✓ Format RPPS pharmacien valide.';}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(factEmail)){
+      document.getElementById('factEmailMsg').className='field-msg err';
+      document.getElementById('factEmailMsg').textContent='✗ Merci de renseigner un email de facturation valide.';
+      document.getElementById('phFactEmail').focus();
+      return;
+    }
+    document.getElementById('factEmailMsg').className='field-msg ok';
+    document.getElementById('factEmailMsg').textContent='✓ Email de facturation valide.';
     psGo(2);
-  } else if(from===2){
+  } else if(from===3){
     const finess=document.getElementById('phFiness').value;
-    const rpps=document.getElementById('phRpps').value;
     const siret=document.getElementById('phSiret').value.replace(/\s/g,'');
     let ok=true;
     if(!/^\d{9}$/.test(finess)){document.getElementById('finessMsg').className='field-msg err';document.getElementById('finessMsg').textContent='✗ Le FINESS doit comporter exactement 9 chiffres.';ok=false;}
     else{document.getElementById('finessMsg').className='field-msg ok';document.getElementById('finessMsg').textContent='✓ Format FINESS valide.';}
-    if(!/^\d{11}$/.test(rpps)){document.getElementById('rppsMsg').className='field-msg err';document.getElementById('rppsMsg').textContent='✗ Le RPPS doit comporter exactement 11 chiffres.';ok=false;}
-    else{
-      if(!rpps.startsWith('21')) document.getElementById('rppsMsg').textContent='⚠ Pour un pharmacien, le RPPS commence généralement par 21.';
-      else{document.getElementById('rppsMsg').className='field-msg ok';document.getElementById('rppsMsg').textContent='✓ Format RPPS pharmacien valide.';}
-    }
     if(!ok) return;
-    if(siret && !luhnSiret(siret)){const c=confirm('Format SIRET invalide. Continuer ?');if(!c)return;}
-    psGo(3);
+    if(siret && !luhnSiret(siret)){const c=confirm('Format SIRET invalide. Continuer quand même ?');if(!c)return;}
+    // Sauvegarde complète du dossier
+    try{
+      const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');
+      ph.nom=document.getElementById('phNom').value.trim();
+      ph.rue=document.getElementById('phRue').value.trim();
+      ph.cp=document.getElementById('phCp').value.trim();
+      ph.ville=document.getElementById('phVille').value.trim();
+      ph.adresse=ph.rue+', '+ph.cp+' '+ph.ville;
+      ph.email=document.getElementById('phEmail').value.trim();
+      ph.tel=document.getElementById('phTel').value.trim();
+      ph.titulaire={prenom:document.getElementById('phTitPrenom').value.trim(),nom:document.getElementById('phTitNom').value.trim(),rpps:document.getElementById('phRpps').value.trim(),emailFacturation:document.getElementById('phFactEmail').value.trim()};
+      ph.finess=finess; ph.siret=siret;
+      ph.iban=document.getElementById('phIban').value.trim();
+      localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));
+    }catch(e){}
+    alert('✅ Dossier d\'inscription envoyé !\n\nUn conseiller Livraisanté vous contactera dans les 24h pour finaliser l\'activation de votre espace pharmacie.');
   }
 }
 function psGo(n){
@@ -7167,8 +7199,9 @@ function selectPlan(pid,period){
   }
   try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=period;ph.planName=pl.name;if(_planAppliedPromo)ph.promoCode=_planAppliedPromo.code;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
   _planAppliedPromo=null;
-  if(pid==='free'){alert(`✅ Compte Découverte activé.\n\n3 livraisons gratuites pour tester la plateforme.\n\nUn conseiller Livraisanté vous contactera pour l'activation.`);return;}
-  alert(`✅ Abonnement "${pl.name}" ${ann?'annuel':'mensuel'} sélectionné${promoNote}.\n\nMontant : €${total}${ann?'/an':'/mois'}.\n\nUn conseiller Livraisanté vous contactera pour finaliser le paiement et l'activation.`);
+  const planLabel=pid==='free'?'Essai gratuit (3 livraisons offertes)':`"${pl.name}" ${ann?'annuel':'mensuel'} — €${total}${ann?'/an':'/mois'}${promoNote}`;
+  showToast(`✅ ${planLabel} sélectionné`, 'var(--ok)');
+  psGo(3);
 }
 
 /* ---- Dashboard livreur — section parrainage ---- */
@@ -7819,13 +7852,10 @@ const MEDICAMENT_DB=[
   {nom:'Doliprane 500mg',cip13:'3400933613110',dci:'Paracétamol',laboratoire:'Sanofi'},
   {nom:'Efferalgan 1000mg',cip13:'3400938070086',dci:'Paracétamol',laboratoire:'UPSA'},
   {nom:'Efferalgan 500mg',cip13:'3400938070024',dci:'Paracétamol',laboratoire:'UPSA'},
-  {nom:'Advil 200mg',cip13:'3400930031261',dci:'Ibuprofène',laboratoire:'Pfizer'},
-  {nom:'Nurofen 400mg',cip13:'3400936660956',dci:'Ibuprofène',laboratoire:'Reckitt'},
   {nom:'Spasfon 80mg',cip13:'3400930016282',dci:'Phloroglucinol',laboratoire:'Teva'},
   {nom:'Spasfon lyoc 80mg',cip13:'3400933692961',dci:'Phloroglucinol',laboratoire:'Teva'},
   {nom:'Smecta 3g',cip13:'3400930167619',dci:'Diosmectite',laboratoire:'Ipsen'},
   {nom:'Imodium 2mg',cip13:'3400930158020',dci:'Lopéramide',laboratoire:'Johnson & Johnson'},
-  {nom:'Voltarène emulgel 1%',cip13:'3400934009057',dci:'Diclofénac',laboratoire:'Novartis'},
   {nom:'Levothyrox 100µg',cip13:'3400936081733',dci:'Lévothyroxine',laboratoire:'Merck'},
   {nom:'Levothyrox 50µg',cip13:'3400936081696',dci:'Lévothyroxine',laboratoire:'Merck'},
   {nom:'Metformine 500mg',cip13:'3400937477501',dci:'Metformine',laboratoire:'Biogaran'},
@@ -7833,9 +7863,7 @@ const MEDICAMENT_DB=[
   {nom:'Amoxicilline 500mg',cip13:'3400935842282',dci:'Amoxicilline',laboratoire:'Sandoz'},
   {nom:'Amoxicilline 1g',cip13:'3400935842299',dci:'Amoxicilline',laboratoire:'Sandoz'},
   {nom:'Augmentin 1g',cip13:'3400935573186',dci:'Amoxicilline/Acide clavulanique',laboratoire:'GSK'},
-  {nom:'Ibuprofène 400mg',cip13:'3400937420040',dci:'Ibuprofène',laboratoire:'Arrow'},
   {nom:'Dafalgan 1g',cip13:'3400938561302',dci:'Paracétamol',laboratoire:'UPSA'},
-  {nom:'Rhinadvil',cip13:'3400930150444',dci:'Ibuprofène/Pseudoéphédrine',laboratoire:'Pfizer'},
   {nom:'Toplexil',cip13:'3400930125978',dci:'Oxomémazine',laboratoire:'Sanofi'},
   {nom:'Nux Vomica 9CH',cip13:'3400930000695',dci:'Homéopathie',laboratoire:'Boiron'},
   {nom:'Oscillococcinum',cip13:'3400930009476',dci:'Homéopathie',laboratoire:'Boiron'},
@@ -9266,7 +9294,7 @@ function trialWidget(){
   return `<div class="trial-strip">
     <div><b>Essai gratuit</b> · ${daysLeft > 0?`${daysLeft} jour${daysLeft>1?'s':''} restant${daysLeft>1?'s':''}`:`Expiré — passez à un abonnement`}</div>
     <div style="font-size:12px">Commandes : <b>${ordersThisMonth}/10</b> ce mois</div>
-    <button onclick="psGo(3);setPlanToggle('mens');enterRole('pharmacySignup')">Passer à l'abonnement →</button>
+    <button onclick="psGo(2);setPlanToggle('mens');enterRole('pharmacySignup')">Passer à l'abonnement →</button>
   </div>`;
 }
 
