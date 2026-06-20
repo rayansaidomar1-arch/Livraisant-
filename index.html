@@ -3385,7 +3385,7 @@ function findPharmacies(){
           const la=e.lat??e.center?.lat, lo=e.lon??e.center?.lon;
           const dist=haversine(lat,lon,la,lo);
           let level;
-          if(dist<=PHARM_RADIUS_FREE_REF) level=Math.random()>.5?'ref':'free';
+          if(dist<=PHARM_RADIUS_FREE_REF){const _rl=new Uint8Array(1);crypto.getRandomValues(_rl);level=_rl[0]>=128?'ref':'free';}
           else if(dist<=PHARM_RADIUS_PRIO) level='prio';
           else level='alt';
           return {name:(e.tags&&e.tags.name)||'Pharmacie', la, lo, dist, level};
@@ -3959,7 +3959,7 @@ function onWizSportChange(sport){
   section.style.display='block';
   // Build club list from registered club accounts + static list for the sport
   const clubs=getClubsForSport(sport);
-  sel.innerHTML=`<option value="">-- Aucun club --</option>`+clubs.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+  sel.innerHTML=`<option value="">-- Aucun club --</option>`+clubs.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
 }
 
 function getClubsForSport(sport){
@@ -4309,7 +4309,7 @@ function enterRole(r){
   if(r==='profileScreen') renderProfile();
   if(r==='healthPro') renderHealthProDashboard();
   if(r==='club') renderClubDashboard();
-  if(r==='admin') renderAdminDashboard();
+  if(r==='admin'){ if(!currentUser||currentUser.role!=='admin'){enterRole('sante');return;} renderAdminDashboard(); }
   renderHeader();
   renderBottomNav();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -4422,9 +4422,15 @@ loadOrders();
 
 const bc=('BroadcastChannel' in window)?new BroadcastChannel('livraisante'):null;
 if(bc) bc.onmessage=ev=>{
-  if(!ev.data) return;
-  if(ev.data.order){ ORDERS[ev.data.order.id]=ev.data.order; refreshViews(); }
-  if(ev.data.labs){ activeLabs=new Set(ev.data.labs); if(currentView==='pro') renderPro(); refreshProducts(); }
+  if(!ev.data||typeof ev.data!=='object') return;
+  // Valider la structure et le format de l'ID avant d'accepter des données externes
+  if(ev.data.order&&typeof ev.data.order==='object'&&typeof ev.data.order.id==='string'&&/^[a-zA-Z0-9_-]{1,40}$/.test(ev.data.order.id)){
+    ORDERS[ev.data.order.id]=ev.data.order; refreshViews();
+  }
+  if(ev.data.labs&&Array.isArray(ev.data.labs)){
+    activeLabs=new Set(ev.data.labs.filter(l=>typeof l==='string'));
+    if(currentView==='pro') renderPro(); refreshProducts();
+  }
 };
 function broadcast(order){ if(bc) bc.postMessage({order}); }
 
@@ -4767,17 +4773,17 @@ function renderOrderTrack(id){
     }
   }
   if(o.status==='refusee'){
-    track.innerHTML=`<div class="track-card"><b>Commande ${o.id}</b> — <span class="ostatus refusee">Refusée par le pharmacien</span><br><span style="font-size:12.5px;color:var(--ink-soft)">Rapproche‑toi de ton pharmacien pour un conseil adapté.</span></div>${subHtml}${cagnotteHtml()}`;
+    track.innerHTML=`<div class="track-card"><b>Commande ${esc(o.id)}</b> — <span class="ostatus refusee">Refusée par le pharmacien</span><br><span style="font-size:12.5px;color:var(--ink-soft)">Rapproche‑toi de ton pharmacien pour un conseil adapté.</span></div>${subHtml}${cagnotteHtml()}`;
     return;
   }
   const idx=STEPS.findIndex(s=>s[0]===o.status);
   track.innerHTML=`<div class="track-card">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <b>Commande ${o.id}</b><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span>
+      <b>Commande ${esc(o.id)}</b><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span>
     </div>
     <div class="stepper">${STEPS.map((s,i)=>`<div class="st ${i<=idx?'on':''}"><div class="bub"></div>${s[1]}</div>`).join('')}</div>
     ${o.driver?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">🛵 Pris en charge par un livreur.</div>`:''}
-    ${o.patient?.addr?.startsWith('Click & Collect')?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">🏪 ${o.patient.addr}</div>`:''}
+    ${o.patient?.addr?.startsWith('Click & Collect')?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">🏪 ${esc(o.patient.addr)}</div>`:''}
     ${o.patient?.donation?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">${o.patient.donation.icon} Livraisanté reverse <b>€${o.patient.donation.amount}</b> à ${o.patient.donation.assoc} en votre nom.</div>`:''}
   </div>${renderOrderCode(o)}${renderCheckInBlock(o)}${subHtml}${cagnotteHtml()}`;
 }
@@ -5055,7 +5061,7 @@ async function syncGoogleHours(){
       localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
       msg.innerHTML=`<span style="color:var(--warn)">⚠ Place ID enregistré. Pour synchroniser automatiquement les horaires, configurez une clé API Google Places dans vos paramètres ou <a href="https://business.google.com" target="_blank" style="color:#1F6FEB;font-weight:700">saisissez vos horaires manuellement ci-dessous</a>.</span>`;
     } else {
-      msg.innerHTML=`<span style="color:var(--err)">✗ Erreur de synchronisation (${e.message}). Vérifiez votre Place ID.</span>`;
+      msg.innerHTML=`<span style="color:var(--err)">✗ Erreur de synchronisation (${esc(e.message)}). Vérifiez votre Place ID.</span>`;
     }
   }
 }
@@ -5185,7 +5191,7 @@ function renderPro(){
   const closes=all.filter(o=>['livree','refusee'].includes(o.status));
   const card=o=>`
     <div class="ocard">
-      <div class="otop"><div class="oid">${o.id}<small>${o.patient.name} · ${o.kind||'santé'} · il y a ${timeAgo(o.createdAt)}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
+      <div class="otop"><div class="oid">${esc(o.id)}<small>${esc(o.patient.name)} · ${esc(o.kind||'santé')} · il y a ${timeAgo(o.createdAt)}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
       ${o.code?`<div style="display:flex;align-items:center;gap:8px;padding:6px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)">Code</span><span style="font-family:monospace;font-weight:900;font-size:15px;letter-spacing:3px;background:var(--lime);padding:3px 10px;border-radius:6px;color:var(--ink)">${o.code}</span>${o.codeValidated?'<span style="color:var(--ok);font-size:12px;font-weight:700">✓ Validé</span>':''}</div>`:''}
       <div class="oitems">${orderItemsHtml(o)}</div>
       <div class="oaddr">${orderAddrHtml(o)}</div>
@@ -8425,6 +8431,8 @@ function restoreSession(){
     const s=JSON.parse(localStorage.getItem('livraisante_session')||'null');
     if(s&&Date.now()-s.ts<86400000*7&&ACCOUNTS[s.email]){
       currentUser=ACCOUNTS[s.email];
+      // Sécurité : le rôle admin n'est JAMAIS restauré depuis le localStorage
+      if(currentUser.role==='admin') currentUser.role='patient';
       if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
       if(currentUser.cagnotte) cagnotte=currentUser.cagnotte;
       if(currentUser.role==='pharmacien'&&currentUser.pharmacyInfo?.labsActive) activeLabs=new Set(currentUser.pharmacyInfo.labsActive);
@@ -8535,7 +8543,7 @@ async function checkRPPSPro(){
       const prenom=data?.prenom||'—';
       const prof=data?.profession||'Professionnel de santé';
       if(msgEl)msgEl.innerHTML='<span style="color:var(--ok)">✓ RPPS valide</span>';
-      if(resEl){resEl.style.display='block';resEl.innerHTML=`<div style="font-weight:700">${prenom} ${nom}</div><div style="color:var(--ink-soft);font-size:12px">${prof}</div>`;}
+      if(resEl){resEl.style.display='block';resEl.innerHTML=`<div style="font-weight:700">${esc(prenom)} ${esc(nom)}</div><div style="color:var(--ink-soft);font-size:12px">${esc(prof)}</div>`;}
     } else {
       if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ RPPS non trouvé — vérifiez le numéro (la vérification en ligne sera effectuée manuellement)</span>';
       if(resEl)resEl.style.display='none';
@@ -8617,7 +8625,7 @@ async function checkRPPSPharma(){
   } else {
     msgEl.textContent=result.msg; msgEl.style.color='var(--ok)';
     resEl.style.display='block';
-    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:700;color:var(--ok)">${result.prenom} ${result.nom}</div><div style="font-size:12px;color:#666;margin-top:2px">${result.specialite} · RPPS ${rpps} vérifié dans l'Annuaire Santé national</div></div></div>`;
+    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:700;color:var(--ok)">${esc(result.prenom)} ${esc(result.nom)}</div><div style="font-size:12px;color:#666;margin-top:2px">${esc(result.specialite)} · RPPS ${esc(rpps)} vérifié dans l'Annuaire Santé national</div></div></div>`;
     if(input) input.dataset.rppsStatus='verified';
     // Pré-remplir le prénom/nom si champs vides
     const prenomEl=document.getElementById('regPrenom');
@@ -9518,7 +9526,7 @@ function showArrivalToast(o){
   const ex=document.getElementById('arrival-toast'); if(ex) ex.remove();
   const toast=document.createElement('div');
   toast.id='arrival-toast'; toast.className='arrival-alert';
-  toast.innerHTML=`<div style="font-size:22px;flex:0 0 auto">🔔</div><div style="flex:1"><div style="font-weight:800;font-size:15px;margin-bottom:3px">Patient arrivé en officine !</div><div style="font-size:12px;opacity:.9">${o.patient?.name||'Patient'} · Commande ${o.id}</div><div style="font-size:11px;opacity:.75;margin-top:2px">${o.arrival.timeLabel} · ${o.patient?.addr?.replace('Click & Collect · Créneau ','Créneau ')}</div></div><button onclick="document.getElementById('arrival-toast').remove();enterRole('pro')" style="font-family:inherit;font-weight:700;font-size:11px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);color:white;padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap">Voir →</button>`;
+  toast.innerHTML=`<div style="font-size:22px;flex:0 0 auto">🔔</div><div style="flex:1"><div style="font-weight:800;font-size:15px;margin-bottom:3px">Patient arrivé en officine !</div><div style="font-size:12px;opacity:.9">${esc(o.patient?.name||'Patient')} · Commande ${esc(o.id)}</div><div style="font-size:11px;opacity:.75;margin-top:2px">${esc(o.arrival.timeLabel)} · ${esc((o.patient?.addr||'').replace('Click & Collect · Créneau ','Créneau '))}</div></div><button onclick="document.getElementById('arrival-toast').remove();enterRole('pro')" style="font-family:inherit;font-weight:700;font-size:11px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);color:white;padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap">Voir →</button>`;
   document.body.appendChild(toast);
   setTimeout(()=>{const t=document.getElementById('arrival-toast');if(t){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);}},8000);
 }
@@ -9551,7 +9559,7 @@ function renderCheckInBlock(o){
 function renderArrivalNotifications(){
   const arrivals=Object.values(ORDERS).filter(o=>o.arrival?.checkedIn&&!o.arrival?.served);
   if(!arrivals.length) return '';
-  return `<div style="margin-bottom:18px"><div class="dash-sec-title" style="color:#16A34A;margin-top:0;display:flex;align-items:center;gap:8px"><div class="green-dot"></div>Patients présents en officine <span class="cnt" style="background:#16A34A">${arrivals.length}</span></div>${arrivals.map(o=>`<div class="arrival-notif"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div style="font-weight:800;font-size:15px;color:#1c6b2b">${o.patient?.name||'Patient'} — Commande ${o.id}</div><div style="font-size:12.5px;color:#2d6b3d;margin-top:3px">⏰ ${o.arrival.timeLabel} · ${o.patient?.addr?.replace('Click & Collect · Créneau ','Créneau ')}</div><div style="font-size:12px;color:#2d6b3d;margin-top:3px">${(o.items||[]).map(i=>i.name||i.ev).slice(0,2).join(', ')}</div></div><button onclick="markServed('${o.id}')" style="font-family:inherit;font-weight:800;font-size:12px;background:#16A34A;color:white;border:none;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap">✓ Remis</button></div></div>`).join('')}</div>`;
+  return `<div style="margin-bottom:18px"><div class="dash-sec-title" style="color:#16A34A;margin-top:0;display:flex;align-items:center;gap:8px"><div class="green-dot"></div>Patients présents en officine <span class="cnt" style="background:#16A34A">${arrivals.length}</span></div>${arrivals.map(o=>`<div class="arrival-notif"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div style="font-weight:800;font-size:15px;color:#1c6b2b">${esc(o.patient?.name||'Patient')} — Commande ${esc(o.id)}</div><div style="font-size:12.5px;color:#2d6b3d;margin-top:3px">⏰ ${esc(o.arrival.timeLabel)} · ${esc((o.patient?.addr||'').replace('Click & Collect · Créneau ','Créneau '))}</div><div style="font-size:12px;color:#2d6b3d;margin-top:3px">${(o.items||[]).map(i=>esc(i.name||i.ev||'')).slice(0,2).join(', ')}</div></div><button onclick="markServed('${o.id}')" style="font-family:inherit;font-weight:800;font-size:12px;background:#16A34A;color:white;border:none;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap">✓ Remis</button></div></div>`).join('')}</div>`;
 }
 function markServed(orderId){const o=ORDERS[orderId];if(!o)return;o.arrival.served=true;o.status='livree';saveOrder(o);renderPro();}
 
@@ -9871,6 +9879,10 @@ function renderInvoiceMonth(m, showDownload=true, entityType='', entityLabel='')
 function downloadInvoicePDF(m, entityLabel='', entityType=''){
   const num=`LV-${m.key}-${String(Date.now()).slice(-4)}`;
   const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  // XSS : pré-échapper toutes les valeurs dérivées de données utilisateur avant injection dans document.write()
+  const _eLabel=esc(entityLabel);
+  const _eType=esc(entityType);
+  const _eNum=esc(num);
   const platformCommission=m.orders.reduce((s,o)=>s+(parseFloat(o.delivery_fee||0)*0.20),0);
   const clubContrib=platformCommission*0.50;
   const win=window.open('','_blank','width=860,height=750');
@@ -9911,11 +9923,11 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
     <div>
       <div class="logo">Livrais<span>anté</span></div>
       <div style="font-size:12px;color:#888;margin-top:4px">livraisante.fr · livraison de médicaments</div>
-      ${entityLabel?`<div style="font-size:12px;margin-top:6px"><b>${entityType}</b> : ${entityLabel}</div>`:''}
+      ${_eLabel?`<div style="font-size:12px;margin-top:6px"><b>${_eType}</b> : ${_eLabel}</div>`:''}
     </div>
     <div class="meta">
       <strong>FACTURE MENSUELLE</strong>
-      N° ${num}<br>
+      N° ${_eNum}<br>
       Période : ${m.label}<br>
       Édité le ${today}
     </div>
@@ -9932,7 +9944,7 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
     const fee=parseFloat(o.delivery_fee||0);
     const comm=(fee*0.20).toFixed(2);
     const d=o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'—';
-    return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${(o.id||'—').slice(0,16)}</td><td>${d}</td><td>${parseFloat(o.total_price||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
+    return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${esc((o.id||'—').slice(0,16))}</td><td>${d}</td><td>${parseFloat(o.total_price||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
   }).join('')}</tbody>
   <tfoot><tr><td colspan="3" style="font-weight:700">TOTAL</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td><td>${platformCommission.toFixed(2)} €</td></tr></tfoot></table>
   ${clubContrib>0?`<div class="b2b2c"><div class="ttl">🏆 Reversement clubs (modèle B2B2C)</div><div style="font-size:12px;color:#15803d">50% de la commission plateforme reversés aux clubs de leurs membres licenciés : <b>${clubContrib.toFixed(2)} €</b> estimés ce mois.</div></div>`:''}
