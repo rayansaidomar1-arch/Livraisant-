@@ -170,7 +170,9 @@ input,select,button{font-family:var(--sans)}
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"
+  integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil"
+  crossorigin="anonymous"></script>
 <script>
 // ════════════════════════════════════════════════════════════
 // AUTH — Supabase uniquement (aucun credential en dur)
@@ -543,7 +545,8 @@ function initPromoEvents(){}
 function generateCode(){
   const pfx=(document.getElementById('pfx').value.toUpperCase().replace(/[^A-Z0-9]/g,'')||'LIVRAI').slice(0,8);
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const rnd=Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const _rb=new Uint8Array(6); crypto.getRandomValues(_rb);
+  const rnd=Array.from(_rb,b=>chars[b%chars.length]).join('');
   const code=pfx+rnd;
   const type=document.getElementById('disc-type').value;
   const val=parseInt(document.getElementById('disc-val').value)||20;

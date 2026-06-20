@@ -19,8 +19,8 @@ function getSB(){
   _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
     auth:{
       autoRefreshToken: true,
-      persistSession: true,    // JWT stored in localStorage (encrypted)
-      detectSessionInUrl: true
+      persistSession: true,    // JWT stored in localStorage (base64, NOT encrypted — ne pas stocker de secrets dans le JWT)
+      detectSessionInUrl: false // true uniquement si OAuth social (Google, GitHub…) est activé
     }
   });
   return _sb;

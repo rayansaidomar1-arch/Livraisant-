@@ -16,10 +16,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Carte des pharmacies (OpenStreetMap, sans clé API) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-<!-- Supabase JS SDK (CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+  crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer
+  integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+  crossorigin="anonymous"></script>
+<!-- Supabase JS SDK (CDN) — version épinglée + SRI -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"
+  integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil"
+  crossorigin="anonymous"></script>
 <script src="js/supabase-client.js"></script>
 <style>
   :root{
@@ -1513,7 +1519,6 @@
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="doLogin()">Se connecter →</button>
       <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
       <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
-      <div id="loginDebug" style="display:none;margin-top:10px;padding:10px;background:#fef9c3;border-radius:10px;font-size:12px;font-family:monospace;word-break:break-all"></div>
     </div>
     <!-- Comptes démo masqués — existent dans Supabase uniquement -->
   </div>
@@ -4429,7 +4434,8 @@ function getNotifications(){ try{return JSON.parse(localStorage.getItem(NOTIF_KE
 function saveNotifications(arr){ try{localStorage.setItem(NOTIF_KEY,JSON.stringify(arr.slice(-100)));}catch(e){} }
 function pushNotification(targetRole,message,meta={}){
   const notifs=getNotifications();
-  notifs.push({id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),targetRole,message,meta,ts:Date.now(),read:false});
+  const _ni=new Uint32Array(1); crypto.getRandomValues(_ni);
+  notifs.push({id:'n_'+Date.now()+'_'+_ni[0].toString(36).slice(0,6),targetRole,message,meta,ts:Date.now(),read:false});
   saveNotifications(notifs);
   // Also broadcast for same-session listeners
   if(bc) bc.postMessage({type:'notification',targetRole,message,meta});
@@ -4618,7 +4624,8 @@ function renderDriverReferral(){
   const used=referrals.length;
   const remaining=DRIVER_REFERRAL.maxReferrals-used;
   const earned=referrals.filter(r=>r.validated).length*DRIVER_REFERRAL.parrainBonus;
-  const refCode=acc?.driverRefCode||('DRV-'+Math.random().toString(36).substr(2,8).toUpperCase());
+  const _rba=new Uint8Array(8); crypto.getRandomValues(_rba);
+  const refCode=acc?.driverRefCode||('DRV-'+Array.from(_rba,b=>b.toString(16).padStart(2,'0')).join('').toUpperCase().slice(0,8));
   // Sauvegarde le code si nouveau
   if(!acc?.driverRefCode && acc){ acc.driverRefCode=refCode; const accs=getAccounts(); accs[currentUser.email]=acc; localStorage.setItem('livraisante_accounts_v2',JSON.stringify(accs)); }
   return `<div style="background:white;border:2px solid var(--ink);border-radius:14px;padding:18px;margin-top:16px;box-shadow:3px 3px 0 var(--lime)">
@@ -4663,7 +4670,8 @@ function showToast(msg,color='var(--ink)'){
 ══════════════════════════════════════════════════════════ */
 function generateOrderCode(){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const code=Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const arr=new Uint8Array(6); crypto.getRandomValues(arr);
+  const code=Array.from(arr,b=>chars[b%chars.length]).join('');
   return 'LIV-'+code;
 }
 
@@ -6867,7 +6875,8 @@ function generateDriverCode(){
   const prenom=(document.getElementById('drPrenom').value.slice(0,2)||'LV').toUpperCase();
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code=prenom.padEnd(2,'L');
-  for(let i=0;i<4;i++) code+=chars[Math.floor(Math.random()*chars.length)];
+  const _rnd=new Uint8Array(4); crypto.getRandomValues(_rnd);
+  _rnd.forEach(b=>{ code+=chars[b%chars.length]; });
   myDriverCode='LIV-'+code;
   return myDriverCode;
 }
@@ -8020,12 +8029,7 @@ function initDemoAccounts(){
 }
 
 /* ---- Auth ---- */
-function _dbg(msg){
-  const el=document.getElementById('loginDebug');
-  if(!el) return;
-  el.style.display='block';
-  el.textContent=(el.textContent?el.textContent+'\n':'')+msg;
-}
+function _dbg(msg){ /* panel debug supprimé en prod */ console.debug('[LV]',msg); }
 
 async function doLogin(){
   const email=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();
@@ -8081,6 +8085,8 @@ async function doLogin(){
     return;
   }
   currentUser={...acc};
+  // Sécurité : le rôle admin n'est JAMAIS accordé via le fallback localStorage
+  if(currentUser.role==='admin') currentUser.role='patient';
   try{localStorage.setItem('livraisante_session',JSON.stringify({email,ts:Date.now()}));}catch(e){}
   if(acc.role==='pharmacien'&&acc.pharmacyInfo){
     const pi=acc.pharmacyInfo;
@@ -8146,12 +8152,7 @@ async function doLogout(){
   updateAccountChip(); renderHeader(); renderBottomNav(); showHome();
 }
 function clearLoginErr(){const e=document.getElementById('loginErr'); if(e) e.style.display='none';}
-function fillDemo(type){
-  const map={pharmacie:'pharmacie.demo@livraisante.fr',livreur:'livreur.demo@livraisante.fr',patient:'patient.demo@livraisante.fr'};
-  const email=map[type]; if(!email)return;
-  const el1=document.getElementById('loginEmail'), el2=document.getElementById('loginPassword');
-  if(el1) el1.value=email; if(el2) el2.value='Demo2024!';
-}
+// fillDemo() supprimée — ne jamais exposer de credentials dans le source
 async function doRegister(){
   const prenom=(document.getElementById('regPrenom')?.value||'').trim();
   const nom=(document.getElementById('regNom')?.value||'').trim();
@@ -8281,7 +8282,10 @@ async function doRegister(){
   showVerificationPanel();
 }
 
-function generateCode(n){return String(Math.floor(Math.random()*Math.pow(10,n))).padStart(n,'0');}
+function generateCode(n){
+  const arr=new Uint32Array(1); crypto.getRandomValues(arr);
+  return String(arr[0]%Math.pow(10,n)).padStart(n,'0');
+}
 let pendingReg=null;
 
 function showVerificationPanel(){
@@ -8297,9 +8301,8 @@ function showVerificationPanel(){
       <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Vérification en 2 étapes</h2>
       <p style="font-size:13px;color:#666;margin:0">Saisissez les codes reçus par email et par SMS<br>pour activer votre compte.</p>
     </div>
-    <div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#92400e">
-      🔧 <b>Mode développement</b> — Les codes sont affichés ici directement (en production, ils seront envoyés par email et SMS) :<br>
-      <span style="font-family:monospace">Email : <b>${pendingReg.emailCode}</b> &nbsp;|&nbsp; SMS : <b>${pendingReg.phoneCode}</b></span>
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#166534">
+      📬 <b>Codes envoyés</b> — Vérifiez votre boîte email et vos SMS.
     </div>
     <div style="margin-bottom:14px">
       <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code email <span style="color:#666;font-weight:400">(${pendingReg.email})</span></label>
@@ -9491,7 +9494,7 @@ function onGeoError(orderId,err){
   if(status) status.innerHTML=`<div style="font-size:13px;color:var(--ink-soft);margin-top:8px">⚠ ${msgs[err.code]||'Erreur.'} <button onclick="showManualCheckIn('${orderId}')" style="font-family:inherit;font-weight:700;font-size:12px;background:#16A34A;color:white;border:none;padding:7px 13px;border-radius:8px;cursor:pointer;margin-left:6px">Valider sans GPS</button></div>`;
 }
 function showManualCheckIn(orderId){
-  const code=Math.floor(1000+Math.random()*9000);
+  const _ca=new Uint16Array(1); crypto.getRandomValues(_ca); const code=1000+(_ca[0]%9000);
   const status=document.getElementById(`checkin-status-${orderId}`);
   if(status) status.innerHTML=`<div style="background:var(--paper-2);border-radius:12px;padding:16px;margin-top:8px;text-align:center">
     <div style="font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px">Code de présence</div>
@@ -10189,7 +10192,8 @@ function savePromoCodes(codes){
 }
 function generatePromoCode(length=8){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from({length},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  const _rb=new Uint8Array(length); crypto.getRandomValues(_rb);
+  return Array.from(_rb,b=>chars[b%chars.length]).join('');
 }
 function createPromoCode(options){
   const codes=getPromoCodes();
@@ -10756,6 +10760,8 @@ function _buildSearchIndex(){
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+// Alias utilisé dans tout le code — ne jamais supprimer
+const esc = escHtml;
 
 function showSearch(){
   _buildSearchIndex();
