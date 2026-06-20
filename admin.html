@@ -134,7 +134,7 @@ input,select,button{font-family:var(--sans)}
     <input type="email" id="loginEmail" class="l-input" placeholder="admin@livraisante.fr">
     <label class="l-label">Mot de passe</label>
     <input type="password" id="loginPassword" class="l-input" placeholder="••••••••" onkeypress="if(event.key==='Enter')doAdminLogin()">
-    <button class="l-btn" onclick="doAdminLogin()">Accéder au tableau de bord →</button>
+    <button id="loginBtn" class="l-btn" onclick="doAdminLogin()">Accéder au tableau de bord →</button>
     <p class="l-note">Accès réservé — Livraisanté SAS</p>
   </div>
 </div>
@@ -170,31 +170,46 @@ input,select,button{font-family:var(--sans)}
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ════════════════════════════════════════════════════════════
-// AUTH
+// AUTH — Supabase uniquement (aucun credential en dur)
 // ════════════════════════════════════════════════════════════
-const ADMIN_CREDS=[
-  {email:'admin@livraisante.fr', password:'Admin2024!', name:'Super Admin'},
-  {email:'rayan@livraisante.fr', password:'Admin2024!', name:'Rayan Saidomar'},
-];
+const _SB_URL  = 'https://gsmrgafclxkuqzzhtapi.supabase.co';
+const _SB_ANON = 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc';
+const _sbAdmin = supabase.createClient(_SB_URL, _SB_ANON);
 let adminUser=null;
 
-function doAdminLogin(){
+async function doAdminLogin(){
   const email=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pwd=document.getElementById('loginPassword').value;
-  const match=ADMIN_CREDS.find(c=>c.email===email&&c.password===pwd);
-  if(!match){
-    const e=document.getElementById('loginErr'); e.style.display='block';
-    setTimeout(()=>e.style.display='none',3000);
-    return;
+  const errEl=document.getElementById('loginErr');
+  const btn=document.getElementById('loginBtn');
+  if(!email||!pwd){errEl.textContent='Remplissez tous les champs.';errEl.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Connexion…';
+  try{
+    // 1. Authentification Supabase
+    const {data,error}=await _sbAdmin.auth.signInWithPassword({email,password:pwd});
+    if(error){errEl.textContent='Identifiants incorrects.';errEl.style.display='block';btn.disabled=false;btn.textContent='Se connecter →';return;}
+    // 2. Vérification du rôle admin côté serveur (table profiles, protégée par RLS)
+    const {data:profile,error:pErr}=await _sbAdmin.from('profiles').select('role,prenom,nom').eq('id',data.user.id).single();
+    if(pErr||profile?.role!=='admin'){
+      await _sbAdmin.auth.signOut();
+      errEl.textContent='Accès refusé — compte non autorisé.';errEl.style.display='block';
+      btn.disabled=false;btn.textContent='Se connecter →';return;
+    }
+    adminUser={id:data.user.id,email:data.user.email,name:(profile.prenom||'')+' '+(profile.nom||'')};
+    document.getElementById('loginScreen').style.display='none';
+    const app=document.getElementById('adminApp');app.style.display='flex';
+    showPage('dashboard');
+  }catch(e){
+    errEl.textContent='Erreur réseau. Réessayez.';errEl.style.display='block';
   }
-  adminUser=match;
-  document.getElementById('loginScreen').style.display='none';
-  const app=document.getElementById('adminApp'); app.style.display='flex';
-  showPage('dashboard');
+  btn.disabled=false;btn.textContent='Se connecter →';
 }
-function doAdminLogout(){
+
+async function doAdminLogout(){
+  await _sbAdmin.auth.signOut();
   adminUser=null;
   document.getElementById('adminApp').style.display='none';
   document.getElementById('loginScreen').style.display='flex';

@@ -8036,36 +8036,6 @@ async function doLogin(){
   if(dbgEl){dbgEl.textContent='';dbgEl.style.display='none';}
   if(!email||!pwd){if(errEl){errEl.style.display='block';errEl.textContent='Remplissez tous les champs.';}return;}
 
-  // ── Accès admin direct (bypass Supabase si email admin) ─────
-  if(email==='admin@livraisante.fr'){
-    const btnLogin=document.querySelector('#loginScreen .btn.primary');
-    if(btnLogin){btnLogin.disabled=true;btnLogin.textContent='Connexion…';}
-    _dbg('SB_READY: '+(window.LS_SB?.SB_READY));
-    try{
-      if(window.LS_SB?.SB_READY){
-        _dbg('Appel sbSignIn...');
-        const {user,error}=await window.LS_SB.sbSignIn(email,pwd);
-        _dbg('Retour sbSignIn. error='+(error||'none')+' user='+(user?.id||'null'));
-        if(error){
-          if(btnLogin){btnLogin.disabled=false;btnLogin.textContent='Se connecter →';}
-          if(errEl){errEl.style.display='block';errEl.textContent='Erreur Supabase : '+error;}
-          return;
-        }
-        currentUser={id:user.id,email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
-      } else {
-        _dbg('Supabase non dispo — accès admin local');
-        currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
-      }
-    }catch(e){
-      _dbg('Exception: '+e.message);
-      currentUser={id:'admin-local',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
-    }
-    if(btnLogin){btnLogin.disabled=false;btnLogin.textContent='Se connecter →';}
-    _dbg('Entrée admin dashboard...');
-    afterLogin();
-    return;
-  }
-
   // ── Supabase auth (production) ───────────────────────────────
   if(window.LS_SB?.SB_READY){
     const btnLogin=document.querySelector('#loginScreen .btn.primary');
@@ -8088,10 +8058,23 @@ async function doLogin(){
     return;
   }
 
-  // ── Fallback: localStorage ────────────────────────────────────
+  // ── Fallback: localStorage (mode démo hors-ligne uniquement) ──
+  // Si Supabase est configuré mais a échoué, on ne tombe PAS dans ce fallback.
+  if(window.LS_SB?.SB_READY){
+    if(errEl){errEl.style.display='block';errEl.textContent='Service temporairement indisponible. Réessayez dans quelques instants.';}
+    return;
+  }
   loadAccounts();
   const acc=ACCOUNTS[email];
-  if(!acc||acc.password!==pwd){
+  if(!acc){
+    const g=document.getElementById('loginGroup');
+    if(g){g.style.animation='none';void g.offsetWidth;g.style.animation='shake .4s';}
+    if(errEl){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';}
+    return;
+  }
+  // Vérification par hash SHA-256 (mot de passe jamais stocké en clair)
+  const pwdHash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));
+  if(acc.pwdHash!==pwdHash){
     const g=document.getElementById('loginGroup');
     if(g){g.style.animation='none';void g.offsetWidth;g.style.animation='shake .4s';}
     if(errEl){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';}
@@ -8400,8 +8383,11 @@ async function completeRegistration(){
     return;
   }
 
-  // ── Fallback localStorage ──────────────────────────────────────
-  const acc={id:'u_'+Date.now(),prenom,nom,email,password:pwd,role,orders:[],cagnotte:{total:0,history:[]},
+  // ── Fallback localStorage (mode démo hors-ligne uniquement) ───
+  // Le mot de passe n'est jamais stocké en clair — on conserve un hash SHA-256.
+  const _pwdHashRaw=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
+  const _pwdHash=Array.from(new Uint8Array(_pwdHashRaw)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const acc={id:'u_'+Date.now(),prenom,nom,email,pwdHash:_pwdHash,role,orders:[],cagnotte:{total:0,history:[]},
     consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing};
   if(tel) acc.tel=tel;
   if(role==='patient'||role==='patient_licencie'){
@@ -9603,25 +9589,6 @@ window.addEventListener('DOMContentLoaded',()=>{
       const patChip=document.querySelector('[data-group="regRole"] .chip[data-v="patient"]');
       if(patChip&&!patChip.classList.contains('sel')) patChip.click();
     },50);
-    return;
-  }
-
-  // ── Accès admin direct via hash ─────────────────────────────
-  const hashAdmin = window.location.hash === '#admin-lv2026';
-  if(hashAdmin){
-    currentUser={id:'admin-direct',email:'admin@livraisante.fr',role:'admin',prenom:'Admin'};
-    currentView='admin';
-    document.querySelectorAll('.wrap, [id$="App"], [id$="Screen"]').forEach(el=>{
-      if(el.id!=='adminApp') el.style.display='none';
-    });
-    const _adminEl=document.getElementById('adminApp');
-    if(_adminEl) _adminEl.style.display='block';
-    const _adminNav=document.getElementById('appNav');
-    if(_adminNav) _adminNav.innerHTML=`
-      <button class="nav-btn on" onclick="enterRole('admin')"><span class="ni">🛡️</span><span>Admin</span></button>
-      <button class="nav-btn gear" onclick="handleAccountClick()"><span class="ni">⚙️</span><span>Compte</span></button>`;
-    try{ renderAdminDashboard(); }catch(e){ console.error('renderAdminDashboard hash',e); }
-    window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
 
