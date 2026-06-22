@@ -1567,7 +1567,13 @@
             <button class="chip" data-v="65+">65 ans et +</button>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">Grossesse / Allaitement</label>
+        <div class="form-group"><label class="form-label">Sexe</label>
+          <div class="chips" data-group="regSex">
+            <button class="chip sel" data-v="femme" onclick="onRegSexChange('femme',this)">Femme</button>
+            <button class="chip" data-v="homme" onclick="onRegSexChange('homme',this)">Homme</button>
+          </div>
+        </div>
+        <div class="form-group" id="regPregGroup"><label class="form-label">Grossesse / Allaitement</label>
           <div class="chips" data-group="regPreg">
             <button class="chip sel" data-v="non">Non</button>
             <button class="chip" data-v="enceinte">Enceinte 🤰</button>
@@ -3472,14 +3478,19 @@ function renderHeader(){
   if(currentUser){
     const init=(currentUser.prenom||currentUser.email||'A')[0].toUpperCase();
     const unread=getMyNotifications().filter(n=>!n.read).length;
+    const _cl=(typeof patientCart!=='undefined')?patientCart.length:0;
+    const _cb=_cl>0?`<button onclick="enterRole('sante')" title="Mon panier" style="position:relative;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px">🛒<span style="position:absolute;top:-2px;right:-2px;background:#ef4444;color:white;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 2px">${_cl}</span></button>`:'';
     el.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+  ${_cb}
   <button class="notif-bell-btn" onclick="toggleNotifPanel();event.stopPropagation()" title="Notifications" style="position:relative;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">
     🔔<span class="notif-bell-count" style="display:${unread?'flex':'none'};position:absolute;top:-2px;right:-2px;background:#ef4444;color:white;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center">${unread||''}</span>
   </button>
   <button class="h-avatar" onclick="handleAccountClick()" title="Mon compte" style="font-family:inherit">${init}</button>
 </div>`;
   } else {
-    el.innerHTML=`<button onclick="handleAccountClick()" style="font-family:inherit;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:7px 14px;cursor:pointer">Se connecter</button>`;
+    const _cl=(typeof patientCart!=='undefined')?patientCart.length:0;
+    const _cb=_cl>0?`<button onclick="enterRole('sante')" title="Mon panier" style="position:relative;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px">🛒<span style="position:absolute;top:-2px;right:-2px;background:#ef4444;color:white;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 2px">${_cl}</span></button>`:'';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px">${_cb}<button onclick="handleAccountClick()" style="font-family:inherit;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:7px 14px;cursor:pointer">Se connecter</button></div>`;
   }
 }
 
@@ -6139,7 +6150,11 @@ function santeHome(){
     ${actionBar}
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
-      ${AILMENTS.map(a=>{
+      ${(()=>{
+        const FEMALE_ONLY=['cystite','regles_douloureuses'];
+        const isMale=patientProfile?.sex==='homme';
+        return AILMENTS.filter(a=>!(isMale&&FEMALE_ONLY.includes(a.id)));
+      })().map(a=>{
         const sel=selectedAilments.has(a.id);
         const col=AILMENT_COLORS[a.id]||{border:'#ccc',bg:'#fafafa',text:'#333'};
         return `<button onclick="toggleAilment('${a.id}')" style="font-family:inherit;width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;cursor:pointer;text-align:left;border:${sel?`2.5px solid ${col.border}`:'2px solid #e5e5e5'};background:${sel?col.bg:'white'};transition:.12s;box-shadow:${sel?`0 0 0 1px ${col.border}40`:'none'}">
@@ -6174,9 +6189,10 @@ let patientCart=[], deliveryMode='livraison';
 function cartKey(p){return p.name+'|'+p.lab;}
 function addToCart(p){
   if(!patientCart.some(c=>cartKey(c)===cartKey(p))) patientCart.push(p);
+  if(typeof renderHeader==='function') renderHeader();
   renderCart();
 }
-function removeFromCart(key){ patientCart=patientCart.filter(p=>cartKey(p)!==key); renderCart(); }
+function removeFromCart(key){ patientCart=patientCart.filter(p=>cartKey(p)!==key); renderCart(); if(typeof renderHeader==='function') renderHeader(); }
 function cartTotal(mode){
   const base=patientCart.reduce((s,p)=>s+(p.prix||0),0);
   const subtotal=base*(1+MARGE_PCT);
@@ -7698,7 +7714,7 @@ function warnHtml(w){
 function showTriage(){
   const saved=patientProfile||{};
   const loggedIn=!!currentUser;
-  const medChips=CHRONIC_MEDS.map(m=>`<button class="chip${saved.meds?.includes(m.id)?' sel':''}" data-group="meds" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12.5px">${m.label}<br><span style="font-size:10px;opacity:.6">${m.ex}</span></button>`).join('');
+  const medChips=CHRONIC_MEDS.map(m=>`<button class="chip${saved.meds?.includes(m.id)?' sel':''}" data-group="meds" data-v="${m.id}" onclick="toggleMedChip(this)" style="font-size:12.5px">${m.label}<br><span style="font-size:10px;opacity:.6">${m.ex}</span></button>`).join('');
   let qn=0;
   document.getElementById('santeContent').innerHTML=`
     <div class="sec-head"><div class="num">🩺</div><div><h2>Nouvelle consultation</h2><p>${loggedIn?'Complétez les informations spécifiques à cette consultation.':'Ces informations sécurisent vos conseils. Stockées uniquement sur votre appareil.'}</p></div></div>
@@ -7722,7 +7738,15 @@ function showTriage(){
       </div>`:''}
 
       <div class="triage-q">
-        <label>${!loggedIn?'2':'1'}. Depuis combien de temps avez-vous ces symptômes ?</label>
+        <label>${!loggedIn?'2':'1'}. Votre sexe <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(pour personnaliser les conseils)</span></label>
+        <div class="triage-chips chips" data-group="sex" id="triageSexChips">
+          <button class="chip${(!saved.sex||saved.sex==='femme')?' sel':''}" data-v="femme" onclick="onTriageSexChange('femme',this)">Femme</button>
+          <button class="chip${saved.sex==='homme'?' sel':''}" data-v="homme" onclick="onTriageSexChange('homme',this)">Homme</button>
+        </div>
+      </div>
+
+      <div class="triage-q">
+        <label>${!loggedIn?'3':'2'}. Depuis combien de temps avez-vous ces symptômes ?</label>
         <div class="triage-chips chips" data-group="duration">
           <button class="chip" data-v="lt24h">Moins de 24h</button>
           <button class="chip" data-v="1-3j">1 à 3 jours</button>
@@ -7731,8 +7755,8 @@ function showTriage(){
         </div>
       </div>
 
-      <div class="triage-q">
-        <label>${!loggedIn?'3':'2'}. Grossesse ou allaitement ?</label>
+      <div class="triage-q" id="triagePregnancyQ" style="${saved.sex==='homme'?'display:none':''}">
+        <label>${!loggedIn?'4':'3'}. Grossesse ou allaitement ?</label>
         <div class="triage-chips chips" data-group="pregnancy">
           <button class="chip${(!saved.pregnancy||saved.pregnancy==='non')?' sel':''}" data-v="non">Non</button>
           <button class="chip${saved.pregnancy==='enceinte'?' sel':''}" data-v="enceinte">Enceinte 🤰</button>
@@ -7741,13 +7765,13 @@ function showTriage(){
       </div>
 
       <div class="triage-q">
-        <label>${!loggedIn?'4':'3'}. Traitements chroniques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(en cas de changement récent)</span></label>
+        <label>${!loggedIn?'5':'4'}. Traitements chroniques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(en cas de changement récent)</span></label>
         <div class="triage-chips" style="display:flex;flex-wrap:wrap;gap:8px">${medChips}<button class="chip" data-v="aucun" onclick="clearMedChips(this)" style="font-size:12.5px">Aucun</button></div>
       </div>
 
       ${!loggedIn?`
       <div class="triage-q">
-        <label>5. Informations physiques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(optionnel — utile pour le conseil)</span></label>
+        <label>6. Informations physiques <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(optionnel — utile pour le conseil)</span></label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px">⚖️ Poids</div>
@@ -7770,7 +7794,7 @@ function showTriage(){
       </div>
 
       <div class="triage-q">
-        <label>6. Adresse de livraison <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(optionnel — pré-remplie à chaque commande)</span></label>
+        <label>7. Adresse de livraison <span style="font-weight:400;font-size:13px;color:var(--ink-soft)">(optionnel — pré-remplie à chaque commande)</span></label>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
           <input id="triageAddr1" type="text" placeholder="Numéro et nom de rue" value="${saved.address?.line1||''}"
             style="padding:11px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box">
@@ -7822,6 +7846,7 @@ function submitTriage(){
   const age=loggedIn?(currentUser?.birthdate?birthdateToAgeId(currentUser.birthdate):(existing.age||'18-25')):ageFromChip;
   const dur=document.querySelector('[data-group="duration"] .chip.sel')?.dataset.v;
   const preg=document.querySelector('[data-group="pregnancy"] .chip.sel')?.dataset.v||'non';
+  const sex=document.querySelector('[data-group="sex"] .chip.sel')?.dataset.v||saved.sex||'femme';
   const alertEl=document.getElementById('triageAlert');
   if(!loggedIn&&!age){if(alertEl)alertEl.innerHTML='<div class="warn-caution" style="margin-bottom:12px"><b>⚠</b> Merci de répondre aux questions 1 et 2.</div>';return;}
   if(!dur){if(alertEl)alertEl.innerHTML='<div class="warn-caution" style="margin-bottom:12px"><b>⚠</b> Merci d\'indiquer la durée des symptômes.</div>';return;}
@@ -7839,7 +7864,7 @@ function submitTriage(){
   const city=((document.getElementById('triageCity')?.value||'').trim())||(existing.address?.city||'');
   const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:(existing.address||null);
 
-  const profile={age,duration:dur,pregnancy:preg,meds,weight,height,bmi,address};
+  const profile={age,duration:dur,pregnancy:preg,sex,meds,weight,height,bmi,address};
   saveProfile(profile);
 
   // Synchroniser avec le compte si connecté
@@ -7857,9 +7882,55 @@ function submitTriage(){
   if(warn){setTimeout(()=>showCombinedConseil(),100);}
   else showCombinedConseil();
 }
+function toggleMedChip(btn){
+  btn.classList.toggle('sel');
+  // Si un traitement est sélectionné, désélectionner "Aucun"
+  if(btn.classList.contains('sel')){
+    const par=btn.closest('.triage-chips')||btn.closest('[class*="triage"]');
+    if(par){const a=par.querySelector('.chip[data-v="aucun"]');if(a)a.classList.remove('sel');}
+  }
+}
 function clearMedChips(btn){
-  document.querySelectorAll('.triage-chips:last-child .chip').forEach(c=>c.classList.remove('sel'));
+  // Désélectionner tous les traitements, cocher uniquement "Aucun"
+  const par=btn.closest('.triage-chips')||btn.parentElement;
+  if(par) par.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
   btn.classList.add('sel');
+}
+function toggleRegMed(btn){
+  btn.classList.toggle('sel');
+  if(btn.classList.contains('sel')){
+    const a=document.querySelector('#regMeds .chip[data-v="aucun"]');
+    if(a) a.classList.remove('sel');
+  }
+}
+function clearRegMeds(btn){
+  const par=document.getElementById('regMeds');
+  if(par) par.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function onTriageSexChange(val, btn){
+  // Update selected chip
+  const par=btn.closest('.triage-chips'); if(par) par.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+  // Show/hide pregnancy question
+  const pregQ=document.getElementById('triagePregnancyQ');
+  if(pregQ){
+    pregQ.style.display=val==='homme'?'none':'';
+    if(val==='homme'){
+      document.querySelectorAll('[data-group="pregnancy"] .chip').forEach(c=>{c.classList.toggle('sel',c.dataset.v==='non');});
+    }
+  }
+}
+function onRegSexChange(val, btn){
+  const par=btn.closest('.chips'); if(par) par.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+  const pregG=document.getElementById('regPregGroup');
+  if(pregG){
+    pregG.style.display=val==='homme'?'none':'';
+    if(val==='homme'){
+      document.querySelectorAll('[data-group="regPreg"] .chip').forEach(c=>{c.classList.toggle('sel',c.dataset.v==='non');});
+    }
+  }
 }
 /* ---- Créneaux Click & Collect ---- */
 let selectedSlot=null;
@@ -8356,9 +8427,10 @@ async function doRegister(){
     const address=addr1||zip||city?{line1:addr1,zip,city,country:'France'}:null;
     const ageChip=document.querySelector('[data-group="regAge"] .chip.sel')?.dataset.v||'18-25';
     const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
+    const sexChip=document.querySelector('[data-group="regSex"] .chip.sel')?.dataset.v||'femme';
     const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
     const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
-    _roleData={weight,height,bmi,addr1,zip,city,address,ageChip,pregChip,medsChips,sportLicense};
+    _roleData={weight,height,bmi,addr1,zip,city,address,ageChip,pregChip,sexChip,medsChips,sportLicense};
   }
   if(role==='club'){
     _roleData={
@@ -8506,7 +8578,7 @@ async function completeRegistration(){
   if(tel) acc.tel=tel;
   if(role==='patient'||role==='patient_licencie'){
     const rd=roleData;
-    acc.healthProfile={ageRange:rd.ageChip,pregnancy:rd.pregChip,meds:rd.medsChips,weight:rd.weight,height:rd.height,bmi:rd.bmi,address:rd.address};
+    acc.healthProfile={ageRange:rd.ageChip,pregnancy:rd.pregChip,sex:rd.sexChip||'femme',meds:rd.medsChips,weight:rd.weight,height:rd.height,bmi:rd.bmi,address:rd.address};
     if(rd.sportLicense) acc.sportLicense=rd.sportLicense;
   }
   if(role==='club'){
@@ -8662,7 +8734,7 @@ function initRegisterForm(){
   // Populate meds chips
   const medDiv=document.getElementById('regMeds');
   if(medDiv&&CHRONIC_MEDS){
-    medDiv.innerHTML=CHRONIC_MEDS.map(m=>`<button class="chip" data-v="${m.id}" onclick="this.classList.toggle('sel')" style="font-size:12px">${m.label}</button>`).join('')+'<button class="chip" data-v="aucun" onclick="clearRegMeds(this)" style="font-size:12px">Aucun</button>';
+    medDiv.innerHTML=CHRONIC_MEDS.map(m=>`<button class="chip" data-v="${m.id}" onclick="toggleRegMed(this)" style="font-size:12px">${m.label}</button>`).join('')+'<button class="chip" data-v="aucun" onclick="clearRegMeds(this)" style="font-size:12px">Aucun</button>';
   }
   // Populate professions dropdown
   const profSel=document.getElementById('regProfession');
