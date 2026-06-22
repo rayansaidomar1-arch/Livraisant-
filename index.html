@@ -2226,12 +2226,12 @@ function getClubCNCForUser(){
   return (club?.clubInfo?.cnc===true)?club:null;
 }
 const PRODUCT_PRIX={
-  // Santé du quotidien
-  'Magnésium':10.50,
+  // Santé du quotidien — prix PVC TTC officine (données réelles officine, TVA 5.5 % incluse)
+  'Magnésium':14.15,              // avg TTC officine (Mg général, 34 références)
   'Vitamine B2 (riboflavine)':11.90,
   'Compresse froide / chaud-froid':7.50,
   'Tisane relaxante (camomille / mélisse)':5.20,
-  'Spray nasal isotonique (eau de mer)':8.90,
+  'Spray nasal isotonique (eau de mer)':7.55,  // avg TTC officine (spray nasal isotonique)
   'Vitamine C + Zinc':11.90,
   'Échinacée (extrait standardisé)':13.50,
   'Propolis':12.90,
@@ -2239,12 +2239,12 @@ const PRODUCT_PRIX={
   'Spray adoucissant gorge':9.50,
   'Zinc + miel (pastilles adoucissantes)':8.90,
   'Huile essentielle eucalyptus / thym':7.20,
-  'Probiotiques digestifs':14.90,
+  'Probiotiques digestifs':18.60,  // avg TTC officine (Lactibiane/Ergyphilus, 62 références)
   'Gingembre (extrait standardisé)':11.90,
   'Enzymes digestives':14.50,
-  'Charbon végétal actif':8.50,
+  'Charbon végétal actif':8.90,    // avg TTC officine (Arkog Charbon, 10 références)
   'Solution de réhydratation orale (SRO)':9.90,
-  'Zinc':9.90,
+  'Zinc':10.75,                    // avg TTC officine (51 références Zinc)
   'Pansements / compresses stériles':7.90,
   'Solution saline (lavage de plaie)':6.90,
   'Gel aloe vera':9.50,
@@ -2252,10 +2252,10 @@ const PRODUCT_PRIX={
   'Extracteur de venin':9.90,
   'Roll-on apaisant post-piqûre (HE)':9.90,
   'Curcumine':14.90,
-  'Oméga‑3 (EPA/DHA)':14.90,
+  'Oméga‑3 (EPA/DHA)':15.65,       // avg TTC officine (Omega-3, 15 références)
   'Patch thermique':9.90,
   'Orthèse / soutien articulaire':29.90,
-  'Mélatonine (faible dose — CA)':9.90,
+  'Mélatonine (faible dose — CA)':10.55,  // avg TTC officine (Mélatonine, 20 références)
   'Valériane + Mélisse':9.90,
   'Passiflore (extrait)':9.90,
   'Quercétine':14.90,
@@ -2263,14 +2263,14 @@ const PRODUCT_PRIX={
   // Compléments sportifs
   'Protéines (whey / caséine)':24.90,
   'Créatine monohydrate':17.90,
-  'Vitamine D':9.90,
+  'Vitamine D':7.75,               // avg TTC officine (Vitamine D, 13 références)
   'Calcium (+ vitamine D)':9.90,
   'Fer':9.90,
-  'Collagène + vitamine C':17.90,
+  'Collagène + vitamine C':24.40,  // avg TTC officine (Collagène, Dielen 60 caps ref.)
   'Jus de cerise de Montmorency':17.90,
   'Électrolytes (sodium, potassium)':11.90,
   'Glucosamine / chondroïtine':17.90,
-  'Probiotiques':14.90
+  'Probiotiques':18.60             // avg TTC officine (62 références probiotiques)
 };
 function getPrixStats(substance){
   const prods=(typeof PRODUCT_CATALOG!=='undefined')&&PRODUCT_CATALOG[substance];
@@ -5385,13 +5385,13 @@ function renderLivreur(){
 =================================================================== */
 const PRODUCT_CATALOG={
   'Magnésium':[
-    {lab:'Nutergia',name:'Ergymag',dosage:'300 mg bisglycinate · 90 gél.',prix:12.50},
-    {lab:'Pileje',name:'Magnesium Pileje 300mg',dosage:'60 comprimés',prix:11.90},
-    {lab:'Forté Pharma',name:'Turbo Magnésium 300+',dosage:'30 comprimés effervescents',prix:10.90},
-    {lab:'Arkopharma',name:'Magnésium Marin Arkopharma',dosage:'60 gélules',prix:9.90},
-    {lab:'Solgar',name:'Magnésium Chélaté Solgar',dosage:'100 mg · 100 comprimés',prix:14.90},
-    {lab:'NHCO',name:'Mg++ NHCO',dosage:'ampoules buvables',prix:15.90},
-    {lab:'Aragan',name:'Magnésium Marin Aragan',dosage:'60 gélules',prix:10.90},
+    {lab:'Nutergia',name:'Ergymag',dosage:'300 mg bisglycinate · 90 gél.',prix:22.90},
+    {lab:'Pileje',name:'Magnesium Pileje 300mg',dosage:'60 comprimés',prix:15.50},
+    {lab:'Forté Pharma',name:'Turbo Magnésium 300+',dosage:'30 comprimés effervescents',prix:11.50},
+    {lab:'Arkopharma',name:'Magnésium Marin Arkopharma',dosage:'60 gélules',prix:10.50},
+    {lab:'Solgar',name:'Magnésium Chélaté Solgar',dosage:'100 mg · 100 comprimés',prix:17.50},
+    {lab:'NHCO',name:'Mg++ NHCO',dosage:'84 gélules',prix:21.35},
+    {lab:'Aragan',name:'Magnésium Marin Aragan',dosage:'60 gélules',prix:12.50},
   ],
   'Vitamine B2 (riboflavine)':[
     {lab:'Arkopharma',name:'Vitamine B2 Arkopharma 400mg',dosage:'60 gélules',prix:11.90},
@@ -5409,8 +5409,9 @@ const PRODUCT_CATALOG={
     {lab:'Weleda',name:'Tisane Relaxante Weleda',dosage:'20 sachets',prix:6.50},
   ],
   'Spray nasal isotonique (eau de mer)':[
-    {lab:'Gifrer',name:'Sérums Physiologiques Gifrer Adultes',dosage:'unidoses 5mL × 40',prix:6.50},
-    {lab:'Cooper',name:'Spray Nasal Isotonique Cooper',dosage:'100 mL',prix:7.90},
+    {lab:'Gifrer',name:'Sérums Physiologiques Gifrer Adultes',dosage:'unidoses 5mL × 40',prix:4.45},
+    {lab:'Cooper',name:'Spray Nasal Isotonique Cooper',dosage:'100 mL',prix:6.25},
+    {lab:'Marimer',name:'Marimer Isotonique Hygiène Nasale',dosage:'100 mL',prix:5.11},
   ],
   'Vitamine C + Zinc':[
     {lab:'Forté Pharma',name:'Turbo Vit C 1000mg + Zinc',dosage:'30 comprimés effervescents',prix:9.90},
@@ -5452,10 +5453,10 @@ const PRODUCT_CATALOG={
     {lab:'Arkopharma',name:'HE Eucalyptus Arkopharma',dosage:'10 mL',prix:7.50},
   ],
   'Probiotiques digestifs':[
-    {lab:'Pileje',name:'Lactibiane Référence',dosage:'30 gélules — 10 Md UFC',prix:14.90},
-    {lab:'Nutergia',name:'Ergyflor',dosage:'20 sachets',prix:16.90},
-    {lab:'Solgar',name:'Probiotiques Advanced 50 Milliards Solgar',dosage:'30 gélules',prix:19.90},
-    {lab:'NHCO',name:'Probiotiques NHCO',dosage:'30 gélules',prix:17.90},
+    {lab:'Pileje',name:'Lactibiane Référence',dosage:'30 gélules — 10 Md UFC',prix:28.15},
+    {lab:'Nutergia',name:'Ergyflor',dosage:'20 sachets',prix:19.50},
+    {lab:'Solgar',name:'Probiotiques Advanced 50 Milliards Solgar',dosage:'30 gélules',prix:25.90},
+    {lab:'NHCO',name:'Probiotiques NHCO',dosage:'30 gélules',prix:22.50},
   ],
   'Gingembre (extrait standardisé)':[
     {lab:'Arkopharma',name:'Arkogélules Gingembre',dosage:'45 gélules',prix:11.90},
@@ -5468,19 +5469,19 @@ const PRODUCT_CATALOG={
     {lab:'Nutergia',name:'Ergydigest',dosage:'60 gélules',prix:14.90},
   ],
   'Charbon végétal actif':[
-    {lab:'Arkopharma',name:'Arkogélules Charbon Végétal',dosage:'45 gélules',prix:8.50},
-    {lab:'Forté Pharma',name:'Charbon Végétal Activé Forté Pharma',dosage:'60 gélules',prix:7.90},
-    {lab:'Les 3 Chênes',name:'Charbon Végétal Les 3 Chênes',dosage:'60 gélules',prix:8.90},
+    {lab:'Arkopharma',name:'Arkogélules Charbon Végétal',dosage:'45 gélules',prix:8.90},
+    {lab:'Forté Pharma',name:'Charbon Végétal Activé Forté Pharma',dosage:'60 gélules',prix:7.55},
+    {lab:'Les 3 Chênes',name:'Charbon Végétal Les 3 Chênes',dosage:'60 gélules',prix:9.50},
   ],
   'Solution de réhydratation orale (SRO)':[
     {lab:'Reckitt',name:'Dioralyte Saveur Citron',dosage:'sachets × 6 — DM CE',prix:9.90},
     {lab:'Cooper',name:'SRO Cooper',dosage:'sachets × 10 — DM CE',prix:8.90},
   ],
   'Zinc':[
-    {lab:'Solgar',name:'Zinc Picolinate Solgar 22mg',dosage:'100 comprimés',prix:9.90},
-    {lab:'Nutergia',name:'Ergyzinc',dosage:'60 gélules',prix:10.90},
-    {lab:'NHCO',name:'Zinc+ NHCO',dosage:'30 comprimés',prix:12.90},
-    {lab:'Forté Pharma',name:'Zinc 15mg Expert Forté Pharma',dosage:'60 comprimés',prix:8.90},
+    {lab:'Solgar',name:'Zinc Picolinate Solgar 22mg',dosage:'100 comprimés',prix:10.75},
+    {lab:'Nutergia',name:'Ergyzinc',dosage:'60 gélules',prix:11.50},
+    {lab:'NHCO',name:'Zinc+ NHCO',dosage:'30 comprimés',prix:14.50},
+    {lab:'Forté Pharma',name:'Zinc 15mg Expert Forté Pharma',dosage:'60 comprimés',prix:8.50},
   ],
   'Pansements / compresses stériles':[
     {lab:'Kenvue',name:'Band-Aid Assortiment Kenvue',dosage:'40 pansements — DM',prix:7.90},
@@ -5519,10 +5520,11 @@ const PRODUCT_CATALOG={
     {lab:'Solgar',name:'Curcumine Full Spectrum Solgar',dosage:'60 gélules',prix:22.90},
   ],
   'Oméga‑3 (EPA/DHA)':[
-    {lab:'Pileje',name:'Oméganut Pileje',dosage:'60 gélules · EPA 450mg/DHA 300mg',prix:14.90},
-    {lab:'Nutergia',name:'Ergyomega',dosage:'60 gélules',prix:15.90},
-    {lab:'Solgar',name:'Oméga-3 950mg Solgar',dosage:'100 gélules',prix:19.90},
-    {lab:'NHCO',name:'EPA/DHA NHCO',dosage:'60 gélules',prix:16.90},
+    {lab:'Pileje',name:'Oméganut Pileje',dosage:'60 gélules · EPA 450mg/DHA 300mg',prix:17.50},
+    {lab:'Nutergia',name:'Ergyomega',dosage:'60 gélules',prix:16.90},
+    {lab:'Solgar',name:'Oméga-3 950mg Solgar',dosage:'100 gélules',prix:22.90},
+    {lab:'NHCO',name:'EPA/DHA NHCO',dosage:'60 gélules',prix:21.50},
+    {lab:'Arkopharma',name:'Arkog Oméga-3 Marin',dosage:'180 capsules',prix:21.15},
   ],
   'Patch thermique':[
     {lab:'BSN Radiante',name:'Patch Chauffant BSN Radiante',dosage:'3 patches — DM',prix:9.90},
@@ -5535,10 +5537,10 @@ const PRODUCT_CATALOG={
     {lab:'Orliman',name:'Genouillère Rotulienne Orliman',dosage:'DM',prix:28.90},
   ],
   'Mélatonine (faible dose — CA)':[
-    {lab:'Forté Pharma',name:'Turbo Mélatonine 1.9mg Forté Pharma',dosage:'30 comprimés',prix:9.90},
-    {lab:'Pileje',name:'Mélatonine 1mg Pileje',dosage:'60 comprimés',prix:10.90},
-    {lab:'NHCO',name:'Mélatonine 1mg NHCO',dosage:'30 comprimés',prix:12.90},
-    {lab:'Nutergia',name:'Mélatoni+ Nutergia',dosage:'30 gélules',prix:11.90},
+    {lab:'Forté Pharma',name:'Turbo Mélatonine 1.9mg Forté Pharma',dosage:'30 comprimés',prix:8.55},
+    {lab:'Pileje',name:'Mélatonine 1mg Pileje',dosage:'60 comprimés',prix:12.25},
+    {lab:'NHCO',name:'Mélatonine 1mg NHCO',dosage:'30 comprimés',prix:14.90},
+    {lab:'Nutergia',name:'Mélatoni+ Nutergia',dosage:'30 gélules',prix:12.90},
     {lab:'Arkopharma',name:'Mélatonine 1mg Arkopharma',dosage:'30 comprimés',prix:9.50},
   ],
   'Valériane + Mélisse':[
@@ -5575,27 +5577,28 @@ const PRODUCT_CATALOG={
     {lab:'Forté Pharma',name:'Forté Créatine Sport',dosage:'90 gélules',prix:16.90},
   ],
   'Vitamine D':[
-    {lab:'Pileje',name:'D-Biane Pileje 1000UI',dosage:'60 comprimés',prix:9.90},
-    {lab:'Nutergia',name:'Ergyvit D3',dosage:'60 gélules · 2000UI',prix:10.90},
-    {lab:'Forté Pharma',name:'Fortévit D3 Expert',dosage:'30 gélules · 2000UI',prix:9.50},
-    {lab:'Arkopharma',name:'Vitamine D3 Arkopharma 1000UI',dosage:'90 gélules',prix:8.90},
-    {lab:'Solgar',name:'Vitamine D3 1000UI Solgar',dosage:'100 gélules',prix:10.90},
+    {lab:'Pileje',name:'D-Biane Pileje 1000UI',dosage:'60 comprimés',prix:7.50},
+    {lab:'Nutergia',name:'Ergyvit D3',dosage:'60 gélules · 2000UI',prix:8.55},
+    {lab:'Forté Pharma',name:'Fortévit D3 Expert',dosage:'30 gélules · 2000UI',prix:7.90},
+    {lab:'Arkopharma',name:'Vitamine D3 Arkopharma 1000UI',dosage:'90 gélules',prix:7.20},
+    {lab:'Solgar',name:'Vitamine D3 1000UI Solgar',dosage:'100 gélules',prix:8.55},
   ],
   'Calcium (+ vitamine D)':[
-    {lab:'Pileje',name:'D3K2+Calcium Pileje',dosage:'60 gélules',prix:11.90},
-    {lab:'Nutergia',name:'Ergycalcium',dosage:'90 comprimés',prix:12.90},
-    {lab:'Solgar',name:'Calcium 600mg + D3 Solgar',dosage:'120 comprimés',prix:13.90},
+    {lab:'Pileje',name:'D3K2+Calcium Pileje',dosage:'60 gélules',prix:13.50},
+    {lab:'Nutergia',name:'Ergycalcium',dosage:'90 comprimés',prix:14.50},
+    {lab:'Solgar',name:'Calcium 600mg + D3 Solgar',dosage:'120 comprimés',prix:15.90},
   ],
   'Fer':[
-    {lab:'Pileje',name:'Fe+ Pileje',dosage:'30 gélules',prix:9.90},
-    {lab:'NHCO',name:'Fer Plus NHCO',dosage:'30 gélules',prix:12.90},
-    {lab:'Nutergia',name:'Ergyfer',dosage:'20 ampoules',prix:11.90},
-    {lab:'Aragan',name:'Fer + Vit C Aragan',dosage:'60 comprimés',prix:10.90},
+    {lab:'Pileje',name:'Fe+ Pileje',dosage:'30 gélules',prix:10.50},
+    {lab:'NHCO',name:'Fer Plus NHCO',dosage:'30 gélules',prix:14.50},
+    {lab:'Nutergia',name:'Ergyfer',dosage:'20 ampoules',prix:12.90},
+    {lab:'Aragan',name:'Fer + Vit C Aragan',dosage:'60 comprimés',prix:11.50},
   ],
   'Collagène + vitamine C':[
-    {lab:'Pileje',name:'Collagène Marin + Vit C Pileje',dosage:'30 sachets',prix:17.90},
-    {lab:'NHCO',name:'Marine Collagen NHCO',dosage:'30 gélules',prix:19.90},
-    {lab:'Forté Pharma',name:'Collagène Marin 10 000mg Forté Pharma',dosage:'20 sachets',prix:16.90},
+    {lab:'Pileje',name:'Collagène Marin + Vit C Pileje',dosage:'30 sachets',prix:26.50},
+    {lab:'NHCO',name:'Marine Collagen NHCO',dosage:'30 gélules',prix:29.90},
+    {lab:'Forté Pharma',name:'Collagène Marin 10 000mg Forté Pharma',dosage:'20 sachets',prix:21.15},
+    {lab:'Dielen',name:'Collagène Caps Dielen',dosage:'60 capsules',prix:24.40},
   ],
   'Jus de cerise de Montmorency':[
     {lab:'Arkopharma',name:'Jus Cerise Montmorency Arkopharma',dosage:'500mL concentré',prix:17.90},
@@ -5608,13 +5611,13 @@ const PRODUCT_CATALOG={
     {lab:'Forté Pharma',name:'Électrolytes Sport Forté Pharma',dosage:'30 sachets effervescents',prix:10.90},
   ],
   'Glucosamine / chondroïtine':[
-    {lab:'Pileje',name:'Articulatio Glucosamine Pileje',dosage:'60 gélules',prix:17.90},
-    {lab:'NHCO',name:'Articulaire Glucosamine NHCO',dosage:'30 gélules',prix:19.90},
-    {lab:'Solgar',name:'Glucosamine 1000mg Solgar',dosage:'60 comprimés',prix:21.90},
+    {lab:'Pileje',name:'Articulatio Glucosamine Pileje',dosage:'60 gélules',prix:19.50},
+    {lab:'NHCO',name:'Articulaire Glucosamine NHCO',dosage:'30 gélules',prix:24.40},
+    {lab:'Solgar',name:'Glucosamine 1000mg Solgar',dosage:'60 comprimés',prix:23.90},
   ],
   'Probiotiques':[
-    {lab:'Pileje',name:'Lactibiane Référence',dosage:'30 gélules — 10 Md UFC',prix:14.90},
-    {lab:'Nutergia',name:'Ergyflor',dosage:'20 sachets',prix:16.90},
+    {lab:'Pileje',name:'Lactibiane Référence',dosage:'30 gélules — 10 Md UFC',prix:28.15},
+    {lab:'Nutergia',name:'Ergyflor',dosage:'20 sachets',prix:19.50},
   ],
 
   /* ── Mal de dos & musculo-squelettique ── */
@@ -5664,9 +5667,9 @@ const PRODUCT_CATALOG={
     {lab:'Solgar',name:'D-Mannose with Cranberry',dosage:'60 gélules',prix:18.90},
   ],
   'Probiotiques gynécologiques':[
-    {lab:'Pileje',name:'Floragynes Probiotiques',dosage:'30 gélules — Lactobacillus rhamnosus',prix:17.90},
-    {lab:'Nutergia',name:'Ergyflore Féminin',dosage:'14 gélules — Lactobacillus',prix:16.50},
-    {lab:'Arkopharma',name:'Arkoflor Féminin',dosage:'28 gélules',prix:15.90},
+    {lab:'Pileje',name:'Floragynes Probiotiques',dosage:'30 gélules — Lactobacillus rhamnosus',prix:20.42},
+    {lab:'Nutergia',name:'Ergyphilus Intima',dosage:'60 gélules — Lactobacillus',prix:20.42},
+    {lab:'Arkopharma',name:'Arkoflor Féminin',dosage:'28 gélules',prix:18.50},
   ],
   'Bicarbonate de sodium alimentaire':[
     {lab:'Altheapharma',name:'Bicarbonate de soude alimentaire',dosage:'250g — qualité alimentaire',prix:3.90},
@@ -5710,18 +5713,19 @@ const PRODUCT_CATALOG={
 
   /* ── 7 nouveaux protocoles ── */
   'Vitamine C 500mg':[
-    {lab:'Solgar',name:'Vitamine C 500mg Solgar',dosage:'100 comprimés',prix:12.90},
+    {lab:'Solgar',name:'Vitamine C 500mg Solgar',dosage:'100 comprimés',prix:14.95},
     {lab:'Arkopharma',name:'Vitamine C 500mg Arkopharma',dosage:'60 gélules',prix:9.90},
-    {lab:'Pileje',name:'Vitamine C Pileje 500mg',dosage:'60 comprimés',prix:11.90},
+    {lab:'Pileje',name:'Vitamine C Pileje 500mg',dosage:'60 comprimés',prix:12.90},
+    {lab:'Granions',name:'Vitamine C Liposomale Granions',dosage:'60 comprimés',prix:17.45},
   ],
   'Vitamine D3 1000 UI':[
-    {lab:'Ixora',name:'Vitamine D3 1000 UI Ixora',dosage:'60 gélules',prix:10.90},
-    {lab:'Pileje',name:'D-Biane 1000UI Pileje',dosage:'60 comprimés',prix:9.90},
-    {lab:'Solgar',name:'Vitamine D3 1000UI Solgar',dosage:'100 gélules',prix:10.90},
+    {lab:'Ixora',name:'Vitamine D3 1000 UI Ixora',dosage:'60 gélules',prix:7.25},
+    {lab:'Pileje',name:'D-Biane 1000UI Pileje',dosage:'60 comprimés',prix:7.50},
+    {lab:'Solgar',name:'Vitamine D3 1000UI Solgar',dosage:'100 gélules',prix:8.55},
   ],
   'Zinc 15mg':[
-    {lab:'Solgar',name:'Zinc 15mg Picolinate Solgar',dosage:'100 comprimés',prix:9.90},
-    {lab:'Pileje',name:'Zinc 15mg Pileje',dosage:'60 comprimés',prix:10.90},
+    {lab:'Solgar',name:'Zinc 15mg Picolinate Solgar',dosage:'100 comprimés',prix:10.75},
+    {lab:'Pileje',name:'Zinc 15mg Pileje',dosage:'60 comprimés',prix:11.50},
     {lab:'Ixora',name:'Zinc 15mg Ixora',dosage:'60 gélules',prix:9.50},
   ],
   'Propolis extrait':[
@@ -5790,9 +5794,9 @@ const PRODUCT_CATALOG={
     {lab:'Arkopharma',name:'Lutéine 20mg Arkopharma',dosage:'30 gélules',prix:15.90},
   ],
   'Oméga-3 DHA 500mg':[
-    {lab:'Pileje',name:'Oméganut DHA 500mg Pileje',dosage:'60 gélules',prix:16.90},
-    {lab:'Nutergia',name:'Ergyomega DHA',dosage:'60 gélules',prix:15.90},
-    {lab:'Solgar',name:'Oméga-3 DHA 500mg Solgar',dosage:'100 gélules',prix:19.90},
+    {lab:'Pileje',name:'Oméganut DHA 500mg Pileje',dosage:'60 gélules',prix:17.50},
+    {lab:'Nutergia',name:'Ergyomega DHA',dosage:'60 gélules',prix:16.90},
+    {lab:'Solgar',name:'Oméga-3 DHA 500mg Solgar',dosage:'100 gélules',prix:22.90},
   ],
   'Zinc + Cuivre':[
     {lab:'Solgar',name:'Zinc + Cuivre Solgar',dosage:'100 comprimés',prix:10.90},
@@ -5835,9 +5839,9 @@ const PRODUCT_CATALOG={
     {lab:'Les 3 Chênes',name:'Marronnier d\'Inde Les 3 Chênes',dosage:'60 gélules',prix:11.50},
   ],
   'Magnésium bisglycinate 300mg':[
-    {lab:'Pileje',name:'Magnésium Bisglycinate 300mg Pileje',dosage:'60 gélules',prix:13.90},
-    {lab:'Nutergia',name:'Ergymag Bisglycinate',dosage:'90 gélules',prix:14.90},
-    {lab:'Solgar',name:'Magnésium Bisglycinate Solgar',dosage:'120 gélules',prix:16.90},
+    {lab:'Pileje',name:'Magnésium Bisglycinate 300mg Pileje',dosage:'60 gélules',prix:15.50},
+    {lab:'Nutergia',name:'Ergymag Bisglycinate',dosage:'90 gélules',prix:22.90},
+    {lab:'Solgar',name:'Magnésium Bisglycinate Solgar',dosage:'120 gélules',prix:17.50},
   ],
   'Ashwagandha 300mg':[
     {lab:'Solgar',name:'Ashwagandha 300mg Solgar',dosage:'60 gélules',prix:18.90},
