@@ -754,6 +754,8 @@
   .sr-price{font-weight:800;font-size:14px;color:#0D0E09;flex:0 0 auto}
   #searchEmpty{text-align:center;padding:48px 20px;color:#bbb;font-size:15px}
 </style>
+  <!-- Stripe.js — paiement sécurisé -->
+  <script src="https://js.stripe.com/v3/" async></script>
 </head>
 <body>
 
@@ -2178,6 +2180,17 @@ function resetAll(){
 =================================================================== */
 const MARGE_PCT=0.10;
 const FRAIS_LIVRAISON=3.90; // fallback si distance inconnue
+
+// ── Stripe ───────────────────────────────────────────────────────────
+// Remplacer par votre clé publique Stripe depuis dashboard.stripe.com/apikeys
+const STRIPE_PUBLISHABLE_KEY='pk_live_VOTRE_CLE_STRIPE_ICI';
+let _stripeInstance=null;
+function getStripe(){
+  if(_stripeInstance) return _stripeInstance;
+  if(typeof Stripe==='undefined'||STRIPE_PUBLISHABLE_KEY.includes('VOTRE_CLE')) return null;
+  _stripeInstance=Stripe(STRIPE_PUBLISHABLE_KEY);
+  return _stripeInstance;
+}
 
 /* ── TARIFICATION PHARMACIE ── */
 const PHARMACY_PRICE_KEY='lv_pharma_pricing';
@@ -3612,7 +3625,7 @@ function renderLicencieTab(){
         <button onclick="enterRole('registerScreen')" style="font-family:inherit;font-weight:700;font-size:13px;padding:11px 18px;background:white;color:var(--ink);border:2px solid var(--ink);border-radius:10px;cursor:pointer">Créer un compte</button>
       </div>
     </div>
-    <div style="text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:10px;font-style:italic">— ou continuer sans compte —</div>`:''}
+    `:''}
     ${currentUser?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
       <div style="width:44px;height:44px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white">${(currentUser.prenom||currentUser.email||'?')[0].toUpperCase()}</div>
       <div><div style="font-weight:800;font-size:15px">${currentUser.prenom||currentUser.email}</div><div style="font-size:12px;color:var(--ink-soft)">${currentUser.sportLicense?'🏅 Licence : '+currentUser.sportLicense:'Pas de licence enregistrée'}</div></div>
@@ -3633,7 +3646,7 @@ function renderLicencieTab(){
     </select>
   </div>
 </div>
-    <button onclick="setSportWizStep(1)" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
+    <button onclick="if(!currentUser){showBilanGate();}else if(!isClubLicencie()){showBilanGate('notvalidated');}else{setSportWizStep(1);}" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
   }
 
   else if(n===1){
@@ -6398,6 +6411,11 @@ function renderCart(){
       <span style="color:var(--ink-soft)">⚙️ Frais de fonctionnement (10%)</span>
       <span style="font-weight:700">€${commission.toFixed(2)}</span>
     </div>
+    ${currentUser?.role==='patient_licencie'||currentUser?.sportLicense?`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 8px;background:linear-gradient(90deg,#f5f3ff,#faf5ff);font-size:12.5px;border-top:1px solid #ede9fe">
+      <span style="color:#7c3aed">🏆 Reversé à votre club (50% des frais)</span>
+      <span style="font-weight:700;color:#7c3aed">€${(commission*0.5).toFixed(2)}</span>
+    </div>`:''}
     <div class="assoc-section" id="donationSection">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:${donationEnabled?'10px':'0'}">
         <input type="checkbox" ${donationEnabled?'checked':''} onchange="toggleDonation()" style="width:17px;height:17px;accent-color:var(--pharma)">
@@ -7094,6 +7112,73 @@ function setMode(m){
   renderCart();
 }
 
+/** Affiche le panneau de paiement Stripe et appelle onSuccess() si le paiement réussit */
+async function showStripePayment(amountEur, meta, onSuccess){
+  const stripe=getStripe();
+  if(!stripe){
+    // Stripe non configuré — mode démo, on passe directement
+    showToast('⚠️ Mode démo — paiement simulé (Stripe non configuré)','#f59e0b');
+    onSuccess(); return;
+  }
+  // Créer le PaymentIntent via la Supabase Edge Function
+  let clientSecret=null;
+  try{
+    const res=await window.LS_SB?.sbCreatePaymentIntent(Math.round(amountEur*100),meta);
+    if(res?.clientSecret) clientSecret=res.clientSecret;
+  }catch(e){}
+  if(!clientSecret){
+    showToast('⚠️ Paiement en mode démo — Edge Function non déployée','#f59e0b');
+    onSuccess(); return;
+  }
+  // Créer l'overlay de paiement
+  document.getElementById('stripePayOverlay')?.remove();
+  const ov=document.createElement('div');
+  ov.id='stripePayOverlay';
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9500;display:flex;flex-direction:column;justify-content:flex-end;animation:fadeIn .2s';
+  ov.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 32px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div><div style="font-weight:800;font-size:18px">💳 Paiement sécurisé</div><div style="font-size:12px;color:var(--ink-soft);margin-top:2px">Stripe · SSL · 3D Secure</div></div>
+      <button onclick="document.getElementById('stripePayOverlay')?.remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--ink-soft)">×</button>
+    </div>
+    <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:18px;font-size:14px">
+      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:16px"><span>Total à régler</span><span>€${amountEur.toFixed(2)}</span></div>
+    </div>
+    <div id="stripe-payment-element" style="margin-bottom:12px"></div>
+    <div id="stripe-pay-message" style="color:var(--err);font-size:13px;margin:6px 0;min-height:18px"></div>
+    <button id="stripe-pay-btn" onclick="confirmStripePayment()" style="width:100%;font-family:inherit;font-weight:800;font-size:16px;padding:16px;background:var(--ink);color:var(--lime);border:none;border-radius:14px;cursor:pointer;margin-top:4px">
+      🔒 Payer €${amountEur.toFixed(2)}
+    </button>
+    <div style="text-align:center;font-size:11px;color:var(--ink-soft);margin-top:10px">Aucune donnée bancaire n'est stockée sur Livraisanté. Paiement traité par Stripe.</div>
+  </div>`;
+  document.body.appendChild(ov);
+  // Monter l'élément Stripe
+  const elements=stripe.elements({clientSecret,locale:'fr'});
+  const pe=elements.create('payment',{layout:'tabs'});
+  pe.mount('#stripe-payment-element');
+  window._stripeState={elements,onSuccess};
+}
+
+async function confirmStripePayment(){
+  const stripe=getStripe();
+  if(!stripe||!window._stripeState) return;
+  const btn=document.getElementById('stripe-pay-btn');
+  const msg=document.getElementById('stripe-pay-message');
+  if(btn){btn.disabled=true;btn.textContent='Traitement en cours…';}
+  const {error,paymentIntent}=await stripe.confirmPayment({
+    elements:window._stripeState.elements,
+    confirmParams:{return_url:window.location.href},
+    redirect:'if_required'
+  });
+  if(error){
+    if(msg) msg.textContent=error.message;
+    if(btn){btn.disabled=false;btn.innerHTML='🔒 Réessayer';}
+  } else {
+    document.getElementById('stripePayOverlay')?.remove();
+    if(window._stripeState.onSuccess) window._stripeState.onSuccess();
+    window._stripeState=null;
+  }
+}
+
 function placeOrderSante(){
   if(!patientCart.length){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Ajoutez au moins un produit au panier.</div>';return;}
   if(deliveryMode==='cnc'&&!selectedSlot){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card warn-caution">Sélectionnez un créneau Click &amp; Collect.</div>';return;}
@@ -7102,24 +7187,21 @@ function placeOrderSante(){
     deliveryMode==='cnc_club'?`Retrait Club · ${_cncClub?.clubInfo?.nom||'Club'}${_cncClub?.clubInfo?.adresse?' · '+_cncClub.clubInfo.adresse:''}`:
     (document.getElementById('santeAddr')?.value||'').trim();
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
-  const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
-  const assocObj=donationEnabled?getCurrentAssoc():null;
-  const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
-  // Le don patient va toujours à l'association du mois
-  let donInfo=null;
-  if(assocObj && donAmt>0){
-    donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};
-  }
-  // B2B2C : reverser 50% de la commission (10% du total) au club du licencié (automatique)
-  getPatientClub().then(club=>{
-    if(club?.id){
-      const orderTotal=cartTotal(deliveryMode);
-      addCagnotteContribution(club.id, 'order-'+Date.now(), orderTotal);
-    }
+  const amountEur=cartTotalFull(deliveryMode);
+  const meta={patient:document.getElementById('santeName')?.value?.trim()||currentUser?.prenom||'Patient',items:patientCart.map(p=>p.name).join(', ').slice(0,500)};
+  showStripePayment(amountEur, meta, function(){
+    const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
+    const assocObj=donationEnabled?getCurrentAssoc():null;
+    const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
+    let donInfo=null;
+    if(assocObj&&donAmt>0){donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};}
+    getPatientClub().then(club=>{
+      if(club?.id){const orderTotal=cartTotal(deliveryMode);addCagnotteContribution(club.id,'order-'+Date.now(),orderTotal);}
+    });
+    createOrder({items,kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
+      patient:{name:meta.patient,pos:santePos,addr,donation:donInfo},
+      trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn')});
   });
-  createOrder({items, kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
-    patient:{name:document.getElementById('santeName')?.value.trim()||'Patient',pos:santePos,addr,donation:donInfo},
-    trackId:'santeOrderTrack', btn:document.getElementById('santeOrderBtn')});
 }
 
 /* ===================================================================
@@ -7543,9 +7625,50 @@ function selectSport(id){
     }
   }
 }
+/** Returns true if the current user is a validated club member (licencié) */
+function isClubLicencie(){
+  if(!currentUser) return false;
+  if(currentUser.role==='patient_licencie') return true;
+  if(currentUser.sportLicense||currentUser.healthProfile?.sportLicense) return true;
+  return false;
+}
 function startSportBilan(){
+  if(!currentUser){
+    // Show gate overlay instead of the bilan
+    showBilanGate();
+    return;
+  }
+  if(!isClubLicencie()){
+    showBilanGate('notvalidated');
+    return;
+  }
   if(!currentSport){alert('Sélectionne ton sport pour commencer le bilan.');return;}
   go(1);
+}
+function showBilanGate(reason){
+  const ov=document.createElement('div');
+  ov.id='bilanGate';
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;flex-direction:column;justify-content:flex-end';
+  const isNotValidated=reason==='notvalidated';
+  ov.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 32px;max-height:70vh;overflow-y:auto">
+    <button onclick="document.getElementById('bilanGate')?.remove()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-soft)">×</button>
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:48px;margin-bottom:8px">${isNotValidated?'⏳':'🔒'}</div>
+      <div style="font-weight:800;font-size:20px;margin-bottom:6px">${isNotValidated?'Validation du club requise':'Compte licencié requis'}</div>
+      <div style="font-size:14px;color:var(--ink-soft);line-height:1.5">${isNotValidated
+        ?'Le bilan prévention et les protocoles personnalisés sont réservés aux membres validés par leur club partenaire Livraisanté.<br><br>Rapprochez-vous de votre club pour activer votre accès.'
+        :'Le bilan prévention & Protocoles est un service exclusif pour les sportifs licenciés de clubs partenaires Livraisanté.<br><br>Créez votre compte sportif licencié pour accéder à votre protocole personnalisé.'
+      }</div>
+    </div>
+    ${!isNotValidated?`<div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="document.getElementById('bilanGate')?.remove();enterRole('registerScreen')" style="font-family:inherit;font-weight:800;font-size:15px;padding:14px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer">Créer mon compte licencié →</button>
+      <button onclick="document.getElementById('bilanGate')?.remove();enterRole('loginScreen')" style="font-family:inherit;font-weight:700;font-size:14px;padding:12px;background:transparent;color:#1F6FEB;border:2px solid #1F6FEB;border-radius:14px;cursor:pointer">J'ai déjà un compte</button>
+    </div>`
+    :`<div style="background:#FEF3C7;border-radius:12px;padding:14px;font-size:13px;text-align:center;color:#92400E">
+      <b>Comment obtenir la validation ?</b><br>Contactez votre club — le responsable peut valider votre adhésion depuis l'espace club Livraisanté.
+    </div>`}
+  </div>`;
+  document.body.appendChild(ov);
 }
 function renderSportGrid(){
   const el=document.getElementById('sportGrid');

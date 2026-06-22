@@ -204,10 +204,24 @@ async function sbUpdateAppointment(apptId, updates){
   return { error: error?.message || null };
 }
 
+// ── Stripe PaymentIntent ─────────────────────────────────────────────
+/** Crée un PaymentIntent Stripe via la Supabase Edge Function `create-payment-intent` */
+async function sbCreatePaymentIntent(amountCents, metadata={}){
+  const sb=getSB(); if(!sb) return {error:'supabase_not_configured'};
+  try{
+    const {data,error}=await sb.functions.invoke('create-payment-intent',{
+      body:{amount:amountCents,currency:'eur',metadata}
+    });
+    if(error) return {error:error.message};
+    return {clientSecret:data?.clientSecret||null,error:null};
+  }catch(e){return {error:e.message||'invoke_failed'};}
+}
+
 // ── Export (accessible globally) ────────────────────────────────
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
   sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements,
   sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
   sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
-  sbGetAppointments, sbInsertAppointment, sbUpdateAppointment };
+  sbGetAppointments, sbInsertAppointment, sbUpdateAppointment,
+  sbCreatePaymentIntent };
