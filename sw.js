@@ -1,10 +1,11 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v95';
+const CACHE = 'livraisante-v96';
 const SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
   '/js/supabase-client.js',
+  '/js/config.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',

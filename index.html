@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Livraisanté — Santé du quotidien, livré</title>
-<meta name="description" content="Conseil pharmaceutique et livraison de compléments alimentaires validés par votre pharmacien.">
+<meta name="description" content="Conseil pharmaceutique et livraison à domicile de compléments alimentaires validés par votre pharmacien. Disponible 7j/7.">
 <meta name="theme-color" content="#0D0E09">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -12,6 +12,58 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="canonical" href="https://livraisante.fr/">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://livraisante.fr/">
+<meta property="og:title" content="Livraisanté — Santé du quotidien, livré">
+<meta property="og:description" content="Conseils pharmaceutiques personnalisés et livraison de compléments alimentaires à domicile. Validés par votre pharmacien. Disponible 7j/7.">
+<meta property="og:image" content="https://livraisante.fr/icons/icon-512.png">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Livraisanté">
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Livraisanté — Santé du quotidien, livré">
+<meta name="twitter:description" content="Conseils pharmaceutiques et livraison de compléments alimentaires validés par votre pharmacien.">
+<meta name="twitter:image" content="https://livraisante.fr/icons/icon-512.png">
+
+<!-- Structured Data — Schema.org WebApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Livraisanté",
+  "url": "https://livraisante.fr",
+  "description": "Application de conseil pharmaceutique et livraison à domicile de compléments alimentaires (CA) et dispositifs médicaux (DM) non remboursés.",
+  "applicationCategory": "HealthApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "inLanguage": "fr-FR",
+  "author": {
+    "@type": "Organization",
+    "name": "Livraisanté SAS",
+    "url": "https://livraisante.fr",
+    "email": "contact@livraisante.fr",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "1 Rue des Vergers",
+      "addressLocality": "Vaulx-en-Velin",
+      "postalCode": "69120",
+      "addressCountry": "FR"
+    }
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  }
+}
+</script>
+
+<!-- Plausible Analytics — RGPD-compliant, sans cookie, sans consentement requis -->
+<script defer data-domain="livraisante.fr" src="https://plausible.io/js/script.js"></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,6 +78,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"
   integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil"
   crossorigin="anonymous"></script>
+<!-- Configuration production (clés publiques) -->
+<script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <style>
   :root{
@@ -2183,7 +2237,7 @@ const FRAIS_LIVRAISON=3.90; // fallback si distance inconnue
 
 // ── Stripe ───────────────────────────────────────────────────────────
 // Remplacer par votre clé publique Stripe depuis dashboard.stripe.com/apikeys
-const STRIPE_PUBLISHABLE_KEY='pk_live_VOTRE_CLE_STRIPE_ICI';
+const STRIPE_PUBLISHABLE_KEY=(window.LIVR_CONFIG?.stripe_pk)||'pk_live_VOTRE_CLE_STRIPE_ICI';
 let _stripeInstance=null;
 function getStripe(){
   if(_stripeInstance) return _stripeInstance;
@@ -4288,6 +4342,53 @@ function showRgpdModal(section='intro'){
       <h4 style="margin:14px 0 6px">Article 8 — Droit applicable et juridiction</h4>
       <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige, et après tentative de résolution amiable, les tribunaux compétents sont ceux du ressort du Tribunal de Commerce de Lyon.</p>
       <p style="margin-top:14px;font-size:12px;color:#888">Contact : <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> · Livraisanté SAS, 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 R.C.S. Lyon</p>`,
+    cgv:`<h3>Conditions Générales de Vente</h3>
+      <p style="font-size:11px;color:#888">Version 1.0 — Entrée en vigueur : 10 juin 2026 · Livraisanté SAS · RCS 933 484 917 Lyon</p>
+
+      <h4 style="margin:14px 0 6px">Article 1 — Objet</h4>
+      <p>Les présentes Conditions Générales de Vente (CGV) s'appliquent à toute commande de compléments alimentaires (CA) et de dispositifs médicaux (DM) passée via l'application Livraisanté. Elles prévalent sur tout autre document. La validation d'une commande implique l'acceptation intégrale des présentes CGV.</p>
+
+      <h4 style="margin:14px 0 6px">Article 2 — Produits</h4>
+      <p>Livraisanté commercialise exclusivement :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li><b>Compléments alimentaires</b> au sens du Décret n° 2006-352 du 20 mars 2006</li>
+        <li><b>Dispositifs médicaux</b> marqués CE selon le Règlement UE 2017/745</li>
+        <li><b>Aucun médicament</b> soumis à prescription ou à AMM</li>
+      </ul>
+      <p>Les prix affichés sont en euros TTC (TVA 5,5 % pour les CA). La pharmacie partenaire est le vendeur légal des produits. Livraisanté agit en qualité d'intermédiaire de commerce.</p>
+
+      <h4 style="margin:14px 0 6px">Article 3 — Commande et validation</h4>
+      <p>La commande est validée à réception du paiement complet. Un email de confirmation est adressé dans les 15 minutes. La pharmacie partenaire dispose de <b>2 heures</b> pour confirmer la disponibilité du stock. En cas d'indisponibilité, la commande est annulée et le paiement intégralement remboursé sous 3 à 5 jours ouvrés.</p>
+
+      <h4 style="margin:14px 0 6px">Article 4 — Prix et frais de livraison</h4>
+      <p>Les prix incluent la marge officinale, les frais de service Livraisanté (10 % HT du panier) et la TVA applicable. Les <b>frais de livraison</b> sont calculés selon la distance officine-domicile :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>0–3 km : 2,90 €</li>
+        <li>3–8 km : 4,90 €</li>
+        <li>8–15 km : 7,90 €</li>
+        <li>Au-delà : sur devis</li>
+      </ul>
+      <p>Le Click & Collect en pharmacie est <b>gratuit</b>. Le paiement s'effectue exclusivement en ligne via Stripe (CB, Apple Pay, Google Pay).</p>
+
+      <h4 style="margin:14px 0 6px">Article 5 — Livraison</h4>
+      <p>La livraison est assurée par un livreur indépendant partenaire dans un délai moyen de <b>45 à 90 minutes</b> selon la disponibilité. Ce délai est indicatif et non contractuel. En cas de retard supérieur à 3 heures, la commande peut être annulée sans frais. La livraison est réalisée à l'adresse renseignée lors de la commande.</p>
+
+      <h4 style="margin:14px 0 6px">Article 6 — Droit de rétractation (Art. L221-18 Code de la consommation)</h4>
+      <p>Conformément à l'Article L221-18 du Code de la consommation, le consommateur dispose d'un délai de <b>14 jours</b> à compter de la réception pour exercer son droit de rétractation, sans motif. <b>Exception :</b> les produits descellés ou entamés, ou dont l'intégrité ne peut plus être garantie (Art. L221-28 §5), ne peuvent pas être retournés pour des raisons d'hygiène et de protection de la santé.</p>
+      <p>Pour exercer ce droit : <a href="mailto:retours@livraisante.fr" style="color:var(--pharma)">retours@livraisante.fr</a> — joindre le numéro de commande. Le remboursement est effectué sous 14 jours par le même moyen de paiement.</p>
+
+      <h4 style="margin:14px 0 6px">Article 7 — Garanties légales</h4>
+      <p>Tous les produits bénéficient de la <b>garantie légale de conformité</b> (Art. L217-4 à L217-14 Code de la consommation) et de la <b>garantie contre les vices cachés</b> (Art. 1641 à 1648 Code civil). En cas de produit non conforme, le remplacement ou remboursement est assuré sans frais.</p>
+
+      <h4 style="margin:14px 0 6px">Article 8 — Responsabilité</h4>
+      <p>Livraisanté ne saurait être tenu responsable des dommages résultant d'une utilisation des produits contraire à leur notice d'utilisation ou aux conseils délivrés. Les informations fournies ne constituent pas un avis médical.</p>
+
+      <h4 style="margin:14px 0 6px">Article 9 — Médiation</h4>
+      <p>En cas de litige non résolu amiablement, le consommateur peut recourir gratuitement au <b>Médiateur de la consommation</b> : <a href="https://www.economie.gouv.fr/mediation-conso" target="_blank" style="color:var(--pharma)">economie.gouv.fr/mediation-conso</a>. Plateforme européenne de règlement en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr" target="_blank" style="color:var(--pharma)">ec.europa.eu/consumers/odr</a>.</p>
+
+      <h4 style="margin:14px 0 6px">Article 10 — Droit applicable</h4>
+      <p>Les présentes CGV sont soumises au <b>droit français</b>. Tout litige relève de la compétence des juridictions françaises.</p>
+      <p style="margin-top:14px;font-size:12px;color:#888">Livraisanté SAS · 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 · <a href="mailto:retours@livraisante.fr" style="color:var(--pharma)">retours@livraisante.fr</a></p>`,
   };
   const modal=document.createElement('div');
   modal.id='rgpdModal';
@@ -4295,7 +4396,7 @@ function showRgpdModal(section='intro'){
   modal.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:540px;max-height:80vh;overflow-y:auto;animation:slideDown .3s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="display:flex;gap:8px">
-        ${['intro','cookies','mentions','cgu'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal','cgu':'📜 CGU'}[s]}</button>`).join('')}
+        ${['intro','cookies','mentions','cgu','cgv'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal','cgu':'📜 CGU','cgv':'🛒 CGV'}[s]}</button>`).join('')}
       </div>
       <button onclick="document.getElementById('rgpdModal').remove()" style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--ink-soft)">✕</button>
     </div>
@@ -4308,6 +4409,22 @@ function showRgpdModal(section='intro'){
 function setCookieConsent(level){
   localStorage.setItem('livr_cookie_consent',JSON.stringify({level,ts:Date.now()}));
   document.getElementById('cookieBanner')?.remove();
+  // Charger GA4 uniquement si consentement analytics accordé
+  if((level==='all'||level==='analytics')&&!document.getElementById('ga4Script')){
+    const ga4Id=(window.LIVR_CONFIG?.ga4_id)||'G-XXXXXXXXXX';
+    if(!ga4Id.includes('XXXX')){
+      const s1=document.createElement('script');
+      s1.id='ga4Script';
+      s1.async=true;
+      s1.src='https://www.googletagmanager.com/gtag/js?id='+ga4Id;
+      document.head.appendChild(s1);
+      window.dataLayer=window.dataLayer||[];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js',new Date());
+      gtag('config',ga4Id,{anonymize_ip:true});
+      window._gtag=gtag;
+    }
+  }
 }
 
 function showCookieBanner(){
@@ -4316,11 +4433,17 @@ function showCookieBanner(){
   const banner=document.createElement('div');
   banner.id='cookieBanner';
   banner.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:9997;background:var(--ink);color:white;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.3)';
-  banner.innerHTML=`<div style="font-size:13px;line-height:1.5"><b>🍪 Cookies &amp; confidentialité</b><br>Livraisanté utilise uniquement des cookies nécessaires et des mesures d'audience anonymisées. Vos données de santé ne sont jamais partagées. <button onclick="showRgpdModal('cookies');document.getElementById('cookieBanner').remove()" style="font-family:inherit;color:#C2F23E;background:none;border:none;cursor:pointer;font-weight:700;font-size:13px;padding:0">En savoir plus →</button></div>
-  <div style="display:flex;gap:8px">
-    <button onclick="setCookieConsent('all')" style="font-family:inherit;font-weight:800;font-size:13px;flex:1;padding:10px;background:#C2F23E;color:var(--ink);border:none;border-radius:10px;cursor:pointer">✓ Tout accepter</button>
-    <button onclick="setCookieConsent('essential')" style="font-family:inherit;font-weight:700;font-size:13px;flex:1;padding:10px;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:10px;cursor:pointer">Essentiels seulement</button>
-  </div>`;
+  banner.innerHTML=`
+    <div style="font-size:13px;line-height:1.5">
+      <b>🍪 Cookies &amp; confidentialité</b><br>
+      Livraisanté utilise des cookies essentiels et des outils de mesure d'audience (Plausible sans cookie, Google Analytics avec votre accord). Aucune donnée de santé n'est transmise.
+      <button onclick="showRgpdModal('cookies');document.getElementById('cookieBanner').remove()" style="font-family:inherit;color:#C2F23E;background:none;border:none;cursor:pointer;font-weight:700;font-size:13px;padding:0;margin-left:4px">En savoir plus →</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="setCookieConsent('all')" style="font-family:inherit;font-weight:800;font-size:13px;flex:1;min-width:120px;padding:10px;background:#C2F23E;color:var(--ink);border:none;border-radius:10px;cursor:pointer">✓ Tout accepter</button>
+      <button onclick="setCookieConsent('essential')" style="font-family:inherit;font-weight:700;font-size:13px;flex:1;min-width:120px;padding:10px;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:10px;cursor:pointer">Refuser les optionnels</button>
+      <button onclick="showRgpdModal('cookies');document.getElementById('cookieBanner').remove()" style="font-family:inherit;font-weight:600;font-size:12px;padding:10px 14px;background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer">Personnaliser</button>
+    </div>`;
   document.body.appendChild(banner);
 }
 
