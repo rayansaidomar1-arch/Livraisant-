@@ -217,6 +217,46 @@ async function sbCreatePaymentIntent(amountCents, metadata={}){
   }catch(e){return {error:e.message||'invoke_failed'};}
 }
 
+// ── Web Push ─────────────────────────────────────────────────────
+
+/** Abonne l'utilisateur aux notifications push et sauvegarde dans Supabase */
+async function sbSubscribePush(userId) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return { error: 'push_not_supported' };
+  const vapidKey = window.LIVR_CONFIG?.vapid_public_key;
+  if (!vapidKey) return { error: 'vapid_key_missing' };
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return { error: 'permission_denied' };
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey)
+    });
+
+    const json = sub.toJSON();
+    const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
+    const { error } = await sb.from('push_subscriptions').upsert({
+      user_id: userId,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth
+    }, { onConflict: 'user_id,endpoint' });
+
+    return { error: error?.message || null };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
 // ── Export (accessible globally) ────────────────────────────────
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
@@ -224,4 +264,4 @@ window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, s
   sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
   sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
   sbGetAppointments, sbInsertAppointment, sbUpdateAppointment,
-  sbCreatePaymentIntent };
+  sbCreatePaymentIntent, sbSubscribePush };

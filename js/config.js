@@ -10,6 +10,10 @@ window.LIVR_CONFIG = {
   supabase_url:  'https://gsmrgafclxkuqzzhtapi.supabase.co',
   supabase_anon: 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc',
 
+  // ── Web Push VAPID (notifications push) ────────────────────────────
+  // Clé publique uniquement — la clé privée est dans Supabase secrets (VAPID_PRIVATE_KEY)
+  vapid_public_key: 'BDrxRAUmDSOPKkOzKR_I2-C3eQJU7rTDGD_Grlz9-fXGD397z7PFXWKltUacqR21uHcBDNHXffeAKjqEhjKvkb8',
+
   // ── Stripe (https://dashboard.stripe.com/apikeys) ──────────────────
   stripe_pk: 'pk_live_51TlGbmACKGmHTUUGH77rzrcCUd7ALnHKu9ZqIwmX3gtjuzbMAldFb2mCg7MdFUXMcPzCiDkOJ1UYsTK4JODSK7aJ00BDwgXD9H',
 
