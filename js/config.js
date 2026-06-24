@@ -7,7 +7,7 @@
 window.LIVR_CONFIG = {
   // ── Stripe (https://dashboard.stripe.com/apikeys) ──────────────────
   // ⚠️  Remplacer par pk_live_... avant le lancement commercial
-  stripe_pk: 'pk_test_51TlGbmACKGmHTUUGJfOl9c4BVCQ5m73Eo5kKE5O6fuVmy5lCd0pccHVbChoPU4vNPYN1vM8kdrnIhQ7QyQYJ9sDu00jZZjgHWf',
+  stripe_pk: 'pk_live_51TlGbmACKGmHTUUGH77rzrcCUd7ALnHKu9ZqIwmX3gtjuzbMAldFb2mCg7MdFUXMcPzCiDkOJ1UYsTK4JODSK7aJ00BDwgXD9H',
 
   // ── Google Analytics 4 (https://analytics.google.com) ─────────────
   // Chargé dynamiquement après consentement cookies CNIL
