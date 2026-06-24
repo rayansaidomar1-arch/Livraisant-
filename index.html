@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://annuaire.sante.fr https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Livraisanté — Santé du quotidien, livré</title>
 <meta name="description" content="Conseil pharmaceutique et livraison à domicile de compléments alimentaires validés par votre pharmacien. Disponible 7j/7.">
@@ -4060,6 +4061,7 @@ function downloadSportProtocolPDF(){
         ${item.ama?'<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;align-self:center">✓ AMA</span>':''}
       </div>`).join('')}
     </div>`).join('');
+  const _esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Protocole Sport-Santé — Livraisanté</title>
   <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
@@ -4077,12 +4079,12 @@ function downloadSportProtocolPDF(){
     <span class="badge">Compléments alimentaires CA · Non dopant AMA</span>
   </div>
   <div class="meta">
-    <div><b>${d.sport||'—'}</b>Sport</div>
-    <div><b>${d.niveau||'—'}</b>Niveau</div>
-    <div><b>${(d.objectifs||[]).join(', ')||'—'}</b>Objectifs</div>
+    <div><b>${_esc(d.sport||'—')}</b>Sport</div>
+    <div><b>${_esc(d.niveau||'—')}</b>Niveau</div>
+    <div><b>${_esc((d.objectifs||[]).join(', ')||'—')}</b>Objectifs</div>
   </div>
   ${itemsHtml}
-  ${proto.alertes.length?`<div class="alert"><b>⚠ Points d'attention :</b><br>${proto.alertes.map(a=>'• '+a).join('<br>')}</div>`:''}
+  ${proto.alertes.length?`<div class="alert"><b>⚠ Points d'attention :</b><br>${proto.alertes.map(a=>'• '+_esc(a)).join('<br>')}</div>`:''}
   <div class="footer">Ce protocole est proposé à titre informatif. Conseil et validation par votre pharmacien partenaire. Non substituable à un avis médical.</div>
   <div style="margin-top:16px;text-align:center"><button onclick="window.print()" style="font-family:sans-serif;font-weight:700;font-size:14px;padding:10px 24px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer">🖨 Imprimer / Enregistrer en PDF</button></div>
   </body></html>`);
@@ -9369,29 +9371,29 @@ function renderProfile(){
     html+=`
     <div class="profile-section">
       <h3>👤 Informations personnelles</h3>
-      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
-      <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
-      <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
-      <div class="pfield"><span class="pk">Téléphone</span><span class="pv">${u.tel||'—'}</span></div>
+      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom||'—')}</span></div>
+      <div class="pfield"><span class="pk">Nom</span><span class="pv">${esc(u.nom||'—')}</span></div>
+      <div class="pfield"><span class="pk">Email</span><span class="pv">${esc(u.email)}</span></div>
+      <div class="pfield"><span class="pk">Téléphone</span><span class="pv">${esc(u.tel||'—')}</span></div>
       <div class="pfield"><span class="pk">Date de naissance</span><span class="pv">${u.birthdate?new Date(u.birthdate).toLocaleDateString('fr-FR'):'—'}</span></div>
       ${u.birthdate?`<div class="pfield"><span class="pk">Tranche d'âge</span><span class="pv" style="background:#f0fdf4;color:#15803d;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700">🔒 ${birthdateToAgeRange(u.birthdate)} — déterminé par votre date de naissance</span></div>`:''}
-      ${u.address?.line1||hp.address?.line1?`<div class="pfield"><span class="pk">📍 Adresse</span><span class="pv">${(u.address||hp.address).line1}, ${(u.address||hp.address).zip} ${(u.address||hp.address).city}</span></div>
+      ${u.address?.line1||hp.address?.line1?`<div class="pfield"><span class="pk">📍 Adresse</span><span class="pv">${esc((u.address||hp.address).line1)}, ${esc((u.address||hp.address).zip)} ${esc((u.address||hp.address).city)}</span></div>
       <div style="font-size:12px;color:var(--ink-soft);padding:2px 0 6px 0">Utilisée pour la livraison et la facturation</div>`
       :`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">📍 Aucune adresse enregistrée</div>`}
       <button onclick="showEditPersonalInfo()" style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 14px;border:1.5px solid var(--line-strong);border-radius:20px;background:white;cursor:pointer;margin-top:6px">✏️ Modifier mes informations</button>
       <div id="editPersonalPanel" style="display:none;margin-top:12px;background:#f8f8f7;border-radius:12px;padding:14px">
         <div style="font-size:13px;font-weight:700;margin-bottom:10px">Modifier mes informations</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Prénom</label><input id="editPrenom" value="${u.prenom||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
-          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Nom</label><input id="editNom" value="${u.nom||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Prénom</label><input id="editPrenom" value="${esc(u.prenom||'')}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+          <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Nom</label><input id="editNom" value="${esc(u.nom||'')}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
         </div>
-        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Téléphone</label><input id="editTel" value="${u.tel||''}" oninput="formatPhone(this)" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
-        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Date de naissance <span style="font-weight:400;color:#666">(définit la tranche d'âge)</span></label><input id="editBirthdate" type="date" value="${u.birthdate||''}" ${u.birthdate?'readonly style="background:#f5f5f5;cursor:not-allowed"':''} style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Téléphone</label><input id="editTel" value="${esc(u.tel||'')}" oninput="formatPhone(this)" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+        <div style="margin-bottom:10px"><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Date de naissance <span style="font-weight:400;color:#666">(définit la tranche d'âge)</span></label><input id="editBirthdate" type="date" value="${esc(u.birthdate||'')}" ${u.birthdate?'readonly style="background:#f5f5f5;cursor:not-allowed"':''} style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
         <div style="font-size:12px;font-weight:700;margin-bottom:4px">Adresse (livraison &amp; facturation)</div>
-        <input id="editAddr" placeholder="N° et rue" value="${u.address?.line1||hp.address?.line1||''}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:6px">
+        <input id="editAddr" placeholder="N° et rue" value="${esc(u.address?.line1||hp.address?.line1||'')}" style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:6px">
         <div style="display:grid;grid-template-columns:120px 1fr;gap:6px;margin-bottom:12px">
-          <input id="editZip" placeholder="Code postal" value="${u.address?.zip||hp.address?.zip||''}" oninput="lookupCitiesFromZip(this.value,'editCity','editCityDropdown')" style="padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box">
-          <div style="position:relative"><input id="editCity" placeholder="Ville" value="${u.address?.city||hp.address?.city||''}" readonly style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"><div id="editCityDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid var(--line-strong);border-radius:10px;z-index:100;max-height:140px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)"></div></div>
+          <input id="editZip" placeholder="Code postal" value="${esc(u.address?.zip||hp.address?.zip||'')}" oninput="lookupCitiesFromZip(this.value,'editCity','editCityDropdown')" style="padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box">
+          <div style="position:relative"><input id="editCity" placeholder="Ville" value="${esc(u.address?.city||hp.address?.city||'')}" readonly style="width:100%;padding:8px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"><div id="editCityDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:2px solid var(--line-strong);border-radius:10px;z-index:100;max-height:140px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1)"></div></div>
         </div>
         <button onclick="savePersonalInfo()" style="font-family:inherit;font-weight:800;font-size:14px;padding:10px 20px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Enregistrer →</button>
         <div id="editPersonalMsg" style="font-size:12px;color:var(--ok);margin-top:6px;min-height:14px"></div>
@@ -9609,8 +9611,8 @@ function renderProfile(){
     html+=`
     <div class="profile-section">
       <h3>🛵 Mon profil livreur</h3>
-      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom}</span></div>
-      <div class="pfield"><span class="pk">Véhicule</span><span class="pv">${d.vehicle||'—'}</span></div>
+      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom)}</span></div>
+      <div class="pfield"><span class="pk">Véhicule</span><span class="pv">${esc(d.vehicle||'—')}</span></div>
       <div class="pfield"><span class="pk">SIRET</span><span class="pv">${d.siret||'—'}</span></div>
       <div class="pfield"><span class="pk">Code parrain</span><span class="pv highlight">${d.refCode||'—'}</span></div>
     </div>
@@ -9630,10 +9632,10 @@ function renderProfile(){
     html+=`
     <div class="profile-section">
       <h3>👤 Informations personnelles</h3>
-      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
-      <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
-      <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
-      ${u.tel?`<div class="pfield"><span class="pk">Téléphone</span><span class="pv">${u.tel}</span></div>`:''}
+      <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom||'—')}</span></div>
+      <div class="pfield"><span class="pk">Nom</span><span class="pv">${esc(u.nom||'—')}</span></div>
+      <div class="pfield"><span class="pk">Email</span><span class="pv">${esc(u.email)}</span></div>
+      ${u.tel?`<div class="pfield"><span class="pk">Téléphone</span><span class="pv">${esc(u.tel)}</span></div>`:''}
     </div>
     <div class="profile-section">
       <h3>🎽 Licence sportive</h3>
@@ -9702,7 +9704,7 @@ function renderProfile(){
     html+=`<div class="profile-section">
     <h3>🛡️ Administration</h3>
     <div class="pfield"><span class="pk">Rôle</span><span class="pv highlight">Super Admin</span></div>
-    <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+    <div class="pfield"><span class="pk">Email</span><span class="pv">${esc(u.email)}</span></div>
     <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('admin')">Accéder au dashboard →</button></div>
   </div>`;
   }
@@ -9710,9 +9712,9 @@ function renderProfile(){
     const partnerClubs=(u.partnerClubs||[]);
     html+=`<div class="profile-section">
     <h3>🩺 Mon profil professionnel</h3>
-    <div class="pfield"><span class="pk">Prénom</span><span class="pv">${u.prenom||'—'}</span></div>
-    <div class="pfield"><span class="pk">Nom</span><span class="pv">${u.nom||'—'}</span></div>
-    <div class="pfield"><span class="pk">Email</span><span class="pv">${u.email}</span></div>
+    <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom||'—')}</span></div>
+    <div class="pfield"><span class="pk">Nom</span><span class="pv">${esc(u.nom||'—')}</span></div>
+    <div class="pfield"><span class="pk">Email</span><span class="pv">${esc(u.email)}</span></div>
     <div class="pfield"><span class="pk">Profession</span><span class="pv">${u.profession||u.healthProInfo?.profession||'—'}</span></div>
     <div class="pfield"><span class="pk">RPPS</span><span class="pv" style="font-family:monospace">${u.rpps||u.healthProInfo?.rpps||'—'}</span></div>
   </div>
@@ -10298,6 +10300,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   initDemoAccounts();
   restoreSession();
+  // ── Sécurité production : interdire le fallback localStorage en mode live ──
+  if(window.LS_SB?.SB_READY && location.hostname === 'livraisante.fr'){
+    // Purge les données de santé stockées localement si on est sur le vrai domaine
+    const sensitiveKeys = ['livraisante_accounts','livraisante_session','livraisante_cart','livraisante_healthProfile'];
+    sensitiveKeys.forEach(k => localStorage.removeItem(k));
+  }
   santeHome();
   renderSportGrid();
   updateAccountChip();

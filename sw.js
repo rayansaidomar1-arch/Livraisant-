@@ -1,5 +1,5 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v99';
+const CACHE = 'livraisante-v100';
 const SHELL = [
   '/',
   '/index.html',

@@ -27,17 +27,19 @@ Deno.serve(async (req) => {
     const signature = req.headers.get('stripe-signature');
 
     // Verify webhook signature
+    if (!webhookSecret) {
+      console.error('CRITICAL: STRIPE_WEBHOOK_SECRET not configured');
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), { status: 500 });
+    }
+    if (!signature) {
+      return new Response(JSON.stringify({ error: 'Missing stripe-signature header' }), { status: 400 });
+    }
     let event: Stripe.Event;
-    if (webhookSecret && signature) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      } catch (err) {
-        console.error('Webhook signature verification failed:', err.message);
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
-      }
-    } else {
-      // No secret configured — accept in test mode only
-      event = JSON.parse(body);
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err.message);
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
