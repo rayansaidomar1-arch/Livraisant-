@@ -63,6 +63,28 @@
 
 <!-- Plausible Analytics — RGPD-compliant, sans cookie, sans consentement requis -->
 <script defer data-domain="livraisante.fr" src="https://plausible.io/js/script.js"></script>
+<!-- Sentry — monitoring erreurs production -->
+<script
+  src="https://browser.sentry-cdn.com/7.99.0/bundle.tracing.min.js"
+  integrity="sha384-placeholder"
+  crossorigin="anonymous"
+></script>
+<script>
+  if(typeof Sentry !== 'undefined'){
+    Sentry.init({
+      dsn: (window.LIVR_CONFIG?.sentry_dsn) || '',
+      environment: location.hostname === 'livraisante.fr' ? 'production' : 'development',
+      tracesSampleRate: 0.1,
+      beforeSend(event){
+        // Ne pas envoyer les erreurs si pas de DSN configuré
+        if(!window.LIVR_CONFIG?.sentry_dsn) return null;
+        // Masquer les données personnelles
+        if(event.request) delete event.request.cookies;
+        return event;
+      }
+    });
+  }
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11696,6 +11718,13 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'Escape'){
     var ov = document.getElementById('searchOverlay');
     if(ov && ov.classList.contains('open')) closeSearch();
+  }
+});
+
+// ── Global error handler → Sentry ────────────────────────────────
+window.addEventListener('unhandledrejection', function(e){
+  if(typeof Sentry !== 'undefined' && window.LIVR_CONFIG?.sentry_dsn){
+    Sentry.captureException(e.reason);
   }
 });
 

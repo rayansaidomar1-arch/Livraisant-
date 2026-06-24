@@ -17,4 +17,8 @@ window.LIVR_CONFIG = {
   // ── Plausible (https://plausible.io/sites) ─────────────────────────
   // Conforme RGPD sans cookie — actif sans configuration supplémentaire
   plausible_domain: 'livraisante.fr',
+
+  // ── Sentry (https://sentry.io) ─────────────────────────────────────
+  // Monitoring erreurs production — laisser vide pour désactiver
+  sentry_dsn: '',
 };
