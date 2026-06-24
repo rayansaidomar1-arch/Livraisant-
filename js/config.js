@@ -12,7 +12,7 @@ window.LIVR_CONFIG = {
   // ── Google Analytics 4 (https://analytics.google.com) ─────────────
   // Chargé dynamiquement après consentement cookies CNIL
   // Remplacer G-XXXXXXXXXX par votre vrai Measurement ID quand disponible
-  ga4_id: 'G-XXXXXXXXXX',
+  ga4_id: 'G-HL89CPZ6YL',
 
   // ── Plausible (https://plausible.io/sites) ─────────────────────────
   // Conforme RGPD sans cookie — actif sans configuration supplémentaire
