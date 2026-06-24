@@ -5,10 +5,10 @@
 ═══════════════════════════════════════════════════════════════════ */
 
 // ── Configuration ────────────────────────────────────────────────
-// Replace these with your actual Supabase project values from:
-// https://supabase.com/dashboard → Settings → API
-const SUPABASE_URL  = 'https://gsmrgafclxkuqzzhtapi.supabase.co';
-const SUPABASE_ANON = 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc'; // Safe to expose — RLS enforces security
+// Valeurs lues depuis js/config.js (window.LIVR_CONFIG)
+// Pour la migration Clever Cloud : mettre à jour config.js uniquement
+const SUPABASE_URL  = window.LIVR_CONFIG?.supabase_url  || 'https://gsmrgafclxkuqzzhtapi.supabase.co';
+const SUPABASE_ANON = window.LIVR_CONFIG?.supabase_anon || 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc';
 
 // ── Init ─────────────────────────────────────────────────────────
 let _sb = null;
