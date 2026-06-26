@@ -1388,7 +1388,10 @@
       <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
     </div>
-    <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
+    <div class="row2">
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="drPassword" placeholder="Minimum 6 caractères"><div class="field-msg" id="drPasswordMsg"></div></div>
+    </div>
     <div class="form-group">
       <label class="form-label">Adresse de facturation *</label>
       <input type="text" id="drAddr1" placeholder="N° et nom de la rue" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;margin-bottom:8px">
@@ -7499,7 +7502,7 @@ function generateDriverCode(){
 function selectedVehicle(){return document.querySelector('#vehicleCards .statute-card.sel')?.dataset.v||'velo';}
 function selectVehicle(btn){document.querySelectorAll('#vehicleCards .statute-card').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
 
-function dsNext(from){
+async function dsNext(from){
   if(from===1){
     const errEl=document.getElementById('dsErr1');
     const prenom=document.getElementById('drPrenom').value.trim();
@@ -7527,9 +7530,31 @@ function dsNext(from){
       return;
     }
     if(!addr1||!city){showErr1('⚠ Adresse de facturation complète obligatoire (rue et ville).','drAddr1');return;}
+    const password=document.getElementById('drPassword')?.value||'';
+    if(!password||password.length<6){showErr1('⚠ Mot de passe obligatoire (minimum 6 caractères).','drPassword');return;}
     if(errEl) errEl.style.display='none';
     const bdMsg=document.getElementById('dsBirthdateMsg');
     if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
+
+    // ── Création du compte Supabase ───────────────────────────────
+    const contBtn=document.querySelector('#ds1 .btn.primary');
+    if(contBtn){contBtn.disabled=true;contBtn.textContent='Création du compte…';}
+    if(window.LS_SB?.SB_READY){
+      const {user,error}=await window.LS_SB.sbSignUp(email,password,{
+        prenom,nom,role:'livreur',tel,
+        address:{line1:addr1,zip,city},
+        birthdate
+      });
+      if(contBtn){contBtn.disabled=false;contBtn.textContent='Continuer →';}
+      if(error&&!error.includes('already registered')&&!error.includes('already been registered')&&!error.includes('User already registered')){
+        showErr1('⚠ '+error,'drEmail');return;
+      }
+      if(error&&(error.includes('already registered')||error.includes('already been registered')||error.includes('User already registered'))){
+        // Compte existant → tenter connexion silencieuse
+        const {error:loginErr}=await window.LS_SB.sbSignIn(email,password);
+        if(loginErr){showErr1('⚠ Email déjà utilisé. Vérifiez votre mot de passe ou connectez-vous.','drEmail');return;}
+      }
+    }
     dsGo(2);
   } else if(from===2){
     const siret=document.getElementById('drSiret').value.replace(/\s/g,'');
@@ -7585,10 +7610,14 @@ function dsGo(n){
   if(n===1){
     const bdInput=document.getElementById('drBirthdate');
     if(bdInput){
+      // Utiliser la date locale (et non toISOString UTC) pour éviter un décalage
+      // d'un jour pour les utilisateurs en fuseau UTC+ à minuit.
+      const _pad=v=>String(v).padStart(2,'0');
+      const _localDate=d=>`${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
       const maxD=new Date(); maxD.setFullYear(maxD.getFullYear()-18);
-      bdInput.max=maxD.toISOString().split('T')[0];
+      bdInput.max=_localDate(maxD);
       const minD=new Date(); minD.setFullYear(minD.getFullYear()-100);
-      bdInput.min=minD.toISOString().split('T')[0];
+      bdInput.min=_localDate(minD);
     }
   }
   window.scrollTo({top:0,behavior:'smooth'});
