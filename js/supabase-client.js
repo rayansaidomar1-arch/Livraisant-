@@ -7,8 +7,9 @@
 // ── Configuration ────────────────────────────────────────────────
 // Valeurs lues depuis js/config.js (window.LIVR_CONFIG)
 // Pour la migration Clever Cloud : mettre à jour config.js uniquement
-const SUPABASE_URL  = window.LIVR_CONFIG?.supabase_url  || 'https://gsmrgafclxkuqzzhtapi.supabase.co';
-const SUPABASE_ANON = window.LIVR_CONFIG?.supabase_anon || 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc';
+// Lire exclusivement depuis config.js — ne jamais dupliquer les clés ici
+const SUPABASE_URL  = window.LIVR_CONFIG?.supabase_url;
+const SUPABASE_ANON = window.LIVR_CONFIG?.supabase_anon;
 
 // ── Init ─────────────────────────────────────────────────────────
 let _sb = null;

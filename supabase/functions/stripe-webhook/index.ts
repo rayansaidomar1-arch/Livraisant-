@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
               body: { user_id: order.patient_id, title: '✅ Commande validée', body: `Votre paiement de ${pi.amount / 100}€ a été accepté. Votre commande est en préparation.`, url: '/#commandes' }
             });
           }
-          console.log(`✅ Order ${orderId} marked as paid — ${pi.amount / 100}€`);
+          console.log(`✅ Order marked as paid — ${pi.amount / 100}€`);
         }
         break;
       }
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
             .from('orders')
             .update({ payment: { status: 'failed', payment_intent_id: pi.id, error: pi.last_payment_error?.message }, updated_at: new Date().toISOString() })
             .eq('id', orderId);
-          console.log(`❌ Order ${orderId} payment failed`);
+          console.log(`❌ Payment failed`);
         }
         break;
       }
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
               body: { user_id: order.patient_id, title: '↩️ Remboursement effectué', body: 'Votre commande a été annulée et remboursée.', url: '/#commandes' }
             });
           }
-          console.log(`↩️ Order ${orderId} refunded`);
+          console.log(`↩️ Order refunded`);
         }
         break;
       }
