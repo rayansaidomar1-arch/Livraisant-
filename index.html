@@ -8057,8 +8057,9 @@ const PHARM_RADIUS_ALT=30000;
 
 /* ---- Profil santé patient (triage obligatoire) ---- */
 let patientProfile=null;
-try{const s=localStorage.getItem('livraisante_profile'); if(s) patientProfile=JSON.parse(s);}catch(e){}
-function saveProfile(p){patientProfile=p; try{localStorage.setItem('livraisante_profile',JSON.stringify(p));}catch(e){}}
+// Données de santé dans sessionStorage (effacé à fermeture du navigateur, pas persisté)
+try{const s=sessionStorage.getItem('livraisante_profile'); if(s) patientProfile=JSON.parse(s);}catch(e){}
+function saveProfile(p){patientProfile=p; try{sessionStorage.setItem('livraisante_profile',JSON.stringify(p));}catch(e){}}
 
 /* ---- Substances à éviter pendant la GROSSESSE (source : CRAT) ---- */
 const CRAT_PREGNANCY_AVOID=new Set([

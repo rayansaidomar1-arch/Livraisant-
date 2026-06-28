@@ -210,7 +210,7 @@ async function sbUpdateAppointment(apptId, updates){
 async function sbResetPassword(email) {
   const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://www.livraisante.fr'
+    redirectTo: 'https://www.livraisante.fr/connexion'  // route dédiée, réduit la fenêtre d'exposition du token
   });
   return { error: error?.message || null };
 }

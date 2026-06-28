@@ -9,13 +9,12 @@
 import Stripe from 'npm:stripe@14.21.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
-};
+// Webhook Stripe = appel serveur→serveur uniquement, pas de CORS nécessaire
+const webhookHeaders = { 'Content-Type': 'application/json' };
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  // Rejeter toute requête non-POST (le webhook Stripe envoie uniquement des POST)
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
   const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-06-20' });
   const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -103,7 +102,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: webhookHeaders
     });
 
   } catch (err) {
