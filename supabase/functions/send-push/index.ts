@@ -93,6 +93,16 @@ function concatArrays(...arrays: Uint8Array[]) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  // Sécurité : cette fonction est réservée aux appels serveur-à-serveur (service role)
+  // Elle ne doit JAMAIS être appelée directement depuis le navigateur
+  const authHeader = req.headers.get('authorization') || '';
+  const serviceKey = Deno.env.get('SERVICE_ROLE_KEY') || '';
+  const supabaseServiceHeader = `Bearer ${serviceKey}`;
+  if (!serviceKey || authHeader !== supabaseServiceHeader) {
+    console.warn('send-push: unauthorized call attempt');
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+  }
+
   try {
     const { user_id, title, body, url = '/' } = await req.json();
     if (!user_id || !title) return new Response(JSON.stringify({ error: 'user_id and title required' }), { status: 400 });

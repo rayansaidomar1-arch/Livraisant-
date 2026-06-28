@@ -1,5 +1,5 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v103';
+const CACHE = 'livraisante-v104';
 const SHELL = [
   '/',
   '/index.html',
@@ -46,7 +46,9 @@ self.addEventListener('push', e => {
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = e.notification.data?.url || '/';
+  // Sécurité : n'autoriser que les URL relatives (commence par /) pour éviter l'open redirect
+  const raw = e.notification.data?.url || '/';
+  const url = (typeof raw === 'string' && raw.startsWith('/')) ? raw : '/';
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       const existing = list.find(c => c.url.includes(self.location.origin));

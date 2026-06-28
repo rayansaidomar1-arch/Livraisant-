@@ -1400,7 +1400,7 @@
     </div>
     <div class="row2">
       <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
-      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="drPassword" placeholder="Minimum 6 caractères"><div class="field-msg" id="drPasswordMsg"></div></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="drPassword" placeholder="Minimum 8 caractères"><div class="field-msg" id="drPasswordMsg"></div></div>
     </div>
     <div class="form-group">
       <label class="form-label">Adresse de facturation *</label>
@@ -1638,7 +1638,7 @@
       </div>
       <div class="form-group"><label class="form-label">Email *</label><input type="email" id="regEmail" placeholder="votre@email.fr"></div>
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="regPhone" inputmode="tel" placeholder="Ex. 06 12 34 56 78" oninput="formatPhone(this)" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;width:100%;box-sizing:border-box"></div>
-      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="regPassword" placeholder="Minimum 6 caractères"></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="regPassword" placeholder="Minimum 8 caractères"></div>
       <div class="form-group"><label class="form-label">Vous êtes :</label>
         <div class="chips" data-group="regRole" style="flex-wrap:wrap">
           <button class="chip sel" data-v="patient">🩹 Patient</button>
@@ -3541,12 +3541,12 @@ function findPharmacies(){
         items.sort((a,b)=>a.dist-b.dist);
         if(!items.length){out.innerHTML='<div class="empty-zone-msg"><span style="font-size:2rem">📍</span><p><strong>Bientôt disponible dans votre zone !</strong></p><p>Parlez de Livraisanté à votre pharmacien pour accélérer le déploiement près de chez vous.</p></div>';}
         else{
-          items.slice(0,40).forEach(p=>L.marker([p.la,p.lo]).addTo(leafletMap).bindPopup(`<b>${p.name}</b><br>${Math.round(p.dist)} m`));
+          items.slice(0,40).forEach(p=>L.marker([p.la,p.lo]).addTo(leafletMap).bindPopup(`<b>${esc(p.name)}</b><br>${Math.round(p.dist)} m`));
           out.innerHTML=items.slice(0,8).map(p=>{
             const d=p.dist<1000?Math.round(p.dist)+' m':(p.dist/1000).toFixed(1)+' km';
             const url=`https://www.openstreetmap.org/?mlat=${p.la}&mlon=${p.lo}#map=18/${p.la}/${p.lo}`;
             const lvlBadge={free:'<span style="font-size:10px;background:var(--accent);color:var(--ink);border-radius:30px;padding:2px 7px;font-weight:800">Essai</span>',ref:'<span style="font-size:10px;background:#d7f0db;color:#1c6b2b;border-radius:30px;padding:2px 7px;font-weight:800">Démarrage 🚀</span>',prio:'<span style="font-size:10px;background:#e8ddff;color:#5b21b6;border-radius:30px;padding:2px 7px;font-weight:800">Développement ⭐</span>',alt:'<span style="font-size:10px;background:var(--ink);color:var(--accent);border-radius:30px;padding:2px 7px;font-weight:800">Premium 👑</span>'}[p.level]||'';
-            return `<div class="ph-item"><a href="${url}" target="_blank" rel="noopener">${p.name} ${lvlBadge}</a><span class="d">${d}</span></div>`;
+            return `<div class="ph-item"><a href="${url}" target="_blank" rel="noopener">${esc(p.name)} ${lvlBadge}</a><span class="d">${d}</span></div>`;
           }).join('');
         }
         btn.disabled=false; btn.textContent='📍 Rafraîchir';
@@ -7552,7 +7552,7 @@ async function dsNext(from){
     }
     if(!addr1||!city){showErr1('⚠ Adresse de facturation complète obligatoire (rue et ville).','drAddr1');return;}
     const password=document.getElementById('drPassword')?.value||'';
-    if(!password||password.length<6){showErr1('⚠ Mot de passe obligatoire (minimum 6 caractères).','drPassword');return;}
+    if(!password||password.length<8){showErr1('⚠ Mot de passe obligatoire (minimum 8 caractères).','drPassword');return;}
     if(errEl) errEl.style.display='none';
     const bdMsg=document.getElementById('dsBirthdateMsg');
     if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
@@ -8921,7 +8921,7 @@ async function doRegister(){
   const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
   const errEl=document.getElementById('regErr');
   const tel=(document.getElementById('regPhone')?.value||'').trim();
-  if(!prenom||!nom||!email||pwd.length<6){
+  if(!prenom||!nom||!email||pwd.length<8){
     if(errEl){errEl.style.display='block';errEl.textContent='Complétez tous les champs obligatoires (prénom, nom, email, mot de passe ≥ 6 caractères).';}
     return;
   }
@@ -9268,7 +9268,17 @@ async function lookupCitiesFromZip(zip, cityId, dropdownId){
     const data=await res.json();
     if(!data.length){dropdown.style.display='none';cityInput.value='';return;}
     if(data.length===1){cityInput.value=data[0].nom;dropdown.style.display='none';return;}
-    dropdown.innerHTML=data.map(c=>`<div onclick="selectCity('${c.nom.replace(/'/g,"\\'")}','${cId}','${dId}')" style="padding:10px 14px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''>${c.nom}</div>`).join('');
+    // Sécurité : créer les éléments via DOM (pas innerHTML avec données tierces)
+    dropdown.innerHTML='';
+    data.forEach(c=>{
+      const div=document.createElement('div');
+      div.textContent=c.nom;
+      div.style.cssText='padding:10px 14px;cursor:pointer;font-size:14px;font-weight:600;border-bottom:1px solid #f0f0f0';
+      div.addEventListener('mouseover',()=>div.style.background='#f5f5f5');
+      div.addEventListener('mouseout',()=>div.style.background='');
+      div.addEventListener('click',()=>selectCity(c.nom,cId,dId));
+      dropdown.appendChild(div);
+    });
     dropdown.style.display='block';
   }catch(e){dropdown.style.display='none';}
 }
