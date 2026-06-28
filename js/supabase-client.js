@@ -20,7 +20,7 @@ function getSB(){
     auth:{
       autoRefreshToken: true,
       persistSession: true,    // JWT stored in localStorage (base64, NOT encrypted — ne pas stocker de secrets dans le JWT)
-      detectSessionInUrl: false // true uniquement si OAuth social (Google, GitHub…) est activé
+      detectSessionInUrl: true  // nécessaire pour les liens de réinitialisation de mot de passe
     }
   });
   return _sb;
@@ -204,6 +204,24 @@ async function sbUpdateAppointment(apptId, updates){
   return { error: error?.message || null };
 }
 
+// ── Password Reset ───────────────────────────────────────────────────
+
+/** Envoie un email de réinitialisation de mot de passe */
+async function sbResetPassword(email) {
+  const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://www.livraisante.fr'
+  });
+  return { error: error?.message || null };
+}
+
+/** Met à jour le mot de passe (appelé après récupération via lien email) */
+async function sbUpdatePassword(newPassword) {
+  const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
+  const { error } = await sb.auth.updateUser({ password: newPassword });
+  return { error: error?.message || null };
+}
+
 // ── Stripe PaymentIntent ─────────────────────────────────────────────
 /** Crée un PaymentIntent Stripe via la Supabase Edge Function `create-payment-intent` */
 async function sbCreatePaymentIntent(amountCents, metadata={}){
@@ -259,6 +277,7 @@ function urlBase64ToUint8Array(base64String) {
 
 // ── Export (accessible globally) ────────────────────────────────
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
+  sbResetPassword, sbUpdatePassword,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
   sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements,
   sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,

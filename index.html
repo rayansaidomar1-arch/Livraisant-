@@ -1598,6 +1598,7 @@
       <div class="form-group"><label class="form-label">Email</label><input type="email" id="loginEmail" placeholder="votre@email.fr" oninput="clearLoginErr()"></div>
       <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
       <div id="loginErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
+      <div style="text-align:right;margin-bottom:10px"><a href="#" style="font-size:13px;color:var(--ink-soft);text-decoration:none" onclick="showForgotPassword(event)">Mot de passe oublié ?</a></div>
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="doLogin()">Se connecter →</button>
       <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
       <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
@@ -11771,6 +11772,125 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+</script>
+
+<!-- ===== MODAL MOT DE PASSE OUBLIÉ ===== -->
+<div id="forgotPwdOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--paper);border-radius:20px;padding:28px 24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px">Mot de passe oublié</h2>
+    <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">Entrez votre email — vous recevrez un lien pour créer un nouveau mot de passe.</p>
+    <div id="forgotPwdForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="forgotEmail" placeholder="votre@email.fr" style="width:100%;box-sizing:border-box">
+      </div>
+      <div id="forgotPwdErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn ghost" style="flex:1" onclick="hideForgotPassword()">Annuler</button>
+        <button class="btn primary" style="flex:2" id="forgotPwdBtn" onclick="sendResetEmail()">Envoyer le lien →</button>
+      </div>
+    </div>
+    <div id="forgotPwdSuccess" style="display:none;text-align:center;padding:12px 0">
+      <div style="font-size:36px;margin-bottom:10px">📧</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px">Email envoyé !</div>
+      <div style="font-size:14px;color:var(--ink-soft);margin-bottom:18px">Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.</div>
+      <button class="btn ghost" style="width:100%" onclick="hideForgotPassword()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL NOUVEAU MOT DE PASSE (arrivée depuis email) ===== -->
+<div id="newPwdOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9001;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--paper);border-radius:20px;padding:28px 24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px">🔑 Nouveau mot de passe</h2>
+    <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">Choisissez un mot de passe sécurisé (minimum 8 caractères).</p>
+    <div class="form-group">
+      <label class="form-label">Nouveau mot de passe</label>
+      <input type="password" id="newPwd1" placeholder="••••••••" style="width:100%;box-sizing:border-box">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirmer le mot de passe</label>
+      <input type="password" id="newPwd2" placeholder="••••••••" style="width:100%;box-sizing:border-box" onkeypress="if(event.key==='Enter')submitNewPassword()">
+    </div>
+    <div id="newPwdErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
+    <button class="btn primary" style="width:100%;font-size:16px;padding:13px" id="newPwdBtn" onclick="submitNewPassword()">Enregistrer le nouveau mot de passe →</button>
+  </div>
+</div>
+
+<script>
+// ── Mot de passe oublié ──────────────────────────────────────────────
+function showForgotPassword(e){
+  if(e) e.preventDefault();
+  const overlay=document.getElementById('forgotPwdOverlay');
+  overlay.style.display='flex';
+  document.getElementById('forgotEmail').value='';
+  document.getElementById('forgotPwdErr').style.display='none';
+  document.getElementById('forgotPwdForm').style.display='block';
+  document.getElementById('forgotPwdSuccess').style.display='none';
+  setTimeout(()=>document.getElementById('forgotEmail').focus(),100);
+}
+function hideForgotPassword(){
+  document.getElementById('forgotPwdOverlay').style.display='none';
+}
+async function sendResetEmail(){
+  const email=document.getElementById('forgotEmail').value.trim();
+  const errEl=document.getElementById('forgotPwdErr');
+  const btn=document.getElementById('forgotPwdBtn');
+  if(!email||!email.includes('@')){
+    errEl.style.display='block';errEl.textContent='Entrez une adresse email valide.';return;
+  }
+  btn.disabled=true;btn.textContent='Envoi…';
+  const {error}=await window.LS_SB.sbResetPassword(email);
+  btn.disabled=false;btn.textContent='Envoyer le lien →';
+  if(error){
+    errEl.style.display='block';errEl.textContent='Erreur : '+error;return;
+  }
+  document.getElementById('forgotPwdForm').style.display='none';
+  document.getElementById('forgotPwdSuccess').style.display='block';
+}
+// Fermer en cliquant en dehors
+document.getElementById('forgotPwdOverlay').addEventListener('click',function(e){
+  if(e.target===this) hideForgotPassword();
+});
+
+// ── Nouveau mot de passe (arrivée depuis le lien email) ──────────────
+function showNewPasswordForm(){
+  const overlay=document.getElementById('newPwdOverlay');
+  overlay.style.display='flex';
+  document.getElementById('newPwd1').value='';
+  document.getElementById('newPwd2').value='';
+  document.getElementById('newPwdErr').style.display='none';
+}
+async function submitNewPassword(){
+  const p1=document.getElementById('newPwd1').value;
+  const p2=document.getElementById('newPwd2').value;
+  const errEl=document.getElementById('newPwdErr');
+  const btn=document.getElementById('newPwdBtn');
+  if(p1.length<8){errEl.style.display='block';errEl.textContent='Le mot de passe doit contenir au moins 8 caractères.';return;}
+  if(p1!==p2){errEl.style.display='block';errEl.textContent='Les mots de passe ne correspondent pas.';return;}
+  btn.disabled=true;btn.textContent='Enregistrement…';
+  const {error}=await window.LS_SB.sbUpdatePassword(p1);
+  btn.disabled=false;btn.textContent='Enregistrer le nouveau mot de passe →';
+  if(error){errEl.style.display='block';errEl.textContent='Erreur : '+error;return;}
+  document.getElementById('newPwdOverlay').style.display='none';
+  alert('✅ Mot de passe mis à jour ! Vous êtes maintenant connecté.');
+}
+
+// ── Écoute l'événement PASSWORD_RECOVERY de Supabase ────────────────
+(function waitForSB(){
+  if(window.LS_SB?.getSB){
+    const sb=window.LS_SB.getSB();
+    if(sb){
+      sb.auth.onAuthStateChange((event)=>{
+        if(event==='PASSWORD_RECOVERY'){
+          showNewPasswordForm();
+        }
+      });
+    }
+  } else {
+    setTimeout(waitForSB,300);
+  }
+})();
 </script>
 </body>
 </html>
