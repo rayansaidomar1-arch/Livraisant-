@@ -27,5 +27,5 @@ window.LIVR_CONFIG = {
 
   // ── Sentry (https://sentry.io) ─────────────────────────────────────
   // Monitoring erreurs production — laisser vide pour désactiver
-  sentry_dsn: '',
+  sentry_dsn: 'https://cf94e7eff1ee439cedbd7e349578e12f@o4511650891890688.ingest.de.sentry.io/4511650905391184',
 };
