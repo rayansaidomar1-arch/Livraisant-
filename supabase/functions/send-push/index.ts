@@ -65,13 +65,13 @@ async function encryptPayload(subscription: { p256dh: string; auth: string }, pa
   );
 
   // Content encryption key
-  const keyInfo = concatArrays(new TextEncoder().encode('Content-Encoding: aesgcm\0\1'), clientPublicKeyBytes, serverPublicKeyRaw);
+  const keyInfo = concatArrays(new TextEncoder().encode('Content-Encoding: aesgcm\x00\x01'), clientPublicKeyBytes, serverPublicKeyRaw);
   const cekKey = await crypto.subtle.importKey('raw', new Uint8Array(authBits), 'HKDF', false, ['deriveBits']);
   const cekBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: keyInfo }, cekKey, 128);
   const cek = await crypto.subtle.importKey('raw', cekBits, 'AES-GCM', false, ['encrypt']);
 
   // Nonce
-  const nonceInfo = concatArrays(new TextEncoder().encode('Content-Encoding: nonce\0\1'), clientPublicKeyBytes, serverPublicKeyRaw);
+  const nonceInfo = concatArrays(new TextEncoder().encode('Content-Encoding: nonce\x00\x01'), clientPublicKeyBytes, serverPublicKeyRaw);
   const nonceBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: nonceInfo }, cekKey, 96);
 
   // Encrypt
