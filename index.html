@@ -4615,7 +4615,7 @@ function enterRole(r){
   if(r==='pro') renderPro();
   if(r==='livreur') renderLivreur();
   if(r==='pharmacySignup'){ dsGo_ps(1); renderPlans(); }
-  if(r==='driverSignup') dsGo(1);
+  if(r==='driverSignup'){ dsGo(1); prefillDriverForm(); }
   if(r==='loginScreen') updateAccountChip();
   if(r==='registerScreen') initRegisterForm();
   if(r==='profileScreen') renderProfile();
@@ -7534,6 +7534,27 @@ function generateDriverCode(){
 function selectedVehicle(){return document.querySelector('#vehicleCards .statute-card.sel')?.dataset.v||'velo';}
 function selectVehicle(btn){document.querySelectorAll('#vehicleCards .statute-card').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');}
 
+function prefillDriverForm(){
+  if(!currentUser) return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&v&&!el.value)el.value=v;};
+  set('drPrenom', currentUser.prenom||'');
+  set('drNom',    currentUser.nom||'');
+  set('drEmail',  currentUser.email||'');
+  set('drTel',    currentUser.tel||currentUser.phone||'');
+  set('drBirthdate', currentUser.birthdate||'');
+  if(currentUser.address){
+    set('drAddr1',    currentUser.address.line1||'');
+    set('drAddrZip',  currentUser.address.zip||'');
+    set('drAddrCity', currentUser.address.city||'');
+  }
+  // Email en lecture seule si déjà connecté (évite confusion)
+  const emailEl=document.getElementById('drEmail');
+  if(emailEl&&currentUser.email){emailEl.readOnly=true;emailEl.style.background='var(--paper-2)';}
+  // Masquer le champ mot de passe si déjà connecté
+  const pwdGroup=document.querySelector('#ds1 #drPassword')?.closest('.form-group');
+  if(pwdGroup&&currentUser) pwdGroup.style.display='none';
+}
+
 async function dsNext(from){
   if(from===1){
     const errEl=document.getElementById('dsErr1');
@@ -7568,7 +7589,21 @@ async function dsNext(from){
     const bdMsg=document.getElementById('dsBirthdateMsg');
     if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
 
-    // ── Création du compte Supabase ───────────────────────────────
+    // ── Si déjà connecté (ex. via Google) → pas besoin de recréer un compte ──
+    if(currentUser){
+      // Sauvegarder les infos du dossier dans le profil
+      if(window.LS_SB?.SB_READY){
+        window.LS_SB.getSB()?.from('profiles').update({
+          prenom,nom,tel,birthdate,
+          address:{line1:addr1,zip,city},
+          role:'livreur'
+        }).eq('id',currentUser.id);
+        currentUser={...currentUser,prenom,nom,tel,birthdate,role:'livreur'};
+      }
+      dsGo(2); return;
+    }
+
+    // ── Création du compte Supabase (nouveau visiteur) ───────────────
     const contBtn=document.querySelector('#ds1 .btn.primary');
     if(contBtn){contBtn.disabled=true;contBtn.textContent='Création du compte…';}
     if(window.LS_SB?.SB_READY){
@@ -7584,7 +7619,7 @@ async function dsNext(from){
       if(error&&(error.includes('already registered')||error.includes('already been registered')||error.includes('User already registered'))){
         // Compte existant → tenter connexion silencieuse
         const {error:loginErr}=await window.LS_SB.sbSignIn(email,password);
-        if(loginErr){showErr1('⚠ Email déjà utilisé. Vérifiez votre mot de passe ou connectez-vous.','drEmail');return;}
+        if(loginErr){showErr1('⚠ Email déjà utilisé. Connectez-vous d\'abord puis revenez sur ce formulaire.','drEmail');return;}
       }
     }
     dsGo(2);
