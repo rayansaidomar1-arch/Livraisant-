@@ -1606,23 +1606,60 @@
       <p>Connectez-vous pour retrouver vos informations de santé</p>
     </div>
     <div class="login-box">
-      <h2>Se connecter</h2>
-      <div class="form-group"><label class="form-label">Email</label><input type="email" id="loginEmail" placeholder="votre@email.fr" oninput="clearLoginErr()"></div>
-      <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+      <h2 style="text-align:center;font-size:22px;margin-bottom:22px;font-weight:800">Bienvenue 👋</h2>
+
+      <!-- Champ Email avec icône -->
+      <div style="position:relative;margin-bottom:14px">
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:#94a3b8" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/>
+        </svg>
+        <input type="email" id="loginEmail" placeholder="Adresse e-mail" oninput="clearLoginErr()"
+          style="width:100%;padding:14px 14px 14px 44px;border:2px solid var(--line-strong);border-radius:12px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .15s;background:var(--paper)"
+          onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line-strong)'">
+      </div>
+
+      <!-- Champ Mot de passe avec icône -->
+      <div style="position:relative;margin-bottom:6px">
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:#94a3b8" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <input type="password" id="loginPassword" placeholder="Mot de passe"
+          style="width:100%;padding:14px 14px 14px 44px;border:2px solid var(--line-strong);border-radius:12px;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .15s;background:var(--paper)"
+          onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--line-strong)'"
+          onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+
       <div id="loginErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
-      <div style="text-align:right;margin-bottom:10px"><a href="#" style="font-size:13px;color:var(--ink-soft);text-decoration:none" onclick="showForgotPassword(event)">Mot de passe oublié ?</a></div>
-      <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="doLogin()">Se connecter →</button>
-      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+
+      <div style="text-align:right;margin-bottom:18px">
+        <a href="#" style="font-size:13px;color:var(--ink-soft);text-decoration:none" onclick="showForgotPassword(event)">Mot de passe oublié ?</a>
+      </div>
+
+      <button class="btn primary" style="width:100%;font-size:16px;padding:14px;border-radius:12px;font-weight:800" onclick="doLogin()">Se connecter →</button>
+
+      <!-- Séparateur -->
+      <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px">
         <div style="flex:1;height:1px;background:var(--line-strong)"></div>
-        <span style="font-size:12px;color:var(--ink-soft);font-weight:600;white-space:nowrap">ou continuer avec</span>
+        <span style="font-size:12px;color:var(--ink-soft);font-weight:600;white-space:nowrap">ou</span>
         <div style="flex:1;height:1px;background:var(--line-strong)"></div>
       </div>
-      <button onclick="doGoogleLogin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1.5px solid #dadce0;border-radius:10px;padding:12px 16px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:4px;transition:.15s" onmouseenter="this.style.background='#f8f9fa'" onmouseleave="this.style.background='#fff'">
+
+      <!-- Bouton Google -->
+      <button onclick="doGoogleLogin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1.5px solid #dadce0;border-radius:12px;padding:13px 16px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.08)" onmouseenter="this.style.background='#f8f9fa';this.style.boxShadow='0 2px 6px rgba(0,0,0,.12)'" onmouseleave="this.style.background='#fff';this.style.boxShadow='0 1px 3px rgba(0,0,0,.08)'">
         <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
         Continuer avec Google
       </button>
-      <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
-      <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
+
+      <!-- CTA Créer un compte — mis en valeur -->
+      <div style="margin-top:20px;padding:18px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);border:2px solid #86efac;border-radius:14px;text-align:center">
+        <div style="font-size:13px;color:#166534;margin-bottom:10px;font-weight:600">Pas encore de compte ?</div>
+        <button onclick="enterRole('registerScreen')" style="width:100%;background:var(--ink);color:var(--lime);border:none;border-radius:10px;padding:13px 24px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;transition:.15s;letter-spacing:.01em" onmouseenter="this.style.opacity='.88'" onmouseleave="this.style.opacity='1'">✨ Créer mon compte gratuitement →</button>
+      </div>
+
+      <!-- Continuer sans compte — discret -->
+      <div style="text-align:center;margin-top:16px">
+        <a href="#" onclick="enterRole('sante')" style="font-size:12px;color:var(--ink-soft);text-decoration:none;opacity:.65;transition:opacity .15s" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='.65'">Continuer sans compte</a>
+      </div>
     </div>
     <!-- Comptes démo masqués — existent dans Supabase uniquement -->
   </div>
@@ -3729,7 +3766,7 @@ function renderLicencieTab(){
     `:''}
     ${currentUser?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
       <div style="width:44px;height:44px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white">${(currentUser.prenom||currentUser.email||'?')[0].toUpperCase()}</div>
-      <div><div style="font-weight:800;font-size:15px">${currentUser.prenom||currentUser.email}</div><div style="font-size:12px;color:var(--ink-soft)">${currentUser.sportLicense?'🏅 Licence : '+currentUser.sportLicense:'Pas de licence enregistrée'}</div></div>
+      <div><div style="font-weight:800;font-size:15px">${esc(currentUser.prenom||currentUser.email)}</div><div style="font-size:12px;color:var(--ink-soft)">${currentUser.sportLicense?'🏅 Licence : '+esc(currentUser.sportLicense):'Pas de licence enregistrée'}</div></div>
     </div>`:''}
     <div class="card" style="margin-bottom:16px">
   <h3 style="font-size:15px;font-weight:800;margin-bottom:10px">⚽ Votre sport et votre club</h3>
@@ -9302,7 +9339,7 @@ function removeProClub(id){
 function renderProClubChips(){
   const el=document.getElementById('regProClubSelected');if(!el)return;
   el.innerHTML=regProSelectedClubs.map(c=>`<div style="display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700">
-    ${c.nom}<button onclick="removeProClub('${c.id}')" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1">×</button>
+    ${esc(c.nom)}<button onclick="removeProClub('${esc(c.id)}')" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1">×</button>
   </div>`).join('');
 }
 
@@ -9830,7 +9867,7 @@ function renderProfile(){
   <div class="profile-section">
     <h3>🏋️ Clubs partenaires</h3>
     ${partnerClubs.length
-      ?`<div style="display:flex;flex-direction:column;gap:8px">${partnerClubs.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--grey);border-radius:10px"><span style="font-weight:700">${c.nom||c}</span><span style="font-size:12px;color:var(--ink-soft)">${c.sport||''}</span></div>`).join('')}</div>`
+      ?`<div style="display:flex;flex-direction:column;gap:8px">${partnerClubs.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--grey);border-radius:10px"><span style="font-weight:700">${esc(c.nom||c)}</span><span style="font-size:12px;color:var(--ink-soft)">${esc(c.sport||'')}</span></div>`).join('')}</div>`
       :`<div style="font-size:13px;color:var(--ink-soft);padding:6px 0">Aucun club partenaire enregistré. Sélectionnez vos clubs depuis votre espace professionnel.</div>`}
     <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('healthPro')">Accéder à mon espace →</button></div>
   </div>`;
@@ -9879,7 +9916,7 @@ async function savePhysique(){
   patientProfile={...(patientProfile||{}), ...currentUser.healthProfile};
   // Persist to both localStorage stores
   saveProfile(patientProfile);
-  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const accs=getAccounts(); const _u1={...currentUser}; delete _u1.healthProfile; accs[currentUser.email]=_u1; saveAccounts();
   // Sync to Supabase if available
   if(window.LS_SB?.SB_READY&&currentUser.id){
     const sb=window.LS_SB.getSB();
@@ -9934,7 +9971,7 @@ async function requestClubLiaison(){
   if(licenseNum&&!currentUser.sportLicense) currentUser.sportLicense=licenseNum;
   patientProfile={...(patientProfile||{}), ...currentUser.healthProfile};
   saveProfile(patientProfile);
-  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const accs=getAccounts(); const _u2={...currentUser}; delete _u2.healthProfile; accs[currentUser.email]=_u2; saveAccounts();
   showToast('✓ Demande envoyée ! En attente de validation.','var(--ok)');
   renderProfile();
 }
@@ -9952,7 +9989,7 @@ async function cancelClubRequest(){
   }
   if(patientProfile){delete patientProfile.clubId;delete patientProfile.clubLiaisonPending;delete patientProfile.clubRequest;}
   saveProfile(patientProfile||{});
-  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const accs=getAccounts(); const _u3={...currentUser}; delete _u3.healthProfile; accs[currentUser.email]=_u3; saveAccounts();
   showToast('Demande annulée.','var(--ink-soft)');
   renderProfile();
 }
@@ -9975,7 +10012,7 @@ async function saveHealthProfile(){
   if(clubId){hp.clubId=clubId;hp.clubLiaisonPending=true;}
   currentUser.healthProfile=hp; patientProfile=hp;
   saveProfile(patientProfile);
-  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const accs=getAccounts(); const _u4={...currentUser}; delete _u4.healthProfile; accs[currentUser.email]=_u4; saveAccounts();
   if(window.LS_SB?.SB_READY&&currentUser.id){
     const sb=window.LS_SB.getSB();
     sb.from('profiles').update({health_profile:hp,updated_at:new Date().toISOString()}).eq('id',currentUser.id).then(()=>{}).catch(()=>{});
@@ -10036,7 +10073,7 @@ async function savePersonalInfo(){
     patientProfile={...(patientProfile||{}), address:currentUser.address};
   }
   saveProfile(patientProfile||{});
-  const accs=getAccounts(); accs[currentUser.email]=currentUser; saveAccounts();
+  const accs=getAccounts(); const _u5={...currentUser}; delete _u5.healthProfile; accs[currentUser.email]=_u5; saveAccounts();
   // Sync to Supabase if available
   if(window.LS_SB?.SB_READY&&currentUser.id){
     const sb=window.LS_SB.getSB();
@@ -11605,7 +11642,9 @@ function _buildSearchIndex(){
 }
 
 function escHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 // Alias utilisé dans tout le code — ne jamais supprimer
 const esc = escHtml;
@@ -12057,7 +12096,7 @@ function filterClubs(query){
     <button onclick="selectClub('${c.id}','${esc(c.nom)}','${esc(c.ville||'')}','${esc(c.sport||'')}',this)"
       style="width:100%;text-align:left;padding:12px 14px;border:none;background:transparent;cursor:pointer;border-bottom:1px solid var(--line);font-family:inherit">
       <div style="font-weight:700;font-size:14px">${esc(c.nom)}</div>
-      <div style="font-size:12px;color:var(--ink-soft)">${[c.ville,c.sport,c.federation].filter(Boolean).join(' · ')}</div>
+      <div style="font-size:12px;color:var(--ink-soft)">${[c.ville,c.sport,c.federation].filter(Boolean).map(esc).join(' · ')}</div>
     </button>`).join('');
   results.style.display='block';
 }

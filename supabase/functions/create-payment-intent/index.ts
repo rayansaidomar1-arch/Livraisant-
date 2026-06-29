@@ -8,7 +8,7 @@ import Stripe from 'npm:stripe@14.21.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders={
-  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Origin':'https://www.livraisante.fr',
   'Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type',
 };
 
@@ -44,8 +44,12 @@ Deno.serve(async (req)=>{
       if(orderErr||!order){
         return new Response(JSON.stringify({error:'Order not found'}),{status:403,headers:corsHeaders});
       }
+      // L'authentification est obligatoire quand un orderId est fourni
+      if(!userId){
+        return new Response(JSON.stringify({error:'Unauthorized'}),{status:401,headers:corsHeaders});
+      }
       // Vérifie que la commande appartient bien à l'utilisateur authentifié
-      if(userId&&order.patient_id!==userId){
+      if(order.patient_id!==userId){
         return new Response(JSON.stringify({error:'Forbidden'}),{status:403,headers:corsHeaders});
       }
       finalAmount=Math.round(order.amount_cents);
