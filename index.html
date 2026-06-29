@@ -2352,7 +2352,7 @@ const DELIVERY_TIERS=[
 /* ── ABONNEMENT PATIENT ── */
 const PATIENT_SUB={price:29.90,label:'Livraison+ Annuel',deliveryFee:0,maxReferrals:5,referralBonus:5.00,referredBonus:5.00};
 /* ── PARRAINAGE LIVREUR ── */
-const DRIVER_REFERRAL={parrainBonus:15.00,parraineeBonus:15.00,maxReferrals:2};
+const DRIVER_REFERRAL={parrainBonus:15.00,parraineeBonus:15.00,maxReferrals:5};
 
 /* ── Professions de santé réglementées avec ordre ── */
 const PROFESSIONS_ORDRE = [
@@ -5002,7 +5002,7 @@ function renderDriverReferral(){
         <button onclick="navigator.clipboard.writeText('${refCode}').then(()=>showToast('Code copié !','var(--ok)'))" style="font-family:inherit;font-weight:700;font-size:12px;padding:8px 14px;border:1.5px solid var(--ink);border-radius:8px;background:white;cursor:pointer">📋</button>
       </div>
       <div style="background:#fffbe6;border:1px solid #D97706;border-radius:10px;padding:10px 14px;font-size:12.5px">
-        <b>Conditions :</b> Le filleul doit effectuer ses <b>3 premières livraisons</b> pour débloquer les primes des deux parties. Maximum <b>${DRIVER_REFERRAL.maxReferrals} parrainages</b> par livreur.
+        <b>Conditions :</b> Le filleul doit effectuer ses <b>3 premières livraisons</b> pour débloquer les primes des deux parties. Maximum <b>5 parrainages</b> par livreur.
       </div>
     </div>`:
     `<div style="background:#d7f0db;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--ok)">✓ Vous avez atteint le maximum de ${DRIVER_REFERRAL.maxReferrals} parrainages livreur.</div>`}
