@@ -12030,7 +12030,17 @@ async function submitNewPassword(){
   btn.disabled=false;btn.textContent='Enregistrer le nouveau mot de passe →';
   if(error){errEl.style.display='block';errEl.textContent='Erreur : '+error;return;}
   document.getElementById('newPwdOverlay').style.display='none';
-  alert('✅ Mot de passe mis à jour ! Vous êtes maintenant connecté.');
+  showToast('✅ Mot de passe mis à jour ! Connexion en cours…','var(--ok)');
+  // Récupère la session active et connecte l'utilisateur
+  try{
+    const session=await window.LS_SB.sbGetSession();
+    if(session){
+      const profile=await window.LS_SB.sbGetProfile(session.user.id);
+      currentUser={id:session.user.id,email:session.user.email,...(profile||{})};
+      if(!currentUser.role) currentUser.role='patient';
+      setTimeout(()=>afterLogin(),600);
+    }
+  }catch(e){}
 }
 
 // ── Modal rôle OAuth ─────────────────────────────────────────────────
@@ -12152,7 +12162,12 @@ async function doGoogleLogin(){
     if(sb){
       sb.auth.onAuthStateChange(async (event, session)=>{
         if(event==='PASSWORD_RECOVERY'){
+          // Stocke le flag pour éviter que SIGNED_IN suivant déclenche afterLogin en double
+          sessionStorage.setItem('pendingPasswordRecovery','1');
           showNewPasswordForm();
+        } else if(event==='USER_UPDATED' && sessionStorage.getItem('pendingPasswordRecovery')){
+          // Mot de passe mis à jour — le flux submitNewPassword() gère la suite
+          sessionStorage.removeItem('pendingPasswordRecovery');
         } else if(event==='SIGNED_IN' && session && sessionStorage.getItem('pendingOAuth')){
           // Retour depuis OAuth Google (ou autre provider)
           const isNew=sessionStorage.getItem('pendingOAuth')==='google:new'||!sessionStorage.getItem('pendingOAuth:returning');
