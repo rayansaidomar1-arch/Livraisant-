@@ -2352,7 +2352,7 @@ const DELIVERY_TIERS=[
 /* ── ABONNEMENT PATIENT ── */
 const PATIENT_SUB={price:29.90,label:'Livraison+ Annuel',deliveryFee:0,maxReferrals:5,referralBonus:5.00,referredBonus:5.00};
 /* ── PARRAINAGE LIVREUR ── */
-const DRIVER_REFERRAL={parrainBonus:25.00,parraineeBonus:25.00,maxReferrals:2};
+const DRIVER_REFERRAL={parrainBonus:15.00,parraineeBonus:15.00,maxReferrals:2};
 
 /* ── Professions de santé réglementées avec ordre ── */
 const PROFESSIONS_ORDRE = [
@@ -4984,7 +4984,7 @@ function renderDriverReferral(){
   if(!acc?.driverRefCode && acc){ acc.driverRefCode=refCode; const accs=getAccounts(); accs[currentUser.email]=acc; localStorage.setItem('livraisante_accounts_v2',JSON.stringify(accs)); }
   return `<div style="background:white;border:2px solid var(--ink);border-radius:14px;padding:18px;margin-top:16px;box-shadow:3px 3px 0 var(--lime)">
     <div style="font-weight:800;font-size:16px;margin-bottom:4px">🤝 Programme de parrainage livreur</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">Recrutez des livreurs · <b>25€</b> pour vous et <b>25€</b> pour le filleul (max ${DRIVER_REFERRAL.maxReferrals} parrainages)</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">Recrutez des livreurs · <b>15€</b> pour vous et <b>15€</b> pour le filleul (max ${DRIVER_REFERRAL.maxReferrals} parrainages)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div style="background:var(--grey);border-radius:10px;padding:12px;text-align:center">
         <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:var(--ok)">€${earned.toFixed(0)}</div>
