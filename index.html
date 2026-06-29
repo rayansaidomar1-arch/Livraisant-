@@ -529,6 +529,11 @@
   .form-label{font-weight:700;font-size:14px;margin-bottom:7px;display:block}
   .form-label .opt{font-weight:400;font-size:12px;color:var(--ink-soft)}
   .form-group{margin-bottom:20px}
+  /* ===== CHAMPS AVEC ICÔNE (email / mot de passe) ===== */
+  .field-icon{position:relative;display:block}
+  .field-icon>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:#94a3b8;z-index:1}
+  .field-icon>input{width:100%;padding:13px 14px 13px 44px!important;border:2px solid var(--line-strong)!important;border-radius:12px!important;font-size:15px;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .15s;background:var(--paper);color:var(--ink)}
+  .field-icon>input:focus{border-color:var(--ink)!important;outline:none}
   .input-row{display:flex;gap:10px}
   .input-row input{flex:1}
   .input-valid{border-color:var(--ok)!important;background:#f1f8ec!important}
@@ -1401,8 +1406,8 @@
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
     </div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="drEmail" placeholder="email@exemple.com"></div>
-      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="drPassword" placeholder="Minimum 8 caractères"><div class="field-msg" id="drPasswordMsg"></div></div>
+      <div class="form-group"><label class="form-label">Email *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="drEmail" placeholder="email@exemple.com"></div></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="drPassword" placeholder="Minimum 8 caractères"></div><div class="field-msg" id="drPasswordMsg"></div></div>
     </div>
     <div class="form-group">
       <label class="form-label">Adresse de facturation *</label>
@@ -1528,7 +1533,7 @@
       <div class="form-group"><label class="form-label">Ville *</label><input type="text" id="phVille" placeholder="Ex. Auch"></div>
     </div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Email de contact</label><input type="email" id="phEmail" placeholder="contact@pharmacie.fr"></div>
+      <div class="form-group"><label class="form-label">Email de contact</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="phEmail" placeholder="contact@pharmacie.fr"></div></div>
       <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="phTel" placeholder="05 62 00 00 00"></div>
     </div>
 
@@ -1546,7 +1551,7 @@
       </div>
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">Email de facturation * <span class="opt">(demandes patients & livreurs, factures)</span></label>
-        <input type="email" id="phFactEmail" placeholder="facturation@pharmacie.fr">
+        <div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="phFactEmail" placeholder="facturation@pharmacie.fr"></div>
         <div class="field-msg" id="factEmailMsg"></div>
       </div>
     </div>
@@ -1684,9 +1689,9 @@
         <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="regPrenom" placeholder="Ex. Marie"></div>
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="regNom" placeholder="Ex. Dupont"></div>
       </div>
-      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="regEmail" placeholder="votre@email.fr"></div>
+      <div class="form-group"><label class="form-label">Email *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="regEmail" placeholder="votre@email.fr"></div></div>
       <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="regPhone" inputmode="tel" placeholder="Ex. 06 12 34 56 78" oninput="formatPhone(this)" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;width:100%;box-sizing:border-box"></div>
-      <div class="form-group"><label class="form-label">Mot de passe *</label><input type="password" id="regPassword" placeholder="Minimum 8 caractères"></div>
+      <div class="form-group"><label class="form-label">Mot de passe *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="regPassword" placeholder="Minimum 8 caractères"></div></div>
       <div class="form-group"><label class="form-label">Vous êtes :</label>
         <div class="chips" data-group="regRole" style="flex-wrap:wrap">
           <button class="chip sel" data-v="patient">🩹 Patient</button>
@@ -11900,7 +11905,7 @@ if('serviceWorker' in navigator){
     <div id="forgotPwdForm">
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" id="forgotEmail" placeholder="votre@email.fr" style="width:100%;box-sizing:border-box">
+        <div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="forgotEmail" placeholder="votre@email.fr"></div>
       </div>
       <div id="forgotPwdErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
       <div style="display:flex;gap:10px;margin-top:6px">
@@ -11924,11 +11929,11 @@ if('serviceWorker' in navigator){
     <p style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">Choisissez un mot de passe sécurisé (minimum 8 caractères).</p>
     <div class="form-group">
       <label class="form-label">Nouveau mot de passe</label>
-      <input type="password" id="newPwd1" placeholder="••••••••" style="width:100%;box-sizing:border-box">
+      <div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="newPwd1" placeholder="••••••••"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Confirmer le mot de passe</label>
-      <input type="password" id="newPwd2" placeholder="••••••••" style="width:100%;box-sizing:border-box" onkeypress="if(event.key==='Enter')submitNewPassword()">
+      <div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="newPwd2" placeholder="••••••••" onkeypress="if(event.key==='Enter')submitNewPassword()"></div>
     </div>
     <div id="newPwdErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
     <button class="btn primary" style="width:100%;font-size:16px;padding:13px" id="newPwdBtn" onclick="submitNewPassword()">Enregistrer le nouveau mot de passe →</button>
