@@ -48,7 +48,10 @@ Deno.serve(async (req) => {
         const pi = event.data.object as Stripe.PaymentIntent;
         const orderId = pi.metadata?.orderId;
         if (orderId) {
-          const { data: order } = await supabase.from('orders').select('patient_id').eq('id', orderId).single();
+          const { data: order } = await supabase
+            .from('orders')
+            .select('patient_id, medicaments, adresse_livraison, pharmacy_id, profiles(prenom, nom, email), pharmacies(nom)')
+            .eq('id', orderId).single();
           await supabase
             .from('orders')
             .update({ payment: { status: 'paid', payment_intent_id: pi.id, amount: pi.amount }, status: 'validee', updated_at: new Date().toISOString() })
@@ -57,6 +60,24 @@ Deno.serve(async (req) => {
           if (order?.patient_id) {
             await supabase.functions.invoke('send-push', {
               body: { user_id: order.patient_id, title: '✅ Commande validée', body: `Votre paiement de ${pi.amount / 100}€ a été accepté. Votre commande est en préparation.`, url: '/#commandes' }
+            });
+          }
+          // Email de validation avec facture
+          const patientEmail = (order as any)?.profiles?.email;
+          if (patientEmail) {
+            await supabase.functions.invoke('send-email', {
+              body: {
+                type: 'validation',
+                to: patientEmail,
+                order: {
+                  id: orderId,
+                  patient_nom: `${(order as any)?.profiles?.prenom || ''} ${(order as any)?.profiles?.nom || ''}`.trim(),
+                  pharmacy_nom: (order as any)?.pharmacies?.nom || '',
+                  medicaments: (order as any)?.medicaments || '',
+                  adresse: (order as any)?.adresse_livraison || '',
+                  montant: pi.amount / 100,
+                }
+              }
             });
           }
           console.log(`✅ Order marked as paid — ${pi.amount / 100}€`);
