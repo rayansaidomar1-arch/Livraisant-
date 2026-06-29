@@ -205,6 +205,19 @@ async function sbUpdateAppointment(apptId, updates){
   return { error: error?.message || null };
 }
 
+// ── Google OAuth ─────────────────────────────────────────────────────
+
+/** Sign in with Google OAuth — redirects browser to Google, then back to /connexion */
+async function sbSignInWithGoogle() {
+  const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/connexion' }
+  });
+  if (error) return { error: error.message };
+  return { data, error: null };
+}
+
 // ── Password Reset ───────────────────────────────────────────────────
 
 /** Envoie un email de réinitialisation de mot de passe */
@@ -278,6 +291,7 @@ function urlBase64ToUint8Array(base64String) {
 
 // ── Export (accessible globally) ────────────────────────────────
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
+  sbSignInWithGoogle,
   sbResetPassword, sbUpdatePassword,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
   sbSubscribeOrders, sbGetDriver, sbUpsertDriver, sbGetSettlements,

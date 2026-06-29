@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>/* Apex → www redirect — must be first */if(location.hostname==='livraisante.fr')location.replace('https://www.livraisante.fr'+location.pathname+location.search+location.hash);</script>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://annuaire.sante.fr https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -1611,6 +1612,15 @@
       <div id="loginErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
       <div style="text-align:right;margin-bottom:10px"><a href="#" style="font-size:13px;color:var(--ink-soft);text-decoration:none" onclick="showForgotPassword(event)">Mot de passe oublié ?</a></div>
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="doLogin()">Se connecter →</button>
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+        <div style="flex:1;height:1px;background:var(--line-strong)"></div>
+        <span style="font-size:12px;color:var(--ink-soft);font-weight:600;white-space:nowrap">ou continuer avec</span>
+        <div style="flex:1;height:1px;background:var(--line-strong)"></div>
+      </div>
+      <button onclick="doGoogleLogin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1.5px solid #dadce0;border-radius:10px;padding:12px 16px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:4px;transition:.15s" onmouseenter="this.style.background='#f8f9fa'" onmouseleave="this.style.background='#fff'">
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Continuer avec Google
+      </button>
       <div style="text-align:center;margin-top:14px;font-size:14px;color:var(--ink-soft)">Pas encore de compte ? <a href="#" style="color:var(--ink);font-weight:700" onclick="enterRole('registerScreen')">Créer un compte</a></div>
       <button class="btn ghost" style="width:100%;margin-top:10px;font-size:14px" onclick="enterRole('sante')">Continuer sans compte →</button>
     </div>
@@ -11908,14 +11918,40 @@ async function submitNewPassword(){
   alert('✅ Mot de passe mis à jour ! Vous êtes maintenant connecté.');
 }
 
-// ── Écoute l'événement PASSWORD_RECOVERY de Supabase ────────────────
+// ── Google Sign-In ───────────────────────────────────────────────────
+async function doGoogleLogin(){
+  if(!window.LS_SB?.SB_READY){showToast('Service non disponible','var(--err)');return;}
+  // Flag persistant pour détecter le retour OAuth après redirect
+  sessionStorage.setItem('pendingOAuth','google');
+  const {error}=await window.LS_SB.sbSignInWithGoogle();
+  if(error){
+    sessionStorage.removeItem('pendingOAuth');
+    showToast('Erreur Google : '+error,'var(--err)');
+  }
+  // Si pas d'erreur, le navigateur redirige vers Google automatiquement
+}
+
+// ── Écoute les événements Supabase Auth ──────────────────────────────
 (function waitForSB(){
   if(window.LS_SB?.getSB){
     const sb=window.LS_SB.getSB();
     if(sb){
-      sb.auth.onAuthStateChange((event)=>{
+      sb.auth.onAuthStateChange(async (event, session)=>{
         if(event==='PASSWORD_RECOVERY'){
           showNewPasswordForm();
+        } else if(event==='SIGNED_IN' && session && sessionStorage.getItem('pendingOAuth')){
+          // Retour depuis OAuth Google (ou autre provider)
+          sessionStorage.removeItem('pendingOAuth');
+          if(!currentUser){
+            const profile=await window.LS_SB.sbGetProfile(session.user.id);
+            currentUser={id:session.user.id,email:session.user.email,...(profile||{})};
+            if(!currentUser.role) currentUser.role='patient';
+            if(currentUser.role==='pharmacien'){
+              const ph=await window.LS_SB.sbGetPharmacy(session.user.id);
+              if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
+            }
+          }
+          afterLogin();
         }
       });
     }
