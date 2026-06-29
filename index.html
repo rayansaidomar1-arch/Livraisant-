@@ -1653,7 +1653,6 @@
       <div class="form-group"><label class="form-label">Vous êtes :</label>
         <div class="chips" data-group="regRole" style="flex-wrap:wrap">
           <button class="chip sel" data-v="patient">🩹 Patient</button>
-          <button class="chip" data-v="patient_licencie">🎽 Sportif licencié</button>
           <button class="chip" data-v="pharmacien">💊 Pharmacien</button>
           <button class="chip" data-v="livreur">🛵 Livreur</button>
           <button class="chip" data-v="professionnel_sante">🩺 Prof. santé</button>
@@ -8965,7 +8964,10 @@ async function doRegister(){
   const nom=(document.getElementById('regNom')?.value||'').trim();
   const email=(document.getElementById('regEmail')?.value||'').trim().toLowerCase();
   const pwd=document.getElementById('regPassword')?.value||'';
-  const role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
+  let role=document.querySelector('[data-group="regRole"] .chip.sel')?.dataset.v||'patient';
+  // Auto-détection sportif licencié : si une licence est renseignée et rôle = patient → patient_licencie
+  const _regLicVal=(document.getElementById('regSportLicense')?.value||'').trim();
+  if(_regLicVal && role==='patient') role='patient_licencie';
   const errEl=document.getElementById('regErr');
   const tel=(document.getElementById('regPhone')?.value||'').trim();
   if(!prenom||!nom||!email||pwd.length<8){
@@ -11894,6 +11896,45 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ═══════════ MODAL RÔLE OAUTH (Google Sign-In) ═══════════ -->
+<div id="oauthRoleOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:18px;padding:28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">Bienvenue 👋</div>
+    <div style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">Première connexion — comment souhaitez-vous utiliser Livraisanté ?</div>
+    <div class="chips" data-group="oauthRole" style="flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <button class="chip sel" data-v="patient" onclick="selectOAuthRoleChip(this)">🩹 Patient</button>
+      <button class="chip" data-v="livreur" onclick="selectOAuthRoleChip(this)">🛵 Livreur</button>
+      <button class="chip" data-v="professionnel_sante" onclick="selectOAuthRoleChip(this)">🩺 Prof. santé</button>
+      <button class="chip" data-v="pharmacien" onclick="selectOAuthRoleChip(this)">💊 Pharmacien</button>
+      <button class="chip" data-v="club" onclick="selectOAuthRoleChip(this)">🏆 Club sportif</button>
+    </div>
+    <div id="oauthLicenseGroup" style="display:none;margin-bottom:16px">
+      <label class="form-label" style="font-size:14px">🏅 Numéro de licence sportive <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(optionnel)</span></label>
+      <input type="text" id="oauthSportLicense" placeholder="Ex. 12345678 · FFFootball, FFRugby, FFN…" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box">
+      <div style="font-size:11px;color:var(--ink-soft);margin-top:4px">Le badge « Non dopant AMA » sera activé sur vos conseils produits</div>
+    </div>
+    <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="confirmOAuthRole()">Continuer →</button>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL CHOIX DU CLUB (sportif licencié) ═══════════ -->
+<div id="clubSelectOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:18px;padding:28px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px">🏆 Votre club partenaire</div>
+    <div style="font-size:14px;color:var(--ink-soft);margin-bottom:16px">Rejoignez votre club pour accéder aux avantages licenciés Livraisanté.</div>
+    <div style="position:relative;margin-bottom:8px">
+      <input type="text" id="clubSearchInput" placeholder="🔍 Rechercher un club par nom ou ville…" oninput="filterClubs(this.value)"
+        style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box">
+    </div>
+    <div id="clubSearchResults" style="max-height:220px;overflow-y:auto;border:1.5px solid var(--line-strong);border-radius:10px;background:white;display:none"></div>
+    <div id="selectedClubDisplay" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:14px;font-weight:700;color:#166534"></div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn ghost" style="flex:1" onclick="skipClubSelection()">Passer →</button>
+      <button class="btn primary" id="confirmClubBtn" style="flex:2;display:none" onclick="confirmClubSelection()">Rejoindre ce club →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Mot de passe oublié ──────────────────────────────────────────────
 function showForgotPassword(e){
@@ -11953,6 +11994,105 @@ async function submitNewPassword(){
   alert('✅ Mot de passe mis à jour ! Vous êtes maintenant connecté.');
 }
 
+// ── Modal rôle OAuth ─────────────────────────────────────────────────
+function selectOAuthRoleChip(el){
+  document.querySelectorAll('[data-group="oauthRole"] .chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('oauthLicenseGroup').style.display=(el.dataset.v==='patient')?'block':'none';
+}
+
+function showOAuthRoleModal(){
+  const ov=document.getElementById('oauthRoleOverlay');
+  if(ov){ov.style.display='flex';}
+}
+
+async function confirmOAuthRole(){
+  const role=document.querySelector('[data-group="oauthRole"] .chip.sel')?.dataset.v||'patient';
+  const licenseVal=(document.getElementById('oauthSportLicense')?.value||'').trim();
+  let finalRole=role;
+  if(licenseVal&&role==='patient') finalRole='patient_licencie';
+  // Mettre à jour le profil Supabase
+  if(currentUser&&window.LS_SB?.SB_READY){
+    const sb=window.LS_SB.getSB();
+    if(sb){
+      await sb.from('profiles').update({
+        role:finalRole,
+        ...(licenseVal?{sport_license:licenseVal}:{})
+      }).eq('id',currentUser.id);
+      currentUser.role=finalRole;
+      if(licenseVal) currentUser.sportLicense=licenseVal;
+    }
+  }
+  document.getElementById('oauthRoleOverlay').style.display='none';
+  if(finalRole==='livreur'){enterRole('driverSignup');return;}
+  if(finalRole==='patient_licencie'){showClubSelectionModal();return;}
+  afterLogin();
+}
+
+// ── Modal choix du club (sportif licencié) ────────────────────────────
+let _clubsList=[], _selectedClubId=null;
+
+async function showClubSelectionModal(){
+  const ov=document.getElementById('clubSelectOverlay');
+  if(!ov) return;
+  ov.style.display='flex';
+  // Charger les clubs depuis Supabase
+  if(window.LS_SB?.SB_READY&&!_clubsList.length){
+    const sb=window.LS_SB.getSB();
+    if(sb){
+      const {data}=await sb.from('clubs').select('id,nom,ville,sport,federation').order('nom');
+      _clubsList=data||[];
+    }
+  }
+}
+
+function filterClubs(query){
+  const results=document.getElementById('clubSearchResults');
+  if(!results) return;
+  const q=query.toLowerCase().trim();
+  if(!q){results.style.display='none';return;}
+  const matches=_clubsList.filter(c=>(c.nom||'').toLowerCase().includes(q)||(c.ville||'').toLowerCase().includes(q));
+  if(!matches.length){results.innerHTML='<div style="padding:12px 14px;font-size:14px;color:var(--ink-soft)">Aucun club trouvé</div>';results.style.display='block';return;}
+  results.innerHTML=matches.slice(0,10).map(c=>`
+    <button onclick="selectClub('${c.id}','${esc(c.nom)}','${esc(c.ville||'')}','${esc(c.sport||'')}',this)"
+      style="width:100%;text-align:left;padding:12px 14px;border:none;background:transparent;cursor:pointer;border-bottom:1px solid var(--line);font-family:inherit">
+      <div style="font-weight:700;font-size:14px">${esc(c.nom)}</div>
+      <div style="font-size:12px;color:var(--ink-soft)">${[c.ville,c.sport,c.federation].filter(Boolean).join(' · ')}</div>
+    </button>`).join('');
+  results.style.display='block';
+}
+
+function selectClub(id,nom,ville,sport,el){
+  _selectedClubId=id;
+  document.getElementById('clubSearchResults').style.display='none';
+  document.getElementById('clubSearchInput').value=nom+(ville?' — '+ville:'');
+  const disp=document.getElementById('selectedClubDisplay');
+  disp.innerHTML=`✅ <b>${esc(nom)}</b>${ville?' — '+esc(ville):''}${sport?' · '+esc(sport):''}`;
+  disp.style.display='block';
+  const btn=document.getElementById('confirmClubBtn');
+  if(btn) btn.style.display='block';
+}
+
+async function confirmClubSelection(){
+  if(!_selectedClubId||!currentUser) return;
+  if(window.LS_SB?.SB_READY){
+    const sb=window.LS_SB.getSB();
+    if(sb){
+      // Créer la relation club_member
+      await sb.from('club_members').upsert({club_id:_selectedClubId,user_id:currentUser.id},{onConflict:'club_id,user_id'});
+      await sb.from('profiles').update({club_id:_selectedClubId}).eq('id',currentUser.id);
+      currentUser.club_id=_selectedClubId;
+    }
+  }
+  document.getElementById('clubSelectOverlay').style.display='none';
+  afterLogin();
+}
+
+function skipClubSelection(){
+  document.getElementById('clubSelectOverlay').style.display='none';
+  afterLogin();
+}
+
 // ── Google Sign-In ───────────────────────────────────────────────────
 async function doGoogleLogin(){
   if(!window.LS_SB?.SB_READY){showToast('Service non disponible','var(--err)');return;}
@@ -11976,6 +12116,7 @@ async function doGoogleLogin(){
           showNewPasswordForm();
         } else if(event==='SIGNED_IN' && session && sessionStorage.getItem('pendingOAuth')){
           // Retour depuis OAuth Google (ou autre provider)
+          const isNew=sessionStorage.getItem('pendingOAuth')==='google:new'||!sessionStorage.getItem('pendingOAuth:returning');
           sessionStorage.removeItem('pendingOAuth');
           if(!currentUser){
             const profile=await window.LS_SB.sbGetProfile(session.user.id);
@@ -11986,7 +12127,15 @@ async function doGoogleLogin(){
               if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
             }
           }
-          afterLogin();
+          // Nouvel utilisateur Google → demander le rôle
+          // On détecte si c'est une 1ère connexion via created_at ≈ now
+          const createdAt=new Date(session.user.created_at||0);
+          const isFirstLogin=(Date.now()-createdAt.getTime())<30000; // créé il y a moins de 30s
+          if(isFirstLogin){
+            showOAuthRoleModal();
+          } else {
+            afterLogin();
+          }
         }
       });
     }
