@@ -93,19 +93,24 @@ function concatArrays(...arrays: Uint8Array[]) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  // Sécurité : cette fonction est réservée aux appels serveur-à-serveur (service role)
-  // Elle ne doit JAMAIS être appelée directement depuis le navigateur
+  // Auth : service_role (serveur→serveur) OU JWT anon valide (auto-test, envoi à soi-même uniquement)
   const authHeader = req.headers.get('authorization') || '';
-  const serviceKey = Deno.env.get('SERVICE_ROLE_KEY') || '';
-  const supabaseServiceHeader = `Bearer ${serviceKey}`;
-  if (!serviceKey || authHeader !== supabaseServiceHeader) {
-    console.warn('send-push: unauthorized call attempt');
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
-  }
+  const serviceKey  = Deno.env.get('SERVICE_ROLE_KEY') || '';
+  const isServiceRole = !!serviceKey && authHeader === `Bearer ${serviceKey}`;
 
   try {
     const { user_id, title, body, url = '/' } = await req.json();
-    if (!user_id || !title) return new Response(JSON.stringify({ error: 'user_id and title required' }), { status: 400 });
+    if (!user_id || !title) return new Response(JSON.stringify({ error: 'user_id and title required' }), { status: 400, headers: corsHeaders });
+
+    if (!isServiceRole) {
+      // Validation JWT anon : l'utilisateur ne peut pusher qu'à lui-même
+      const anonClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
+      const { data: { user } } = await anonClient.auth.getUser(authHeader.replace(/^Bearer /, ''));
+      if (!user || user.id !== user_id) {
+        console.warn('send-push: unauthorized JWT attempt');
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      }
+    }
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
     const vapidPublic  = Deno.env.get('VAPID_PUBLIC_KEY')!;

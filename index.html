@@ -4823,13 +4823,66 @@ function renderNotifBell(){
 function renderNotifPanel(){
   const mine=getMyNotifications().sort((a,b)=>b.ts-a.ts).slice(0,20);
   markAllRead();
+  // Bloc push selon état de la permission
+  const pushSupported='serviceWorker' in navigator && 'PushManager' in window;
+  const perm=typeof Notification!=='undefined'?Notification.permission:'denied';
+  let pushBlock='';
+  if(currentUser && pushSupported){
+    if(perm==='default'){
+      pushBlock=`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🔔</span>
+        <div style="flex:1;font-size:13px;font-weight:600;color:#166534">Activez les notifications pour rester informé(e)</div>
+        <button onclick="activerPush()" style="font-family:inherit;font-weight:700;font-size:12px;background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap">Activer</button>
+      </div>`;
+    } else if(perm==='granted'){
+      pushBlock=`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">✅</span>
+        <div style="flex:1;font-size:12px;color:#166534;font-weight:600">Notifications push activées</div>
+        <button onclick="testerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:var(--ink);color:var(--lime);border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">📤 Tester</button>
+      </div>`;
+    } else {
+      pushBlock=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#991b1b">
+        🚫 Notifications bloquées dans les réglages du navigateur
+      </div>`;
+    }
+  }
   return `<div style="max-width:420px;width:100%;padding:16px">
     <div style="font-weight:800;font-size:16px;margin-bottom:12px">🔔 Mes notifications</div>
+    ${pushBlock}
     ${mine.length?mine.map(n=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">
       <div style="flex:1"><div style="font-size:13.5px;font-weight:600">${n.message}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${new Date(n.ts).toLocaleString('fr-FR')}</div></div>
     </div>`).join('')
     :'<div style="font-size:13px;color:var(--ink-soft);padding:8px 0">Aucune notification pour le moment.</div>'}
   </div>`;
+}
+async function activerPush(){
+  if(!currentUser?.id){showToast('Connectez-vous d\'abord','#e11d48');return;}
+  if(!window.LS_SB?.SB_READY){showToast('Supabase non configuré','#e11d48');return;}
+  showToast('Demande de permission…','#6366f1');
+  const res=await window.LS_SB.sbSubscribePush(currentUser.id);
+  if(res.error){
+    if(res.error==='permission_denied') showToast('❌ Permission refusée dans les réglages','#e11d48');
+    else if(res.error==='push_not_supported') showToast('❌ Push non supporté sur ce navigateur','#e11d48');
+    else showToast('❌ '+res.error,'#e11d48');
+  } else {
+    showToast('✅ Notifications push activées !','var(--ok)');
+  }
+  // Rafraîchir le panneau
+  document.getElementById('notifPanel')?.remove();
+  setTimeout(toggleNotifPanel,150);
+}
+async function testerPush(){
+  if(!currentUser?.id){showToast('Connectez-vous d\'abord','#e11d48');return;}
+  const sb=window.LS_SB?.getSB();
+  if(!sb){showToast('Supabase non configuré','#e11d48');return;}
+  try{
+    showToast('📤 Envoi du test…','#6366f1');
+    const {error}=await sb.functions.invoke('send-push',{
+      body:{user_id:currentUser.id,title:'🔔 Test Livraisanté',body:'Vos notifications push fonctionnent parfaitement !',url:'/'}
+    });
+    if(error) showToast('❌ '+error.message,'#e11d48');
+    else showToast('✅ Notification envoyée ! Vérifiez votre écran','var(--ok)');
+  }catch(e){showToast('❌ '+e.message,'#e11d48');}
 }
 function toggleNotifPanel(){
   let panel=document.getElementById('notifPanel');
@@ -5079,13 +5132,13 @@ function validateOrderCode(orderId){
   }
 }
 
-function createOrder({items, patient, trackId, btn, kind}){
+function createOrder({items, patient, trackId, btn, kind, totalEur}){
   const track=document.getElementById(trackId);
   if(!items.length){ track.innerHTML='<div class="track-card">Coche au moins un produit à commander.</div>'; return; }
   if(!patient.addr){ track.innerHTML='<div class="track-card">Indique une adresse de livraison ou utilise 📍.</div>'; return; }
   const id='LS'+Date.now().toString().slice(-6);
   const code=generateOrderCode();
-  const o={ id, code, createdAt:Date.now(), kind:kind||'santé', patient, items, status:'nouvelle', driver:null };
+  const o={ id, code, createdAt:Date.now(), kind:kind||'santé', patient, items, status:'nouvelle', driver:null, totalEur:totalEur||null };
   currentPatientOrderId=id; currentTrackId=trackId;
   saveOrder(o);
   logOrder();
@@ -5094,7 +5147,7 @@ function createOrder({items, patient, trackId, btn, kind}){
 function placeOrder(){
   const items=[...document.querySelectorAll('#supplList .ordck:checked')].map(c=>({name:c.dataset.n,ev:c.dataset.ev}));
   createOrder({ items, kind:'sportif',
-    patient:{ name:(state.profile&&state.profile.nom)||'Patient', pos:patientPos, addr:document.getElementById('ordAddr').value.trim() },
+    patient:{ name:(state.profile&&state.profile.nom)||'Patient', pos:patientPos, addr:document.getElementById('ordAddr').value.trim(), email:currentUser?.email||'' },
     trackId:'orderTrack', btn:document.getElementById('placeOrderBtn') });
 }
 function renderOrderTrack(id){
@@ -5160,6 +5213,19 @@ function setStatus(id,st){
   if(st==='validee'){
     pushNotification('patient',`📦 Votre commande ${orderId} est en cours de préparation par le pharmacien`,{orderId,type:'order_status'});
     pushNotification('pharmacien',`🆕 Nouvelle commande de ${pName} — à préparer`,{orderId,type:'new_order'});
+    // Email de préparation au patient
+    if(window.LS_SB?.SB_READY && o.patient?.email){
+      const _sb=window.LS_SB.getSB();
+      if(_sb){
+        const _phNom=(currentUser?.pharmacyInfo?.nom)||currentUser?.nom||'Pharmacie partenaire';
+        const _meds=(o.items||[]).map(i=>i.name||i.ev||'').filter(Boolean).join('\n');
+        _sb.functions.invoke('send-email',{body:{
+          type:'preparation', to:o.patient.email,
+          order:{id:o.id,patient_nom:o.patient.name||'',pharmacy_nom:_phNom,
+                 medicaments:_meds,montant:o.totalEur||null,adresse:o.patient.addr||''}
+        }}).catch(()=>{});
+      }
+    }
   }
   if(st==='prete'){
     pushNotification('patient',`✅ Commande ${orderId} prête — votre livreur va la prendre en charge`,{orderId,type:'order_status'});
@@ -7520,8 +7586,8 @@ function placeOrderSante(){
       if(club?.id){const orderTotal=cartTotal(deliveryMode);addCagnotteContribution(club.id,'order-'+Date.now(),orderTotal);}
     });
     createOrder({items,kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
-      patient:{name:meta.patient,pos:santePos,addr,donation:donInfo},
-      trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn')});
+      patient:{name:meta.patient,pos:santePos,addr,donation:donInfo,email:currentUser?.email||''},
+      trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn'),totalEur:amountEur});
   });
 }
 
