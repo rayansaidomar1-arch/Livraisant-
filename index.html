@@ -4354,7 +4354,7 @@ function showRgpdModal(section='intro'){
     intro:`<h3>Politique de confidentialité</h3>
       <p><b>Responsable de traitement :</b> Livraisanté SAS — RCS 933 484 917 R.C.S. Lyon · 1 Rue des Vergers, 69120 Vaulx-en-Velin<br><b>DPO :</b> <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a></p>
       <p><b>Données collectées :</b> Prénom, email, profil de santé (âge, grossesse, traitements chroniques), historique de commandes, position GPS (livraison uniquement, non conservée).</p>
-      <p><b>Base légale :</b> Consentement explicite (Art. 6§1a et Art. 9§2a RGPD) pour les données de santé. Exécution du contrat (Art. 6§1b) pour les commandes.</p>
+      <p><b>Base légale :</b> Consentement explicite et granulaire (Art. 6§1a et Art. 9§2a RGPD) pour les données de santé — recueilli via une case à cocher dédiée, distincte de l'acceptation des CGU, lors de l'inscription. Exécution du contrat (Art. 6§1b) pour les commandes. Le consentement peut être retiré à tout moment via <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a> ou depuis les réglages du compte.</p>
       <p><b>Durée de conservation :</b> Données de santé supprimées 3 ans après la dernière connexion. Données de commande conservées 5 ans (obligation légale comptable).</p>
       <p><b>Destinataires :</b> Pharmacien(s) partenaire(s) — dans le seul cadre de votre prise en charge. Aucune cession à des tiers à des fins commerciales.</p>
       <p><b>Vos droits (Art. 15–22 RGPD) :</b></p>
@@ -4379,7 +4379,7 @@ function showRgpdModal(section='intro'){
       <p><b>Éditeur :</b> Livraisanté SAS<br>Forme juridique : Société par actions simplifiée (SAS)<br>Capital social : 1 000,00 €<br>Siège social : 1 Rue des Vergers, 69120 Vaulx-en-Velin<br>RCS : 933 484 917 R.C.S. Lyon<br>Date d'immatriculation : 11/10/2024<br>N° de gestion : 2024B08990</p>
       <p><b>Directeur de publication :</b> Archad Sidi Saïd Omar, Président</p>
       <p><b>Contact :</b> <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a></p>
-      <p><b>Hébergement statique :</b> GitHub Inc. — GitHub Pages (HTTPS). <b>Données de santé :</b> Supabase (infrastructure AWS eu-west-3 Paris). Une migration vers un hébergeur HDS certifié ARS (OVH Healthcare, Microsoft Azure HDS ou Cegedim Health Data) est planifiée avant tout traitement de données de santé en production clinique.</p>
+      <p><b>Hébergement statique :</b> GitHub Inc. — GitHub Pages (HTTPS). <b>Données utilisateurs :</b> Supabase (infrastructure AWS eu-west-3 Paris, sous-traitant conforme RGPD). <b>Données de santé (Art. L1111-8 CSP) :</b> en phase de lancement, seules des données de santé non cliniques (compléments alimentaires, réponses à questionnaire bien-être) sont traitées à titre expérimental, sans transmission à un tiers médical. La Société s'engage à migrer vers un hébergeur certifié HDS (Hébergeur de Données de Santé) conformément à l'Art. L1111-8 CSP avant tout traitement de données de santé à caractère clinique.</p>
       <p><b>Avertissement médical :</b> L'application Livraisanté propose des conseils en compléments alimentaires et dispositifs médicaux pour des affections bénignes. Elle ne constitue pas un acte médical et ne remplace pas une consultation médicale.</p>
       <p><b>Données de santé :</b> Livraisanté traite des données de santé (Art. 9 RGPD). Le responsable de traitement s'engage à mettre en place les mesures techniques et organisationnelles appropriées conformément au RGPD et aux recommandations de la CNIL.</p>`,
     cgu:`<h3>Conditions Générales d'Utilisation</h3>
@@ -4426,10 +4426,10 @@ function showRgpdModal(section='intro'){
       <p>L'ensemble du contenu de l'application (protocoles pharmaceutiques, interface, algorithmes de conseil) est la propriété exclusive de Livraisanté SAS et est protégé par le droit d'auteur. Toute reproduction ou utilisation commerciale sans autorisation écrite est interdite.</p>
 
       <h4 style="margin:14px 0 6px">Article 7 — Modification des CGU</h4>
-      <p>La Société se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés par notification dans l'application. La poursuite de l'utilisation après modification vaut acceptation des nouvelles CGU.</p>
+      <p>La Société se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés <b>par email et par notification dans l'application au moins 15 jours avant l'entrée en vigueur</b> de toute modification substantielle. La poursuite de l'utilisation après l'expiration de ce délai vaut acceptation des nouvelles CGU. À défaut d'acceptation, l'utilisateur peut résilier son compte sans frais avant la date d'effet.</p>
 
       <h4 style="margin:14px 0 6px">Article 8 — Droit applicable et juridiction</h4>
-      <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige, et après tentative de résolution amiable, les tribunaux compétents sont ceux du ressort du Tribunal de Commerce de Lyon.</p>
+      <p>Les présentes CGU sont soumises au <b>droit français</b>. En cas de litige non résolu amiablement, les règles de compétence territoriale légales s'appliquent. <b>Pour les consommateurs (B2C)</b>, le tribunal compétent est celui du domicile du défendeur ou du lieu d'exécution de la prestation (Art. R212-2-6° Code de la consommation — clause attributive de juridiction réputée non écrite en droit de la consommation). <b>Pour les professionnels (B2B)</b>, attribution de juridiction au Tribunal de Commerce de Lyon.</p>
       <p style="margin-top:14px;font-size:12px;color:#888">Contact : <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> · Livraisanté SAS, 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 R.C.S. Lyon</p>`,
     cgv:`<h3>Conditions Générales de Vente</h3>
       <p style="font-size:11px;color:#888">Version 1.0 — Entrée en vigueur : 10 juin 2026 · Livraisanté SAS · RCS 933 484 917 Lyon</p>
@@ -4460,10 +4460,10 @@ function showRgpdModal(section='intro'){
       <p>Le Click & Collect en pharmacie est <b>gratuit</b>. Le paiement s'effectue exclusivement en ligne via Stripe (CB, Apple Pay, Google Pay).</p>
 
       <h4 style="margin:14px 0 6px">Article 5 — Livraison</h4>
-      <p>La livraison est assurée par un livreur indépendant partenaire dans un délai moyen de <b>45 à 90 minutes</b> selon la disponibilité. Ce délai est indicatif et non contractuel. En cas de retard supérieur à 3 heures, la commande peut être annulée sans frais. La livraison est réalisée à l'adresse renseignée lors de la commande.</p>
+      <p>La livraison est assurée par un livreur indépendant partenaire dans un délai <b>estimatif de 45 à 90 minutes</b> à compter de la confirmation de commande par la pharmacie, selon la disponibilité des livreurs. Ce délai est <b>estimatif et non contractuel</b> (Art. L111-1 C. conso). En cas de dépassement supérieur à <b>3 heures à compter de la confirmation de commande</b>, le consommateur peut annuler sans frais et obtenir un remboursement intégral sous 14 jours. La livraison est réalisée à l'adresse renseignée lors de la commande.</p>
 
       <h4 style="margin:14px 0 6px">Article 6 — Droit de rétractation (Art. L221-18 Code de la consommation)</h4>
-      <p>Conformément à l'Article L221-18 du Code de la consommation, le consommateur dispose d'un délai de <b>14 jours</b> à compter de la réception pour exercer son droit de rétractation, sans motif. <b>Exception :</b> les produits descellés ou entamés, ou dont l'intégrité ne peut plus être garantie (Art. L221-28 §5), ne peuvent pas être retournés pour des raisons d'hygiène et de protection de la santé.</p>
+      <p>Conformément à l'Article L221-18 du Code de la consommation, le consommateur dispose d'un délai de <b>14 jours</b> à compter de la réception pour exercer son droit de rétractation, sans motif. <b>Exception légale (Art. L221-28 §5, portée à votre connaissance avant toute commande) :</b> les produits d'hygiène ou de santé descellés, entamés ou dont l'intégrité du conditionnement ne peut plus être garantie après livraison ne peuvent être retournés pour des raisons de protection de la santé publique. Cette exception s'applique à la majorité des compléments alimentaires et dispositifs médicaux proposés — en passant commande, vous en prenez acte expressément.</p>
       <p>Pour exercer ce droit : <a href="mailto:retours@livraisante.fr" style="color:var(--pharma)">retours@livraisante.fr</a> — joindre le numéro de commande. Le remboursement est effectué sous 14 jours par le même moyen de paiement.</p>
 
       <h4 style="margin:14px 0 6px">Article 7 — Garanties légales</h4>
