@@ -203,7 +203,7 @@
   .chip{font-family:inherit;font-size:14px;font-weight:600;padding:10px 15px;border-radius:30px;border:1.5px solid var(--line-strong);background:var(--card);cursor:pointer;transition:.15s;color:var(--ink)}
   .chip:hover{border-color:var(--ink)}
   .chip.sel{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  input[type=number],select,input[type=text]{font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%}
+  input[type=number],select,input[type=text],input[type=tel],input[type=email],input[type=date]{font-family:inherit;font-size:15px;padding:11px 13px;border:1.5px solid var(--line-strong);border-radius:11px;background:var(--card);color:var(--ink);width:100%}
   input:focus,select:focus{outline:none;border-color:var(--ink)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
@@ -974,6 +974,7 @@
     <div style="background:white;border-radius:24px;padding:28px 20px;position:relative;overflow:hidden;box-shadow:0 0 0 3px #C2F23E">
 
       <!-- En-tête -->
+      <div style="display:inline-flex;align-items:center;gap:6px;background:#0D0E09;color:#C2F23E;padding:5px 12px;border-radius:30px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px">🩹 Espace Patient</div>
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
         <div style="width:54px;height:54px;background:#C2F23E;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex:0 0 auto">💊</div>
         <div>
@@ -1402,7 +1403,7 @@
     </div>
     <div class="row2">
       <div class="form-group"><label class="form-label">Date de naissance * <span class="opt">(majorité obligatoire)</span></label><input type="date" id="drBirthdate" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box"><div class="field-msg" id="dsBirthdateMsg"></div></div>
-      <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div>
+      <div class="form-group"><label class="form-label">Téléphone *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><input type="tel" id="drTel" placeholder="06 00 00 00 00" oninput="this.value=this.value.replace(/[^\d\s+]/g,'')"></div></div>
     </div>
     <div class="row2">
       <div class="form-group"><label class="form-label">Email *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="drEmail" placeholder="email@exemple.com"></div></div>
@@ -1528,12 +1529,12 @@
     <div class="form-group"><label class="form-label">Nom de la pharmacie *</label><input type="text" id="phNom" placeholder="Ex. Pharmacie du Centre"></div>
     <div class="form-group"><label class="form-label">Adresse (rue) *</label><input type="text" id="phRue" placeholder="Ex. 12 rue de la Paix"></div>
     <div class="row2">
-      <div class="form-group"><label class="form-label">Code postal *</label><input type="text" id="phCp" placeholder="32000" maxlength="5" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+      <div class="form-group"><label class="form-label">Code postal *</label><input type="text" id="phCp" placeholder="32000" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)"></div>
       <div class="form-group"><label class="form-label">Ville *</label><input type="text" id="phVille" placeholder="Ex. Auch"></div>
     </div>
     <div class="row2">
       <div class="form-group"><label class="form-label">Email de contact</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="phEmail" placeholder="contact@pharmacie.fr"></div></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" id="phTel" placeholder="05 62 00 00 00"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><input type="tel" id="phTel" placeholder="05 62 00 00 00"></div></div>
     </div>
 
     <div style="margin:22px 0 6px;padding:16px 18px 18px;background:var(--paper-2);border:2px solid var(--ink);border-radius:14px">
@@ -1544,7 +1545,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">N° RPPS du titulaire * <span class="opt">(11 chiffres)</span></label>
-        <input type="text" id="phRpps" placeholder="Ex. 21000123456" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
+        <input type="text" id="phRpps" placeholder="Ex. 21000123456" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,11)">
         <div class="field-msg" id="rppsMsg"></div>
         <div class="help-box">Identifiant national du professionnel de santé. <a href="https://annuaire.sante.fr" target="_blank" rel="noopener">Annuaire Santé →</a></div>
       </div>
@@ -1579,7 +1580,7 @@
     <div class="id-grid">
       <div class="form-group">
         <label class="form-label">Numéro FINESS de l'établissement <span class="opt">(9 chiffres)</span></label>
-        <input type="text" id="phFiness" placeholder="Ex. 320012345" maxlength="9" oninput="this.value=this.value.replace(/\D/g,'')">
+        <input type="text" id="phFiness" placeholder="Ex. 320012345" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9)">
         <div class="field-msg" id="finessMsg"></div>
         <div class="help-box">Identifie votre officine en tant qu'établissement de santé. <a href="https://finess.sante.gouv.fr" target="_blank" rel="noopener">Consulter l'annuaire FINESS →</a></div>
       </div>
@@ -1689,7 +1690,7 @@
         <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="regNom" placeholder="Ex. Dupont"></div>
       </div>
       <div class="form-group"><label class="form-label">Email *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg><input type="email" id="regEmail" placeholder="votre@email.fr"></div></div>
-      <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" id="regPhone" inputmode="tel" placeholder="Ex. 06 12 34 56 78" oninput="formatPhone(this)" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:15px;width:100%;box-sizing:border-box"></div>
+      <div class="form-group"><label class="form-label">Téléphone *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><input type="tel" id="regPhone" inputmode="tel" placeholder="Ex. 06 12 34 56 78" oninput="formatPhone(this)"></div></div>
       <div class="form-group"><label class="form-label">Mot de passe *</label><div class="field-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" id="regPassword" placeholder="Minimum 8 caractères"></div></div>
       <div class="form-group"><label class="form-label">Vous êtes :</label>
         <div class="chips" data-group="regRole" style="flex-wrap:wrap">
@@ -2370,9 +2371,10 @@ const PROFESSIONS_ORDRE = [
 
 let deliveryDistanceKm=null; // calculé via GPS ou estimé
 
-function getDeliveryFee(){
+function getDeliveryFee(mode){
   const acc=currentUser?getAccounts()[currentUser.email]:null;
   if(acc?.patientSub?.active) return 0; // abonné = livraison gratuite
+  if(mode==='cnc_club') return 0; // Click & Collect club sportif : frais pris en charge par Livraisanté
   if(deliveryDistanceKm===null) return FRAIS_LIVRAISON; // distance inconnue
   const tier=DELIVERY_TIERS.find(t=>deliveryDistanceKm<=t.maxKm);
   return tier?tier.price:9.90;
@@ -4120,27 +4122,27 @@ function downloadSportProtocolPDF(){
   if(!win){showToast('Autorisez les popups pour générer le PDF','var(--warn)');return;}
   const itemsHtml=proto.sections.map(s=>`
     <div style="margin-bottom:16px">
-      <div style="font-weight:700;font-size:13px;color:#1F6FEB;border-bottom:2px solid #EFF6FF;padding-bottom:4px;margin-bottom:8px">${s.icon} ${s.titre}</div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:13px;color:#0D0E09;border-bottom:2px solid #F2F2F0;padding-bottom:4px;margin-bottom:8px">${s.icon} ${s.titre}</div>
       ${s.items.map(item=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px">
-        <div><b>${item.nom}</b><br><span style="color:#666">${item.desc}</span></div>
-        ${item.ama?'<span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;align-self:center">✓ AMA</span>':''}
+        <div><b>${item.nom}</b><br><span style="color:#888">${item.desc}</span></div>
+        ${item.ama?'<span style="background:#C2F23E;color:#0D0E09;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;white-space:nowrap;align-self:center">✓ AMA</span>':''}
       </div>`).join('')}
     </div>`).join('');
   const _esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Protocole Sport-Santé — Livraisanté</title>
-  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+  <style>@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Hanken Grotesk',sans-serif}
   body{padding:24px;max-width:800px;margin:0 auto;font-size:13px;color:#0D0E09}
-  h1{font-size:20px;font-weight:800;color:#1F6FEB;margin-bottom:4px}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid #1F6FEB}
-  .badge{background:#dcfce7;color:#16a34a;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
-  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#f8f8f7;border-radius:8px;padding:10px;margin-bottom:16px;font-size:12px}
-  .meta b{display:block;font-weight:800;font-size:13px}
+  h1{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#0D0E09;margin-bottom:4px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid #0D0E09}
+  .badge{background:#C2F23E;color:#0D0E09;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#F2F2F0;border-radius:8px;padding:10px;margin-bottom:16px;font-size:12px}
+  .meta b{font-family:'Bricolage Grotesque',sans-serif;display:block;font-weight:800;font-size:13px}
   .alert{background:#fffbe6;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-top:12px;font-size:12px}
   .footer{margin-top:20px;padding-top:10px;border-top:1px solid #e5e5e5;font-size:10px;color:#888;text-align:center}
   @media print{button{display:none}}</style></head><body>
   <div class="header">
-    <div><h1>Protocole Sport-Santé personnalisé</h1><div style="font-size:12px;color:#666;margin-top:4px">Généré le ${new Date().toLocaleDateString('fr-FR')} · Livraisanté</div></div>
+    <div><h1>Protocole Sport-Santé personnalisé</h1><div style="font-size:12px;color:#888;margin-top:4px">Généré le ${new Date().toLocaleDateString('fr-FR')} · Livraisanté</div></div>
     <span class="badge">Compléments alimentaires CA · Non dopant AMA</span>
   </div>
   <div class="meta">
@@ -4151,7 +4153,7 @@ function downloadSportProtocolPDF(){
   ${itemsHtml}
   ${proto.alertes.length?`<div class="alert"><b>⚠ Points d'attention :</b><br>${proto.alertes.map(a=>'• '+_esc(a)).join('<br>')}</div>`:''}
   <div class="footer">Ce protocole est proposé à titre informatif. Conseil et validation par votre pharmacien partenaire. Non substituable à un avis médical.</div>
-  <div style="margin-top:16px;text-align:center"><button onclick="window.print()" style="font-family:sans-serif;font-weight:700;font-size:14px;padding:10px 24px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer">🖨 Imprimer / Enregistrer en PDF</button></div>
+  <div style="margin-top:16px;text-align:center"><button onclick="window.print()" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;padding:13px 24px;background:#C2F23E;color:#0D0E09;border:2px solid #0D0E09;border-radius:12px;cursor:pointer;box-shadow:3px 3px 0 #0D0E09">🖨 Imprimer / Enregistrer en PDF</button></div>
   </body></html>`);
   win.document.close();
 }
@@ -4850,7 +4852,7 @@ function renderNotifPanel(){
     <div style="font-weight:800;font-size:16px;margin-bottom:12px">🔔 Mes notifications</div>
     ${pushBlock}
     ${mine.length?mine.map(n=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">
-      <div style="flex:1"><div style="font-size:13.5px;font-weight:600">${n.message}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${new Date(n.ts).toLocaleString('fr-FR')}</div></div>
+      <div style="flex:1"><div style="font-size:13.5px;font-weight:600">${esc(n.message)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:3px">${new Date(n.ts).toLocaleString('fr-FR')}</div></div>
     </div>`).join('')
     :'<div style="font-size:13px;color:var(--ink-soft);padding:8px 0">Aucune notification pour le moment.</div>'}
   </div>`;
@@ -4990,14 +4992,14 @@ function renderPharmacyCard(){
           <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
         </svg>
         <div>
-          <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;color:white">${name}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6)">${adresse}</div>
+          <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;color:white">${esc(name)}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6)">${esc(adresse)}</div>
         </div>
       </div>
       <div style="padding:14px 16px">
         ${tel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13.5px">
-          <span>📞</span><a href="tel:${tel.replace(/\s/g,'')}" style="font-weight:700;color:var(--ink)">${tel}</a>
-          ${ph.horaires?`<span style="color:var(--ink-soft)">· ${ph.horaires}</span>`:''}
+          <span>📞</span><a href="tel:${esc(tel.replace(/\s/g,''))}" style="font-weight:700;color:var(--ink)">${esc(tel)}</a>
+          ${ph.horaires?`<span style="color:var(--ink-soft)">· ${esc(ph.horaires)}</span>`:''}
         </div>`:''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <a href="${gmapsDir}" target="_blank" rel="noopener"
@@ -5194,12 +5196,12 @@ function renderOrderTrack(id){
 }
 
 /* ---- helpers d'affichage commande ---- */
-function orderItemsHtml(o){ return o.items.map(i=>`<span class="chip-i">${i.name}</span>`).join(''); }
+function orderItemsHtml(o){ return o.items.map(i=>`<span class="chip-i">${esc(i.name)}</span>`).join(''); }
 function orderAddrHtml(o){
   const p=o.patient;
   if(p.pos){ const url=`https://www.openstreetmap.org/?mlat=${p.pos.lat}&mlon=${p.pos.lon}#map=17/${p.pos.lat}/${p.pos.lon}`;
-    return `📍 <a href="${url}" target="_blank" rel="noopener">${p.addr}</a>`; }
-  return `📍 ${p.addr}`;
+    return `📍 <a href="${url}" target="_blank" rel="noopener">${esc(p.addr)}</a>`; }
+  return `📍 ${esc(p.addr)}`;
 }
 function timeAgo(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?'à l\'instant':m+' min'; }
 
@@ -5513,7 +5515,7 @@ function renderCustomAdvicePanel(){
         <div style="flex:1">
           <div style="font-weight:700;font-size:13px">${typeof AILMENTS!=='undefined'?(AILMENTS.find(x=>x.id===a.ailmentId)?.ic||'')+(AILMENTS.find(x=>x.id===a.ailmentId)?.name||a.ailmentId):a.ailmentId}</div>
           <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">${(a.products||[]).join(' · ')}</div>
-          ${a.text?`<div style="font-size:12px;color:var(--ink);margin-top:4px;font-style:italic">"${a.text}"</div>`:''}
+          ${a.text?`<div style="font-size:12px;color:var(--ink);margin-top:4px;font-style:italic">"${esc(a.text)}"</div>`:''}
         </div>
         <button onclick="deleteCustomAdvice(${i})" style="font-family:inherit;font-size:11px;font-weight:700;padding:5px 10px;background:white;border:1.5px solid var(--err);color:var(--err);border-radius:8px;cursor:pointer;flex:0 0 auto">Supprimer</button>
       </div>`).join('')}
@@ -5774,7 +5776,7 @@ function renderLivreur(){
   const faites=all.filter(o=>o.status==='livree');
   const card=o=>`
     <div class="ocard">
-      <div class="otop"><div class="oid">${o.id}<small>${o.patient.name} · ${o.kind||'santé'}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
+      <div class="otop"><div class="oid">${esc(o.id)}<small>${esc(o.patient.name)} · ${esc(o.kind||'santé')}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
       <div class="oitems">${orderItemsHtml(o)}</div>
       <div class="oaddr">${orderAddrHtml(o)}</div>
       <div class="oactions">
@@ -6736,7 +6738,7 @@ function removeFromCart(key){ patientCart=patientCart.filter(p=>cartKey(p)!==key
 function cartTotal(mode){
   const base=patientCart.reduce((s,p)=>s+(p.prix||0),0);
   const subtotal=base*(1+MARGE_PCT);
-  return mode==='cnc' ? subtotal : subtotal+getDeliveryFee();
+  return mode==='cnc' ? subtotal : subtotal+getDeliveryFee(mode);
 }
 /** 10% de frais de fonctionnement Livraisanté (transparents, affichés au client) */
 function platformCommission(mode){ return parseFloat((cartTotal(mode)*0.10).toFixed(2)); }
@@ -6749,21 +6751,25 @@ function renderCart(){
   const donation=donationEnabled?donationAmount(rawTotal):0;
   const total=cartTotalFull(deliveryMode);
   const monthName=new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  const fee=getDeliveryFee();
+  const fee=getDeliveryFee(deliveryMode);
   const tier=getDeliveryTier();
   const subtotal=patientCart.reduce((s,p)=>s+(p.prix||0),0)*(1+MARGE_PCT);
 
   // Ligne livraison
   let feeLine='';
-  if(deliveryMode==='livraison'||deliveryMode==='cnc_club'){
+  if(deliveryMode==='livraison'){
     const feeLabel=deliveryDistanceKm!==null
         ?`<span style="font-weight:800;color:${tier?.color||'var(--ink)'}">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">${tier?.label||''}</span>`
         :`<span style="font-weight:700">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">distance à calculer</span>`;
-    const distLabel=deliveryDistanceKm!==null?` · ${deliveryDistanceKm.toFixed(1)} km`:'';
-    const modeIcon=deliveryMode==='cnc_club'?'🏟️ Livraison au club':'🛵 Livraison';
     feeLine=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #eee;font-size:13.5px">
-      <span style="color:var(--ink-soft)">${modeIcon}${distLabel}</span>
+      <span style="color:var(--ink-soft)">🛵 Livraison</span>
       <div style="text-align:right">${feeLabel}</div>
+    </div>`;
+  } else if(deliveryMode==='cnc_club'){
+    const distLabel=deliveryDistanceKm!==null?` · ${deliveryDistanceKm.toFixed(1)} km`:'';
+    feeLine=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #eee;font-size:13.5px">
+      <span style="color:var(--ink-soft)">🏟️ Livraison au club${distLabel}</span>
+      <div style="text-align:right"><span style="font-weight:800;color:var(--ok)">Gratuit</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">offerte par Livraisanté</span></div>
     </div>`;
   } else {
     feeLine=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #eee;font-size:13.5px">
@@ -6811,7 +6817,7 @@ function renderCart(){
     </div>
     <div class="cart-total-row">
       <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':deliveryMode==='cnc_club'?'Retrait au club':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
-      ${(deliveryMode==='livraison'||deliveryMode==='cnc_club')&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
+      ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
       <div class="cart-grand-total">€${total.toFixed(2)}</div>
     </div>`;
   // Charger les options club en asynchrone après le rendu
@@ -7453,7 +7459,7 @@ function setMode(m){
   const details=document.getElementById('modeDetails');
   const addrRow=document.getElementById('addrRow');
   if(!details) return;
-  const fee=getDeliveryFee();
+  const fee=getDeliveryFee(m);
   const tier=getDeliveryTier();
 
   if(m==='cnc'){
@@ -7466,7 +7472,7 @@ function setMode(m){
     details.innerHTML=`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:14px;margin-bottom:12px">
       <div style="font-weight:800;font-size:13.5px;margin-bottom:6px">🏟️ Retrait au club — ${esc(clubNom)}</div>
       ${clubAdresse?`<div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">📍 ${esc(clubAdresse)}</div>`:''}
-      <div style="font-size:12.5px;color:#166534;line-height:1.5">Un livreur Livraisanté déposera votre commande directement à votre club sportif.<br>Les <b>frais de livraison s'appliquent</b> (même tarif qu'une livraison à domicile).</div>
+      <div style="font-size:12.5px;color:#166534;line-height:1.5">Un livreur Livraisanté déposera votre commande directement à votre club sportif.<br><b>Frais de livraison offerts</b> — pris en charge par Livraisanté pour les licenciés.</div>
     </div>
     ${renderPharmacyCard()}
     <div class="cnc-info" style="margin-bottom:8px">Délai estimé <b>2 à 4 heures</b> selon disponibilité du livreur et de la pharmacie partenaire.</div>`;
@@ -7575,7 +7581,7 @@ function placeOrderSante(){
     (document.getElementById('santeAddr')?.value||'').trim();
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
   const amountEur=cartTotalFull(deliveryMode);
-  const meta={patient:document.getElementById('santeName')?.value?.trim()||currentUser?.prenom||'Patient',items:patientCart.map(p=>p.name).join(', ').slice(0,500)};
+  const meta={patient:document.getElementById('santeName')?.value?.trim()||currentUser?.prenom||'Patient',items:patientCart.map(p=>p.name).join(', ').slice(0,500),itemCount:patientCart.length};
   showStripePayment(amountEur, meta, function(){
     const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
     const assocObj=donationEnabled?getCurrentAssoc():null;
@@ -7857,27 +7863,72 @@ function psNext(from){
   } else if(from===3){
     const finess=document.getElementById('phFiness').value;
     const siret=document.getElementById('phSiret').value.replace(/\s/g,'');
-    let ok=true;
-    if(!/^\d{9}$/.test(finess)){document.getElementById('finessMsg').className='field-msg err';document.getElementById('finessMsg').textContent='✗ Le FINESS doit comporter exactement 9 chiffres.';ok=false;}
-    else{document.getElementById('finessMsg').className='field-msg ok';document.getElementById('finessMsg').textContent='✓ Format FINESS valide.';}
-    if(!ok) return;
+    // Le FINESS n'est pas toujours connu du pharmacien au moment de la demande
+    // (un conseiller peut l'aider à le retrouver ensuite) → avertissement non-bloquant,
+    // même logique que le SIRET juste en dessous.
+    if(finess && !/^\d{9}$/.test(finess)){
+      document.getElementById('finessMsg').className='field-msg err';
+      document.getElementById('finessMsg').textContent='✗ Le FINESS doit comporter exactement 9 chiffres.';
+      const c=confirm('Le numéro FINESS renseigné ne fait pas 9 chiffres. Continuer quand même ? (un conseiller vous aidera à le retrouver)');
+      if(!c){document.getElementById('phFiness').focus();return;}
+    } else if(!finess){
+      document.getElementById('finessMsg').className='field-msg warn';
+      document.getElementById('finessMsg').textContent='⚠ FINESS non renseigné — un conseiller vous aidera à le retrouver.';
+    } else {
+      document.getElementById('finessMsg').className='field-msg ok';
+      document.getElementById('finessMsg').textContent='✓ Format FINESS valide.';
+    }
     if(siret && !luhnSiret(siret)){const c=confirm('Format SIRET invalide. Continuer quand même ?');if(!c)return;}
-    // Sauvegarde complète du dossier
-    try{
-      const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');
-      ph.nom=document.getElementById('phNom').value.trim();
-      ph.rue=document.getElementById('phRue').value.trim();
-      ph.cp=document.getElementById('phCp').value.trim();
-      ph.ville=document.getElementById('phVille').value.trim();
-      ph.adresse=ph.rue+', '+ph.cp+' '+ph.ville;
-      ph.email=document.getElementById('phEmail').value.trim();
-      ph.tel=document.getElementById('phTel').value.trim();
-      ph.titulaire={prenom:document.getElementById('phTitPrenom').value.trim(),nom:document.getElementById('phTitNom').value.trim(),rpps:document.getElementById('phRpps').value.trim(),emailFacturation:document.getElementById('phFactEmail').value.trim()};
-      ph.finess=finess; ph.siret=siret;
-      ph.iban=document.getElementById('phIban').value.trim();
-      localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));
-    }catch(e){}
-    alert('✅ Dossier d\'inscription envoyé !\n\nUn conseiller Livraisanté vous contactera dans les 24h pour finaliser l\'activation de votre espace pharmacie.');
+
+    const ph={
+      nom:document.getElementById('phNom').value.trim(),
+      rue:document.getElementById('phRue').value.trim(),
+      cp:document.getElementById('phCp').value.trim(),
+      ville:document.getElementById('phVille').value.trim(),
+      email:document.getElementById('phEmail').value.trim(),
+      tel:document.getElementById('phTel').value.trim(),
+      titulaire:{prenom:document.getElementById('phTitPrenom').value.trim(),nom:document.getElementById('phTitNom').value.trim(),rpps:document.getElementById('phRpps').value.trim(),emailFacturation:document.getElementById('phFactEmail').value.trim()},
+      finess, siret,
+      iban:document.getElementById('phIban').value.trim(),
+    };
+    ph.adresse=ph.rue+', '+ph.cp+' '+ph.ville;
+    try{ localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph)); }catch(e){}
+
+    // ── Envoi réel du dossier vers Supabase (table pharmacy_applications) ──
+    // Auparavant cette fonction se contentait d'un localStorage + alert() de façade :
+    // le dossier n'était jamais transmis à personne. Corrigé ici.
+    const sendBtn=document.querySelector('#ps3 .btn.primary');
+    if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Envoi en cours…';}
+    (async()=>{
+      try{
+        const sb=window.LS_SB?.getSB?.();
+        if(!sb) throw new Error('supabase_not_configured');
+        const {error}=await sb.from('pharmacy_applications').insert({
+          nom:ph.nom, rue:ph.rue, cp:ph.cp, ville:ph.ville, adresse:ph.adresse,
+          email:ph.email, tel:ph.tel,
+          titulaire_prenom:ph.titulaire.prenom, titulaire_nom:ph.titulaire.nom,
+          titulaire_rpps:ph.titulaire.rpps, email_facturation:ph.titulaire.emailFacturation,
+          finess:ph.finess||null, siret:ph.siret||null, iban:ph.iban||null,
+          plan:JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}').plan||null,
+          status:'en_attente',
+        });
+        if(error) throw new Error(error.message||'Échec de l\'enregistrement');
+
+        // Notification à l'équipe Livraisanté (best-effort, ne bloque pas la confirmation utilisateur)
+        sb.functions.invoke('send-email',{body:{type:'candidature_pharmacie',order:{
+          patient_nom:ph.titulaire.prenom+' '+ph.titulaire.nom,
+          pharmacy_nom:ph.nom, adresse:ph.adresse,
+          medicaments:`Tél: ${ph.tel||'—'}\nEmail: ${ph.email||'—'}\nRPPS: ${ph.titulaire.rpps}\nFINESS: ${ph.finess||'non renseigné'}\nSIRET: ${ph.siret||'non renseigné'}`,
+        }}}).catch(()=>{});
+
+        if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer mon dossier →';}
+        alert('✅ Dossier d\'inscription envoyé !\n\nUn conseiller Livraisanté vous contactera dans les 24h pour finaliser l\'activation de votre espace pharmacie.');
+      }catch(err){
+        if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer mon dossier →';}
+        console.error('Échec envoi dossier pharmacie:', err.message);
+        alert('⚠ Une erreur est survenue lors de l\'envoi de votre dossier ('+err.message+').\n\nVos informations ont été sauvegardées sur cet appareil — merci de réessayer, ou de contacter contact@livraisante.fr si le problème persiste.');
+      }
+    })();
   }
 }
 function psGo(n){
@@ -8922,9 +8973,9 @@ async function populateClubsDropdown(){
   if(!sel) return;
   if(window.LS_SB?.SB_READY){
     const sb=window.LS_SB.getSB(); if(!sb) return;
-    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
+    const {data}=await sb.from('clubs_public').select('id,nom,ville').order('nom');
     if(data&&data.length){
-      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
+      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
     }
   }
 }
@@ -9089,7 +9140,7 @@ async function doRegister(){
   }
   // Numéro de licence obligatoire pour les sportifs licenciés
   if(role==='patient_licencie'){
-    const licNum=(document.getElementById('regLicenseNum')?.value||'').trim();
+    const licNum=(document.getElementById('regSportLicense')?.value||'').trim();
     if(!licNum){
       if(errEl){errEl.style.display='block';errEl.textContent='⚠ Le numéro de licence sportive est obligatoire pour les sportifs licenciés.';}
       document.getElementById('regLicenseNum')?.focus();
@@ -9163,7 +9214,7 @@ async function doRegister(){
     const pregChip=document.querySelector('[data-group="regPreg"] .chip.sel')?.dataset.v||'non';
     const sexChip=document.querySelector('[data-group="regSex"] .chip.sel')?.dataset.v||'femme';
     const medsChips=[...document.querySelectorAll('#regMeds .chip.sel')].map(c=>c.dataset.v).filter(Boolean);
-    const sportLicense=(document.getElementById('regLicenseNum')?.value||'').trim()||null;
+    const sportLicense=(document.getElementById('regSportLicense')?.value||'').trim()||null;
     _roleData={weight,height,bmi,addr1,zip,city,address,ageChip,pregChip,sexChip,medsChips,sportLicense};
   }
   if(role==='club'){
@@ -9222,13 +9273,13 @@ function showVerificationPanel(){
       📬 <b>Codes envoyés</b> — Vérifiez votre boîte email et vos SMS.
     </div>
     <div style="margin-bottom:14px">
-      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code email <span style="color:#666;font-weight:400">(${pendingReg.email})</span></label>
+      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code email <span style="color:#666;font-weight:400">(${esc(pendingReg.email)})</span></label>
       <input id="verifyEmailCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
         style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
         oninput="this.value=this.value.replace(/\D/g,'')">
     </div>
     <div style="margin-bottom:20px">
-      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code SMS <span style="color:#666;font-weight:400">(${telDisplay})</span></label>
+      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code SMS <span style="color:#666;font-weight:400">(${esc(telDisplay)})</span></label>
       <input id="verifyPhoneCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
         style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
         oninput="this.value=this.value.replace(/\D/g,'')">
@@ -9390,7 +9441,7 @@ function searchProClubs(q){
   const all=[...new Set([...ALL_CLUBS,...regClubs])];
   const filtered=all.filter(c=>c.toLowerCase().includes(q.toLowerCase())).slice(0,8);
   if(!filtered.length){if(res)res.style.display='none';return;}
-  res.innerHTML=filtered.map(c=>`<div onclick="addProClub('${c.replace(/'/g,"\\'")}',this)" style="padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">${c}</div>`).join('');
+  res.innerHTML=filtered.map(c=>`<div onclick="addProClub('${c.replace(/'/g,"\\'")}',this)" style="padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">${esc(c)}</div>`).join('');
   res.style.display='block';
 }
 function addProClub(nom,el){
@@ -9796,19 +9847,19 @@ function renderProfile(){
     html+=`
     <div class="profile-section">
       <h3>💊 Mon officine</h3>
-      <div class="pfield"><span class="pk">Nom</span><span class="pv">${ph.nom||'—'}</span></div>
-      <div class="pfield"><span class="pk">Adresse</span><span class="pv">${ph.adresse||''} ${ph.ville||''}</span></div>
-      ${ph.tel?`<div class="pfield"><span class="pk">Téléphone</span><span class="pv"><a href="tel:${ph.tel.replace(/\s/g,'')}" style="color:var(--ink)">${ph.tel}</a></span></div>`:''}
-      ${ph.emailOfficine?`<div class="pfield"><span class="pk">Email</span><span class="pv">${ph.emailOfficine}</span></div>`:''}
-      ${ph.horaires?`<div class="pfield"><span class="pk">Horaires</span><span class="pv">${ph.horaires}</span></div>`:''}
+      <div class="pfield"><span class="pk">Nom</span><span class="pv">${esc(ph.nom||'—')}</span></div>
+      <div class="pfield"><span class="pk">Adresse</span><span class="pv">${esc(ph.adresse||'')} ${esc(ph.ville||'')}</span></div>
+      ${ph.tel?`<div class="pfield"><span class="pk">Téléphone</span><span class="pv"><a href="tel:${esc(ph.tel.replace(/\s/g,''))}" style="color:var(--ink)">${esc(ph.tel)}</a></span></div>`:''}
+      ${ph.emailOfficine?`<div class="pfield"><span class="pk">Email</span><span class="pv">${esc(ph.emailOfficine)}</span></div>`:''}
+      ${ph.horaires?`<div class="pfield"><span class="pk">Horaires</span><span class="pv">${esc(ph.horaires)}</span></div>`:''}
     </div>
     <div class="profile-section">
       <h3>📋 Identifiants réglementaires</h3>
-      ${ph.ordreNum?`<div class="pfield"><span class="pk">N° Ordre</span><span class="pv">${ph.ordreNum}</span></div>`:''}
-      ${ph.rcs?`<div class="pfield"><span class="pk">RCS</span><span class="pv">${ph.rcs}</span></div>`:''}
-      <div class="pfield"><span class="pk">FINESS</span><span class="pv">${ph.finess||'—'}</span></div>
-      <div class="pfield"><span class="pk">RPPS</span><span class="pv">${ph.rpps||'—'}</span></div>
-      <div class="pfield"><span class="pk">SIRET</span><span class="pv">${ph.siret||'—'}</span></div>
+      ${ph.ordreNum?`<div class="pfield"><span class="pk">N° Ordre</span><span class="pv">${esc(ph.ordreNum)}</span></div>`:''}
+      ${ph.rcs?`<div class="pfield"><span class="pk">RCS</span><span class="pv">${esc(ph.rcs)}</span></div>`:''}
+      <div class="pfield"><span class="pk">FINESS</span><span class="pv">${esc(ph.finess||'—')}</span></div>
+      <div class="pfield"><span class="pk">RPPS</span><span class="pv">${esc(ph.rpps||'—')}</span></div>
+      <div class="pfield"><span class="pk">SIRET</span><span class="pv">${esc(ph.siret||'—')}</span></div>
     </div>
     <div class="profile-section">
       <h3>📦 Abonnement Livraisanté</h3>
@@ -9829,13 +9880,13 @@ function renderProfile(){
       <h3>🛵 Mon profil livreur</h3>
       <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom)}</span></div>
       <div class="pfield"><span class="pk">Véhicule</span><span class="pv">${esc(d.vehicle||'—')}</span></div>
-      <div class="pfield"><span class="pk">SIRET</span><span class="pv">${d.siret||'—'}</span></div>
-      <div class="pfield"><span class="pk">Code parrain</span><span class="pv highlight">${d.refCode||'—'}</span></div>
+      <div class="pfield"><span class="pk">SIRET</span><span class="pv">${esc(d.siret||'—')}</span></div>
+      <div class="pfield"><span class="pk">Code parrain</span><span class="pv highlight">${esc(d.refCode||'—')}</span></div>
     </div>
     <div class="profile-section">
       <h3>🎁 Parrainage</h3>
       <div class="pfield"><span class="pk">Gains cumulés</span><span class="pv" style="color:var(--ok);font-family:'Bricolage Grotesque';font-size:20px">€${total}</span></div>
-      ${(d.referrals||[]).map(r=>`<div class="pfield"><span class="pk">${r.date}</span><span class="pv">${r.name} · <span style="color:var(--ok)">+€${r.earned||50}</span></span></div>`).join('')}
+      ${(d.referrals||[]).map(r=>`<div class="pfield"><span class="pk">${esc(r.date)}</span><span class="pv">${esc(r.name)} · <span style="color:var(--ok)">+€${r.earned||50}</span></span></div>`).join('')}
     </div>
     <div style="margin-top:10px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('livreur')">Accéder à mon espace →</button></div>`;
   }
@@ -10517,7 +10568,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   initDemoAccounts();
   restoreSession();
   // ── Sécurité production : interdire le fallback localStorage en mode live ──
-  if(window.LS_SB?.SB_READY && location.hostname === 'livraisante.fr'){
+  if(window.LS_SB?.SB_READY && ['livraisante.fr','www.livraisante.fr'].includes(location.hostname)){
     // Purge les données de santé stockées localement si on est sur le vrai domaine
     const sensitiveKeys = ['livraisante_accounts','livraisante_session','livraisante_cart','livraisante_healthProfile'];
     sensitiveKeys.forEach(k => localStorage.removeItem(k));
@@ -10832,38 +10883,39 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
   win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
   <title>Facture ${m.label} — Livraisanté</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;max-width:760px;margin:32px auto 60px;color:#0D0E09;font-size:14px;padding:0 20px}
+    body{font-family:'Hanken Grotesk',sans-serif;max-width:760px;margin:32px auto 60px;color:#0D0E09;font-size:14px;padding:0 20px}
     .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0D0E09;padding-bottom:18px;margin-bottom:24px}
-    .logo{font-size:26px;font-weight:900;letter-spacing:-1px}
-    .logo span{color:#7CB518}
-    .meta{text-align:right;font-size:12px;color:#666}
-    .meta strong{font-size:20px;color:#0D0E09;display:block;margin-bottom:4px}
-    h2{font-size:16px;font-weight:700;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid #eee;text-transform:uppercase;letter-spacing:.5px}
+    .logo{font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em}
+    .logo span{color:#C2F23E;-webkit-text-stroke:.5px #0D0E09}
+    .meta{text-align:right;font-size:12px;color:#888}
+    .meta strong{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;color:#0D0E09;display:block;margin-bottom:4px}
+    h2{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;margin:24px 0 12px;padding-bottom:6px;border-bottom:1px solid #eee;text-transform:uppercase;letter-spacing:.05em}
     .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-    .kpi{background:#f8f8f6;border-radius:10px;padding:14px;text-align:center}
-    .kpi .val{font-size:22px;font-weight:900;color:#0D0E09}
+    .kpi{background:#F2F2F0;border-radius:10px;padding:14px;text-align:center}
+    .kpi .val{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:#0D0E09}
     .kpi .lbl{font-size:11px;color:#888;font-weight:600;margin-top:3px}
-    .kpi.green .val{color:#16a34a}
+    .kpi.green .val{color:#6E9A0A}
     table{width:100%;border-collapse:collapse;font-size:12.5px}
     th{background:#0D0E09;color:white;padding:9px 10px;text-align:left;font-weight:700}
     td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle}
     tr:nth-child(even) td{background:#fafaf8}
-    tfoot td{font-weight:700;background:#f0f0ee;padding:10px}
+    tfoot td{font-weight:700;background:#F2F2F0;padding:10px}
     .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
     .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:16px}
-    .b2b2c{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-top:20px}
-    .b2b2c .ttl{font-weight:700;color:#16a34a;margin-bottom:6px}
+    .b2b2c{background:#F2F2F0;border:1.5px solid #0D0E09;border-radius:10px;padding:14px;margin-top:20px}
+    .b2b2c .ttl{font-weight:800;color:#0D0E09;margin-bottom:6px}
     @media print{body{margin:0;max-width:100%}.no-print{display:none}@page{margin:18mm}}
   </style></head>
   <body>
-  <div class="no-print" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;display:flex;align-items:center;justify-content:space-between">
+  <div class="no-print" style="background:#F2F2F0;border:1.5px solid #0D0E09;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;display:flex;align-items:center;justify-content:space-between">
     <span>📄 Cliquez sur <b>Imprimer</b> puis choisissez <b>Enregistrer en PDF</b></span>
-    <button onclick="window.print()" style="font-family:inherit;font-weight:700;font-size:13px;padding:8px 18px;background:#16a34a;color:white;border:none;border-radius:8px;cursor:pointer">🖨 Imprimer / PDF</button>
+    <button onclick="window.print()" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;padding:9px 18px;background:#C2F23E;color:#0D0E09;border:2px solid #0D0E09;border-radius:10px;cursor:pointer;box-shadow:2px 2px 0 #0D0E09">🖨 Imprimer / PDF</button>
   </div>
   <div class="header">
     <div>
-      <div class="logo">Livrais<span>anté</span></div>
+      <div class="logo">Livraisan<span>té</span></div>
       <div style="font-size:12px;color:#888;margin-top:4px">livraisante.fr · livraison de médicaments</div>
       ${_eLabel?`<div style="font-size:12px;margin-top:6px"><b>${_eType}</b> : ${_eLabel}</div>`:''}
     </div>
@@ -11426,9 +11478,9 @@ async function populateHpClubDropdown(){
   const sel=document.getElementById('hpClubEdit'); if(!sel) return;
   if(window.LS_SB?.SB_READY){
     const sb=window.LS_SB.getSB(); if(!sb) return;
-    const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');
+    const {data}=await sb.from('clubs_public').select('id,nom,ville').order('nom');
     if(data&&data.length){
-      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${c.id}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
+      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
     }
   }
 }
@@ -12013,10 +12065,8 @@ if('serviceWorker' in navigator){
     <div class="chips" data-group="oauthRole" style="flex-wrap:wrap;gap:8px;margin-bottom:16px">
       <button class="chip sel" data-v="patient" onclick="selectOAuthRoleChip(this)">🩹 Patient</button>
       <button class="chip" data-v="livreur" onclick="selectOAuthRoleChip(this)">🛵 Livreur</button>
-      <button class="chip" data-v="professionnel_sante" onclick="selectOAuthRoleChip(this)">🩺 Prof. santé</button>
-      <button class="chip" data-v="pharmacien" onclick="selectOAuthRoleChip(this)">💊 Pharmacien</button>
-      <button class="chip" data-v="club" onclick="selectOAuthRoleChip(this)">🏆 Club sportif</button>
     </div>
+    <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:16px">Vous êtes pharmacien, professionnel de santé ou club sportif ? <a href="#" onclick="document.getElementById('oauthRoleOverlay').style.display='none';enterRole('registerScreen');return false;" style="color:var(--ink);font-weight:700;text-decoration:underline">Créez votre dossier via le formulaire d'inscription →</a></div>
     <div id="oauthLicenseGroup" style="display:none;margin-bottom:16px">
       <label class="form-label" style="font-size:14px">🏅 Numéro de licence sportive <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(optionnel)</span></label>
       <input type="text" id="oauthSportLicense" placeholder="Ex. 12345678 · FFFootball, FFRugby, FFN…" style="padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box">
@@ -12159,7 +12209,7 @@ async function showClubSelectionModal(){
   if(window.LS_SB?.SB_READY&&!_clubsList.length){
     const sb=window.LS_SB.getSB();
     if(sb){
-      const {data}=await sb.from('clubs').select('id,nom,ville,sport,federation').order('nom');
+      const {data}=await sb.from('clubs_public').select('id,nom,ville,federation').order('nom');
       _clubsList=data||[];
     }
   }
@@ -12173,7 +12223,7 @@ function filterClubs(query){
   const matches=_clubsList.filter(c=>(c.nom||'').toLowerCase().includes(q)||(c.ville||'').toLowerCase().includes(q));
   if(!matches.length){results.innerHTML='<div style="padding:12px 14px;font-size:14px;color:var(--ink-soft)">Aucun club trouvé</div>';results.style.display='block';return;}
   results.innerHTML=matches.slice(0,10).map(c=>`
-    <button onclick="selectClub('${c.id}','${esc(c.nom)}','${esc(c.ville||'')}','${esc(c.sport||'')}',this)"
+    <button onclick="selectClub('${esc(c.id)}','${esc(c.nom)}','${esc(c.ville||'')}','${esc(c.sport||'')}',this)"
       style="width:100%;text-align:left;padding:12px 14px;border:none;background:transparent;cursor:pointer;border-bottom:1px solid var(--line);font-family:inherit">
       <div style="font-weight:700;font-size:14px">${esc(c.nom)}</div>
       <div style="font-size:12px;color:var(--ink-soft)">${[c.ville,c.sport,c.federation].filter(Boolean).map(esc).join(' · ')}</div>

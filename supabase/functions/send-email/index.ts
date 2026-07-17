@@ -3,33 +3,91 @@
 // Env vars requis :
 //   RESEND_API_KEY  — re_... (depuis resend.com)
 //   FROM_EMAIL      — noreply@livraisante.fr (domaine vérifié sur Resend)
+//   SUPABASE_URL / SUPABASE_ANON_KEY — pour vérifier le JWT de l'appelant (auth requise
+//   sur 'preparation'/'validation', voir correctif ci-dessous)
+
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://www.livraisante.fr',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Échappe le HTML pour éviter toute injection dans le corps de l'email — les champs
+// `order.*` (nom patient, nom pharmacie, médicaments, adresse) viennent tels quels du
+// client et ne sont pas des identifiants système, donc ne pas les échapper permettrait
+// d'injecter des liens de phishing ou de casser la mise en page de l'email.
+function escapeHtml(v: unknown): string {
+  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { type, to, order } = await req.json();
-    // type: 'preparation' | 'validation'
-    // to: 'patient@email.fr'
+    const { type, to, order: rawOrder } = await req.json();
+    // type: 'preparation' | 'validation' | 'candidature_pharmacie'
+    // to: 'patient@email.fr' (ignoré pour 'candidature_pharmacie', destinataire fixé côté serveur)
     // order: { id, patient_nom, medicaments, montant, adresse, pharmacy_nom, date }
+
+    // ── Correctif (2026-07-16) — ce endpoint permettait à n'importe qui (y compris
+    // anonyme) de faire relayer un email arbitraire par le domaine Livraisanté vers
+    // n'importe quelle adresse `to` (phishing/spam), avec du contenu non échappé.
+    // 'candidature_pharmacie' reste accessible sans authentification (formulaire
+    // public de candidature pharmacie, destinataire fixé côté serveur = ADMIN_EMAIL,
+    // donc pas de relai arbitraire possible). En revanche 'preparation'/'validation'
+    // envoient vers une adresse `to` fournie par le client : on exige désormais un
+    // utilisateur authentifié pour ces deux types.
+    if (type === 'preparation' || type === 'validation') {
+      const authHeader = req.headers.get('Authorization') || '';
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+      if (!authHeader || !supabaseUrl || !anonKey) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      }
+      const anonClient = createClient(supabaseUrl, anonKey);
+      const { data: { user } } = await anonClient.auth.getUser(authHeader.replace(/^Bearer /, ''));
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      }
+      if (!to || !EMAIL_RE.test(to)) {
+        return new Response(JSON.stringify({ error: 'Adresse destinataire invalide' }), { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // Échappe tous les champs texte libres avant de les passer aux templates HTML
+    const order = rawOrder ? {
+      ...rawOrder,
+      patient_nom: escapeHtml(rawOrder.patient_nom),
+      pharmacy_nom: escapeHtml(rawOrder.pharmacy_nom),
+      medicaments: escapeHtml(rawOrder.medicaments),
+      adresse: escapeHtml(rawOrder.adresse),
+    } : rawOrder;
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
     const FROM = Deno.env.get('FROM_EMAIL') || 'noreply@livraisante.fr';
+    const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'contact@livraisante.fr';
 
     let subject = '';
     let html = '';
+    let recipients: string[];
 
     if (type === 'preparation') {
       subject = `🔄 Votre commande est en préparation — Livraisanté`;
       html = emailPreparation(order);
+      recipients = [to];
     } else if (type === 'validation') {
       subject = `✅ Commande validée — Facture #${order.id?.slice(0, 8).toUpperCase()} — Livraisanté`;
       html = emailValidation(order);
+      recipients = [to];
+    } else if (type === 'candidature_pharmacie') {
+      // Notification interne — destinataire fixé côté serveur (pas de valeur `to` fournie
+      // par le client) pour éviter tout détournement de ce endpoint en relai d'emails arbitraires.
+      subject = `🏥 Nouvelle candidature pharmacie — ${order?.pharmacy_nom || 'sans nom'}`;
+      html = emailCandidaturePharmacie(order);
+      recipients = [ADMIN_EMAIL];
     } else {
       return new Response(JSON.stringify({ error: 'Type inconnu' }), { status: 400, headers: corsHeaders });
     }
@@ -37,7 +95,7 @@ Deno.serve(async (req) => {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: `Livraisanté <${FROM}>`, to: [to], subject, html }),
+      body: JSON.stringify({ from: `Livraisanté <${FROM}>`, to: recipients, subject, html }),
     });
 
     const data = await res.json();
@@ -80,6 +138,29 @@ function emailPreparation(o: any): string {
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
     Référence commande : <strong>${o.id?.slice(0, 8).toUpperCase() || '—'}</strong> · ${date}<br>
     © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
+  </div>
+</div>`;
+}
+
+// ── Template : Notification interne — nouvelle candidature pharmacie ──
+function emailCandidaturePharmacie(o: any): string {
+  const date = new Date().toLocaleString('fr-FR');
+  return `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:#0D0E09;padding:24px 32px;text-align:center">
+    <span style="font-size:24px;font-weight:900;color:#C2F23E">Livraisanté — Admin</span>
+  </div>
+  <div style="padding:32px">
+    <div style="background:#fef9c3;border-left:4px solid #eab308;border-radius:10px;padding:14px 18px;margin-bottom:22px;font-size:14px;font-weight:700;color:#854d0e">
+      🏥 Nouvelle candidature pharmacie reçue — à traiter sous 24h
+    </div>
+    <div style="font-size:14px;color:#333;line-height:1.8;white-space:pre-wrap;font-family:monospace;background:#f8f8f8;border-radius:10px;padding:16px">
+Pharmacie   : ${o.pharmacy_nom || '—'}
+Adresse     : ${o.adresse || '—'}
+Titulaire   : ${o.patient_nom || '—'}
+${o.medicaments || ''}
+    </div>
+    <p style="font-size:12px;color:#999;margin-top:20px">Reçu le ${date} · Dossier stocké dans la table <code>pharmacy_applications</code> (Dashboard Supabase → Table Editor).</p>
   </div>
 </div>`;
 }

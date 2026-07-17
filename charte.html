@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Livraisanté — Charte Graphique</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0D0E09; --lime:#C2F23E; --lime-deep:#6E9A0A;
+  --white:#FFFFFF; --grey:#F2F2F0; --mid:#888880;
+  --serif:'Bricolage Grotesque',sans-serif;
+  --sans:'Hanken Grotesk',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--grey);color:var(--ink)}
+.page{max-width:1000px;margin:0 auto;padding:60px 32px}
+
+/* Sections */
+.section{margin-bottom:72px}
+.section-label{font-size:10px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--mid);margin-bottom:14px}
+.section-title{font-family:var(--serif);font-size:32px;font-weight:800;letter-spacing:-.03em;margin-bottom:32px;line-height:1}
+
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+/* Cards */
+.card{background:var(--white);border:2px solid var(--ink);border-radius:18px;padding:28px;box-shadow:4px 4px 0 var(--ink)}
+.card-flush{background:var(--white);border:2px solid var(--ink);border-radius:18px;overflow:hidden}
+
+/* Logo SVG inline */
+.logo-mark{display:inline-flex;align-items:center;justify-content:center}
+
+/* Color swatches */
+.swatch{border-radius:14px;height:120px;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;font-size:12px;font-weight:700}
+.swatch-label{font-size:10px;opacity:.7;margin-bottom:3px}
+.swatch-hex{font-family:monospace;font-size:14px;font-weight:800}
+
+/* Type specimens */
+.type-sample{padding:28px;border-bottom:1px solid #eee}
+.type-sample:last-child{border-bottom:none}
+.type-meta{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);margin-bottom:10px}
+
+/* Buttons */
+.btn{font-family:var(--sans);font-weight:800;font-size:15px;padding:13px 24px;border-radius:12px;cursor:pointer;border:2px solid var(--ink);display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--lime);color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.btn-secondary{background:var(--ink);color:var(--white);box-shadow:3px 3px 0 #3a3b34}
+.btn-ghost{background:transparent;color:var(--ink)}
+
+/* Badge */
+.badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:4px}
+.badge-lime{background:var(--lime);color:var(--ink)}
+.badge-dark{background:var(--ink);color:var(--lime)}
+.badge-outline{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+
+/* Product card UI */
+.ui-card{background:var(--white);border:2px solid var(--ink);border-radius:14px;padding:16px;margin-bottom:12px}
+.ui-topbar{background:var(--ink);padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+
+/* Cover */
+.cover{background:var(--ink);color:var(--white);border-radius:20px;padding:60px 48px;margin-bottom:60px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;bottom:-40px;right:-40px;width:300px;height:300px;background:var(--lime);border-radius:50%;opacity:.08}
+
+@media(max-width:640px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div style="font-size:10px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:20px">Charte Graphique Officielle</div>
+    <div style="display:flex;align-items:center;gap:28px;margin-bottom:32px">
+      <!-- Logo mark inline -->
+      <svg viewBox="0 0 100 100" width="80" height="80" style="flex:0 0 auto;border-radius:18px;background:white">
+        <rect width="100" height="100" rx="22" fill="white"/>
+        <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+        <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+        <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+        <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+      </svg>
+      <div>
+        <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:52px;font-weight:800;letter-spacing:-.04em;line-height:.95;color:white">Livraisan<span style="color:#C2F23E">té</span></h1>
+        <p style="color:rgba(255,255,255,.5);font-size:14px;margin-top:8px;letter-spacing:.08em;text-transform:uppercase;font-weight:600">Santé au quotidien · Livraison</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,auto);gap:40px;width:fit-content">
+      <div><div style="font-size:11px;color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Version</div><div style="font-weight:800;font-size:18px;color:white">1.0</div></div>
+      <div><div style="font-size:11px;color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Concept</div><div style="font-weight:800;font-size:18px;color:white">B — Croix Dynamique</div></div>
+      <div><div style="font-size:11px;color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Palette</div><div style="font-weight:800;font-size:18px;color:white">N&amp;B + Lime</div></div>
+    </div>
+  </div>
+
+  <!-- ════════════ LOGO ════════════ -->
+  <div class="section">
+    <div class="section-label">01 — Logo</div>
+    <div class="section-title">La Croix Dynamique</div>
+
+    <div class="grid-2" style="margin-bottom:24px">
+      <!-- Logo complet sur blanc -->
+      <div class="card" style="display:flex;align-items:center;gap:20px">
+        <svg viewBox="0 0 100 100" width="72" height="72" style="flex:0 0 auto;border-radius:14px;background:white;border:2px solid #eee">
+          <rect width="100" height="100" rx="22" fill="white"/>
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:.95;color:#0D0E09">Livraisan<span style="color:#C2F23E;-webkit-text-stroke:.5px #0D0E09">té</span></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#888;margin-top:6px">Version principale · fond clair</div>
+        </div>
+      </div>
+
+      <!-- Logo sur fond sombre -->
+      <div class="card" style="background:#0D0E09;border-color:#0D0E09;display:flex;align-items:center;gap:20px">
+        <svg viewBox="0 0 100 100" width="72" height="72" style="flex:0 0 auto;border-radius:14px;background:#1a1b14">
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="white"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="white"/>
+          <rect x="38" y="38" width="28" height="24" fill="white"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="white"/>
+        </svg>
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:.95;color:white">Livraisan<span style="color:#C2F23E">té</span></div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:6px">Version inversée · fond sombre</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mark seul + tailles -->
+    <div class="card" style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">Icône 512px</div>
+        <svg viewBox="0 0 100 100" width="80" height="80" style="border-radius:18px;border:2px solid #eee;display:block">
+          <rect width="100" height="100" rx="22" fill="white"/>
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">192px</div>
+        <svg viewBox="0 0 100 100" width="56" height="56" style="border-radius:14px;border:2px solid #eee;display:block">
+          <rect width="100" height="100" rx="22" fill="white"/>
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">48px</div>
+        <svg viewBox="0 0 100 100" width="38" height="38" style="border-radius:10px;border:2px solid #eee;display:block">
+          <rect width="100" height="100" rx="22" fill="white"/>
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">20px</div>
+        <svg viewBox="0 0 100 100" width="20" height="20" style="border-radius:5px;border:2px solid #eee;display:block">
+          <rect width="100" height="100" rx="22" fill="white"/>
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="#0D0E09"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="#0D0E09"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="#0D0E09"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:200px;padding:16px;background:#f5f5f3;border-radius:12px">
+        <p style="font-size:12.5px;color:#555;line-height:1.6"><b>Zone d'exclusion :</b> laisser un espace blanc équivalent à la hauteur de la flèche lime autour du logo. Ne jamais déformer, recolorer ou séparer la flèche de la croix.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ COULEURS ════════════ -->
+  <div class="section">
+    <div class="section-label">02 — Palette</div>
+    <div class="section-title">Couleurs de la marque</div>
+    <div class="grid-4">
+      <div class="swatch" style="background:#0D0E09;color:white">
+        <div class="swatch-label">Encre · Primaire</div>
+        <div class="swatch-hex">#0D0E09</div>
+      </div>
+      <div class="swatch" style="background:#C2F23E;color:#0D0E09;border:1.5px solid #0D0E09">
+        <div class="swatch-label">Lime · Accent</div>
+        <div class="swatch-hex">#C2F23E</div>
+      </div>
+      <div class="swatch" style="background:#FFFFFF;color:#0D0E09;border:2px solid #0D0E09">
+        <div class="swatch-label">Blanc · Fond</div>
+        <div class="swatch-hex">#FFFFFF</div>
+      </div>
+      <div class="swatch" style="background:#F2F2F0;color:#0D0E09;border:1px solid #ddd">
+        <div class="swatch-label">Gris · Surfaces</div>
+        <div class="swatch-hex">#F2F2F0</div>
+      </div>
+    </div>
+    <div class="grid-4" style="margin-top:16px">
+      <div class="swatch" style="background:#6E9A0A;color:white;border-radius:14px;height:72px">
+        <div class="swatch-label">Lime profond</div>
+        <div class="swatch-hex">#6E9A0A</div>
+      </div>
+      <div class="swatch" style="background:#16A34A;color:white;border-radius:14px;height:72px">
+        <div class="swatch-label">Validation</div>
+        <div class="swatch-hex">#16A34A</div>
+      </div>
+      <div class="swatch" style="background:#DC2626;color:white;border-radius:14px;height:72px">
+        <div class="swatch-label">Erreur</div>
+        <div class="swatch-hex">#DC2626</div>
+      </div>
+      <div class="swatch" style="background:#888880;color:white;border-radius:14px;height:72px">
+        <div class="swatch-label">Texte secondaire</div>
+        <div class="swatch-hex">#888880</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ TYPOGRAPHIE ════════════ -->
+  <div class="section">
+    <div class="section-label">03 — Typographie</div>
+    <div class="section-title">Système de polices</div>
+    <div class="card-flush">
+      <div class="type-sample">
+        <div class="type-meta">Bricolage Grotesque ExtraBold 800 — Display / Headlines</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:52px;letter-spacing:-.04em;line-height:1">Votre santé<br>livrée.</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Bricolage Grotesque 600 — Sous-titres</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:28px;letter-spacing:-.02em">Conseil pharmaceutique personnalisé</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Hanken Grotesk 700 — Labels / UI</div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:18px">Produits conseils · Pharmacien validé · Livraison 1–3h</div>
+      </div>
+      <div class="type-sample">
+        <div class="type-meta">Hanken Grotesk 400 — Corps de texte</div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:400;font-size:16px;line-height:1.6;max-width:560px">Ces conseils visent des situations bénignes. Consultez un professionnel si les symptômes sont intenses, durent plus de 7 jours, ou en cas de grossesse. Validé par la Base de données publique des médicaments (ANSM).</div>
+      </div>
+      <div class="type-sample" style="background:#0D0E09;padding:20px 28px">
+        <div class="type-meta" style="color:rgba(255,255,255,.4)">Hanken Grotesk 800 — Caps Tracking / Labels techniques</div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#C2F23E">CRAT · BDPM · ANSM · Interactions médicamenteuses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ COMPOSANTS UI ════════════ -->
+  <div class="section">
+    <div class="section-label">04 — Composants UI</div>
+    <div class="section-title">Interface patient &amp; pharmacien</div>
+
+    <div class="grid-2">
+      <!-- Boutons -->
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:20px">Boutons</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <button class="btn btn-primary">+ Ajouter au panier</button>
+          <button class="btn btn-primary" style="background:#0D0E09;color:#C2F23E;border-color:#0D0E09">Envoyer ma demande →</button>
+          <button class="btn btn-secondary">⚙ Espace Pro</button>
+          <button class="btn btn-ghost">← Modifier ma sélection</button>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:20px">Badges &amp; étiquettes</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+          <span class="badge badge-lime">HAS</span>
+          <span class="badge badge-lime">OMS</span>
+          <span class="badge badge-lime">OMEDIT</span>
+          <span class="badge badge-dark">Prioritaire ⭐</span>
+          <span class="badge badge-dark">Premium 👑</span>
+          <span class="badge badge-outline">DM</span>
+          <span class="badge badge-outline">CA</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="background:#d7f0db;color:#16A34A;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800">✓ Validée</span>
+          <span style="background:#fcebe9;color:#DC2626;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800">✕ Refusée</span>
+          <span style="background:#fffbe6;color:#D97706;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800">⏱ En attente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topbar app -->
+    <div style="margin-top:24px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">Barre de navigation (application)</div>
+      <div class="ui-topbar">
+        <svg viewBox="0 0 100 100" width="36" height="36" style="border-radius:9px;background:rgba(255,255,255,.08);flex:0 0 auto">
+          <rect x="38" y="6" width="24" height="88" rx="12" fill="white"/>
+          <rect x="6" y="38" width="32" height="24" rx="12" fill="white"/>
+          <rect x="38" y="38" width="28" height="24" fill="white"/>
+          <path d="M62,38 L80,38 L96,50 L80,62 L62,62 Z" fill="#C2F23E"/>
+          <rect x="38" y="38" width="28" height="24" fill="white"/>
+        </svg>
+        <div style="flex:1">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;color:white;letter-spacing:-.03em">Livraisanté</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.05em">Santé du quotidien · Livraison</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:30px;font-size:11px;font-weight:700;font-family:inherit">⚙ Pro</button>
+          <div style="width:34px;height:34px;background:#C2F23E;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#0D0E09">M</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carte produit -->
+    <div style="margin-top:24px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">Carte produit (patient)</div>
+      <div class="grid-2">
+        <div class="ui-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div>
+              <div style="font-weight:800;font-size:15px;color:#0D0E09;margin-bottom:4px">Ergymag · Nutergia</div>
+              <div style="font-size:12px;color:#888;margin-bottom:8px">300 mg bisglycinate · 90 gél.</div>
+              <div style="display:flex;gap:6px">
+                <span class="badge badge-lime" style="font-size:9px">Reco HAS</span>
+                <span class="badge badge-outline" style="font-size:9px">CA</span>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;color:#0D0E09">€13.75</div>
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 13px;margin-top:6px">+ Ajouter</button>
+            </div>
+          </div>
+        </div>
+        <div class="ui-card" style="background:#f0faf2;border-color:#16A34A">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div>
+              <div style="font-weight:800;font-size:15px;color:#0D0E09;margin-bottom:4px">Lactibiane Référence</div>
+              <div style="font-size:12px;color:#888;margin-bottom:8px">30 gél. · 10 Md UFC · Pileje</div>
+              <div style="display:flex;gap:6px">
+                <span class="badge badge-lime" style="font-size:9px">OMS</span>
+                <span class="badge badge-outline" style="font-size:9px">CA</span>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;color:#0D0E09">€16.39</div>
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 13px;margin-top:6px;background:#16A34A;border-color:#16A34A;color:white">✓ Dans le panier</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panier -->
+    <div style="margin-top:24px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:12px">Panier &amp; total</div>
+      <div style="background:white;border:3px solid #0D0E09;border-radius:18px;overflow:hidden;box-shadow:5px 5px 0 #C2F23E">
+        <div style="background:#0D0E09;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;color:white">Panier 🛒</span>
+          <span style="background:#C2F23E;color:#0D0E09;font-size:11px;font-weight:900;padding:4px 10px;border-radius:30px">2 produits</span>
+        </div>
+        <div style="padding:0 20px">
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;font-size:14px"><span style="font-weight:700">Ergymag · Nutergia</span><span style="font-weight:700">€13.75</span></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;font-size:14px"><span style="font-weight:700">Lactibiane Référence</span><span style="font-weight:700">€16.39</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#f5f5f3;border-top:2px solid #0D0E09">
+          <div>
+            <div style="font-size:12px;color:#888">Livraison incluse · Don solidaire</div>
+            <div style="font-size:10px;color:#C2F23E;font-weight:700;-webkit-text-stroke:.3px #6E9A0A">🫁 Livraisanté reverse votre arrondi à Vaincre la Mucoviscidose</div>
+          </div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:900;font-size:32px;color:#0D0E09">€31.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ ICONOGRAPHIE ════════════ -->
+  <div class="section">
+    <div class="section-label">05 — Iconographie &amp; ton</div>
+    <div class="section-title">Principes de communication</div>
+    <div class="grid-3">
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:12px">🎯</div>
+        <div style="font-weight:800;font-size:16px;margin-bottom:8px">Clair &amp; Direct</div>
+        <p style="font-size:13px;color:#666;line-height:1.6">Conseils médicaux précis, prix unique sans surprise, validations claires. Pas d'ambiguïté dans la communication.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:12px">🛡️</div>
+        <div style="font-weight:800;font-size:16px;margin-bottom:8px">Sécurité avant tout</div>
+        <p style="font-size:13px;color:#666;line-height:1.6">Références CRAT, BDPM, ANSM systématiques. Chaque conseil est sourcé. La sécurité du patient prime toujours.</p>
+      </div>
+      <div class="card">
+        <div style="font-size:28px;margin-bottom:12px">⚡</div>
+        <div style="font-weight:800;font-size:16px;margin-bottom:8px">Rapide &amp; Fiable</div>
+        <p style="font-size:13px;color:#666;line-height:1.6">La flèche lime incarne la promesse : une réponse en moins de 5 min, une livraison en 1 à 3h. Tout est mesurable.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer charte -->
+  <div style="text-align:center;padding:32px;border-top:2px solid #0D0E09;margin-top:20px">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;color:#0D0E09">Livraisanté <span style="color:#C2F23E">·</span> Charte Graphique v1.0</div>
+    <div style="font-size:12px;color:#888;margin-top:8px">Pharmacie 115 — Grenoble · Juin 2026</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!-- Template backend Livraisanté — Commande en préparation -->
+<!-- Variables : {{PATIENT_NOM}} {{PHARMACY_NOM}} {{MEDICAMENTS}} {{MONTANT}} {{ADRESSE}} {{ORDER_REF}} {{DATE}} -->
+
+<div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:#0D0E09;padding:28px 32px;text-align:center">
+    <span style="font-size:28px;font-weight:900;color:#C2F23E;letter-spacing:-.5px">Livraisanté</span>
+  </div>
+  <div style="padding:36px 32px">
+    <div style="background:#fef9c3;border-left:4px solid #eab308;border-radius:10px;padding:14px 18px;margin-bottom:24px;font-size:14px;font-weight:700;color:#854d0e">
+      🔄 Votre commande est en cours de préparation
+    </div>
+    <h2 style="font-size:19px;font-weight:800;margin:0 0 8px;color:#0D0E09">Bonjour {{PATIENT_NOM}} 👋</h2>
+    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 20px">
+      La pharmacie <strong>{{PHARMACY_NOM}}</strong> prépare actuellement votre commande. Vous serez notifié(e) dès qu'un livreur prend en charge la livraison.
+    </p>
+    <div style="background:#f8f8f8;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+      <div style="font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:12px">Récapitulatif de commande</div>
+      <div style="font-size:13px;color:#555;font-family:monospace;white-space:pre-wrap">{{MEDICAMENTS}}</div>
+      <div style="border-top:1px solid #e5e7eb;margin-top:14px;padding-top:12px;display:flex;justify-content:space-between">
+        <span style="font-weight:700;color:#0D0E09">Total</span>
+        <span style="font-weight:800;font-size:17px;color:#0D0E09">{{MONTANT}}</span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#666;line-height:1.6">
+      📍 Livraison prévue à : <strong>{{ADRESSE}}</strong>
+    </div>
+  </div>
+  <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
+    Référence commande : <strong>{{ORDER_REF}}</strong> · {{DATE}}<br>
+    © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
+  </div>
+</div>
