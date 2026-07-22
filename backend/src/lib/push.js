@@ -1,6 +1,8 @@
 // Web Push (VAPID + chiffrement AES-GCM RFC 8291) — remplace supabase/functions/send-push
 // Porté de Deno vers Node.js (crypto.subtle natif depuis Node 20, disponible globalement).
-const prisma = require('./prisma');
+// push_subscriptions reste sur Supabase (architecture hybride) : lecture/suppression
+// via lib/supabaseDb.js, pas via Prisma (qui ne connaît que la base Clever Cloud).
+const { getPushSubscriptions, deletePushSubscription } = require('./supabaseDb');
 
 const subtle = globalThis.crypto.subtle;
 
@@ -81,9 +83,9 @@ async function encryptPayload(subscription, payload) {
 async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande' }) {
   const vapidPublic = process.env.VAPID_PUBLIC_KEY;
   const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
-  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:contact@livraisante.fr';
+  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:administratif@livraisante.fr';
 
-  const subs = await prisma.pushSubscription.findMany({ where: { userId } });
+  const subs = await getPushSubscriptions(userId);
   if (!subs.length) return { sent: 0 };
 
   const payload = JSON.stringify({ title, body, url, tag });
@@ -108,7 +110,7 @@ async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande'
       });
 
       if (res.status === 410 || res.status === 404) {
-        await prisma.pushSubscription.delete({ where: { id: sub.id } });
+        await deletePushSubscription(sub.id);
       } else if (res.ok || res.status === 201) {
         sent++;
       }

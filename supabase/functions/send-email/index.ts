@@ -21,6 +21,24 @@ function escapeHtml(v: unknown): string {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
 
+// ── Correctif audit sécurité 2026-07-23 (Élevé #6) ───────────────────
+// Le sujet de l'email `candidature_pharmacie` interpolait `order.pharmacy_nom`
+// (texte libre saisi sur un formulaire PUBLIC, non authentifié) directement
+// dans le sujet, sans le passer par `escapeHtml` (qui ne protège de toute façon
+// que le HTML, pas un en-tête d'email) ni aucune limite de longueur. Un CR/LF
+// dans ce champ pourrait tenter une injection d'en-têtes email (ex. Bcc:) selon
+// la façon dont l'API Resend traite le champ `subject` ; à défaut, un nom
+// anormalement long ou contenant des caractères de contrôle dégraderait le
+// sujet reçu par l'admin. Même règle appliquée à `order.id` (utilisé tel quel
+// dans les sujets 'preparation'/'validation') par prudence, même si sa forme
+// est normalement contrôlée en interne.
+// Fix : retirer tout caractère de contrôle (\r,\n,\t,\0) et borner la longueur
+// avant toute interpolation dans un sujet d'email (jamais dans un en-tête brut,
+// on passe par l'API JSON de Resend, mais on ne fait plus confiance à ça seul).
+function sanitizeForSubject(v: unknown, maxLen = 120): string {
+  return String(v ?? '').replace(/[\r\n\t\0]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLen);
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async (req) => {
@@ -40,6 +58,7 @@ Deno.serve(async (req) => {
     // donc pas de relai arbitraire possible). En revanche 'preparation'/'validation'
     // envoient vers une adresse `to` fournie par le client : on exige désormais un
     // utilisateur authentifié pour ces deux types.
+    let authedUserId: string | null = null;
     if (type === 'preparation' || type === 'validation') {
       const authHeader = req.headers.get('Authorization') || '';
       const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -52,9 +71,35 @@ Deno.serve(async (req) => {
       if (!user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
       }
+      authedUserId = user.id;
       if (!to || !EMAIL_RE.test(to)) {
         return new Response(JSON.stringify({ error: 'Adresse destinataire invalide' }), { status: 400, headers: corsHeaders });
       }
+    }
+
+    // ── Rate-limiting (audit 2026-07-23, Moyen) ───────────────────────────
+    // 'preparation'/'validation' sont authentifiés → clé sur l'utilisateur.
+    // 'candidature_pharmacie' est public (formulaire sans compte, pas de JWT) →
+    // clé sur l'IP, seul identifiant disponible pour limiter un abus du
+    // formulaire public (spam de la boîte admin). Échec de l'appel RPC
+    // lui-même = fail-open : le rate-limiting est une protection en
+    // profondeur, il ne doit pas bloquer un envoi légitime si l'infra a un
+    // souci passager.
+    if (type === 'preparation' || type === 'validation' || type === 'candidature_pharmacie') {
+      const rlBucket = authedUserId
+        ? `send-email:${authedUserId}`
+        : `send-email-candidature:${(req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'}`;
+      const rlMax = authedUserId ? 15 : 5;
+      const rlWindow = authedUserId ? 600 : 3600;
+      try {
+        const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
+        const { data: allowed, error: rlErr } = await supabaseAdmin.rpc('check_rate_limit', {
+          p_bucket: rlBucket, p_max_hits: rlMax, p_window_seconds: rlWindow,
+        });
+        if (!rlErr && allowed === false) {
+          return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez plus tard.' }), { status: 429, headers: corsHeaders });
+        }
+      } catch (_e) { /* fail-open volontaire, voir commentaire ci-dessus */ }
     }
 
     // Échappe tous les champs texte libres avant de les passer aux templates HTML
@@ -68,7 +113,7 @@ Deno.serve(async (req) => {
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
     const FROM = Deno.env.get('FROM_EMAIL') || 'noreply@livraisante.fr';
-    const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'contact@livraisante.fr';
+    const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'administratif@livraisante.fr';
 
     let subject = '';
     let html = '';
@@ -79,13 +124,15 @@ Deno.serve(async (req) => {
       html = emailPreparation(order);
       recipients = [to];
     } else if (type === 'validation') {
-      subject = `✅ Commande validée — Facture #${order.id?.slice(0, 8).toUpperCase()} — Livraisanté`;
+      const refId = sanitizeForSubject(order.id?.slice(0, 8)?.toUpperCase(), 20);
+      subject = `✅ Commande validée — Facture #${refId} — Livraisanté`;
       html = emailValidation(order);
       recipients = [to];
     } else if (type === 'candidature_pharmacie') {
       // Notification interne — destinataire fixé côté serveur (pas de valeur `to` fournie
       // par le client) pour éviter tout détournement de ce endpoint en relai d'emails arbitraires.
-      subject = `🏥 Nouvelle candidature pharmacie — ${order?.pharmacy_nom || 'sans nom'}`;
+      const pharmaNom = sanitizeForSubject(order?.pharmacy_nom) || 'sans nom';
+      subject = `🏥 Nouvelle candidature pharmacie — ${pharmaNom}`;
       html = emailCandidaturePharmacie(order);
       recipients = [ADMIN_EMAIL];
     } else {
@@ -222,7 +269,7 @@ function emailValidation(o: any): string {
     </div>
 
     <p style="font-size:13px;color:#888;line-height:1.5">
-      Conservez cet email comme justificatif. Pour toute question : <a href="mailto:contact@livraisante.fr" style="color:#0D0E09">contact@livraisante.fr</a>
+      Conservez cet email comme justificatif. Pour toute question : <a href="mailto:administratif@livraisante.fr" style="color:#0D0E09">administratif@livraisante.fr</a>
     </p>
   </div>
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">

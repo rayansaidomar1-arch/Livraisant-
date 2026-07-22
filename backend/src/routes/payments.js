@@ -6,10 +6,23 @@ const { requireAuth } = require('../lib/auth');
 const { sendPushToUser } = require('../lib/push');
 const { sendEmail } = require('../lib/email');
 const { broadcast } = require('../lib/realtime');
+const { getProfile } = require('../lib/supabaseDb'); // profiles reste sur Supabase (architecture hybride)
 
 const router = express.Router();
 const webhookRouter = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+
+// Instanciation paresseuse : le SDK Stripe lève une exception dès le
+// constructeur si la clé est absente, ce qui ferait planter tout le
+// process au démarrage si STRIPE_SECRET_KEY n'est pas encore configurée
+// côté Clever Cloud. On ne construit le client qu'au premier appel réel.
+let stripe = null;
+function getStripe() {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY absente des variables d\'environnement');
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+  }
+  return stripe;
+}
 
 // ── POST /payments/create-intent ── (équivalent create-payment-intent) ──
 router.post('/create-intent', requireAuth, async (req, res) => {
@@ -22,7 +35,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
       if (!order) return res.status(403).json({ error: 'Order not found' });
       // Le montant est calculé côté serveur depuis la commande — le client ne peut pas le falsifier
       if (order.patientId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
-      finalAmount = Math.round(Number(order.totalEur || 0) * 100);
+      finalAmount = Math.round(Number(order.totalPrice || 0) * 100);
     } else {
       if (!amount || amount < 50) return res.status(400).json({ error: 'Montant minimum 0.50€' });
       finalAmount = Math.round(amount);
@@ -30,7 +43,7 @@ router.post('/create-intent', requireAuth, async (req, res) => {
 
     if (finalAmount < 50) return res.status(400).json({ error: 'Montant minimum 0.50€' });
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: finalAmount,
       currency,
       automatic_payment_methods: { enabled: true },
@@ -59,7 +72,7 @@ webhookRouter.post('/', async (req, res) => {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(req.body, signature, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid signature' });
@@ -71,7 +84,7 @@ webhookRouter.post('/', async (req, res) => {
         const pi = event.data.object;
         const orderId = pi.metadata?.orderId;
         if (orderId) {
-          const order = await prisma.order.findUnique({ where: { id: orderId }, include: { pharmacy: true, patient: true } });
+          const order = await prisma.order.findUnique({ where: { id: orderId }, include: { pharmacy: true } });
           if (order) {
             const updated = await prisma.order.update({
               where: { id: orderId },
@@ -86,16 +99,18 @@ webhookRouter.post('/', async (req, res) => {
               }).catch((err) => console.error('Push échoué:', err.message));
             }
 
-            if (order.patient?.email) {
+            // profiles reste sur Supabase (architecture hybride) — lecture directe.
+            const patientProfile = await getProfile(order.patientId).catch(() => null);
+            if (patientProfile?.email) {
               const montant = pi.amount / 100;
               const montantHT = (montant / 1.055).toFixed(2);
               const tva = (montant - Number(montantHT)).toFixed(2);
               sendEmail({
-                to: order.patient.email,
+                to: patientProfile.email,
                 subject: `✅ Commande validée — Facture #${orderId.slice(0, 8).toUpperCase()} — Livraisanté`,
                 templateKey: 'validation',
                 vars: {
-                  PATIENT_NOM: order.patient.nom || 'pour votre confiance',
+                  PATIENT_NOM: patientProfile.nom || 'pour votre confiance',
                   PHARMACY_NOM: order.pharmacy?.nom || '—',
                   MEDICAMENTS: typeof order.items === 'string' ? order.items : 'Médicaments',
                   ADRESSE: order.patientSnapshot?.adresse || '—',

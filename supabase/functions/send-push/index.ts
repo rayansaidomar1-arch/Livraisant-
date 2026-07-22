@@ -4,7 +4,7 @@
 // Required env vars:
 //   VAPID_PUBLIC_KEY   — clé publique VAPID (aussi dans config.js)
 //   VAPID_PRIVATE_KEY  — clé privée VAPID (jamais exposée côté client)
-//   VAPID_SUBJECT      — mailto:contact@livraisante.fr
+//   VAPID_SUBJECT      — mailto:administratif@livraisante.fr
 //   SERVICE_ROLE_KEY   — pour lire push_subscriptions sans RLS
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -89,6 +89,47 @@ function concatArrays(...arrays: Uint8Array[]) {
   return out;
 }
 
+// ── Correctif audit sécurité 2026-07-23 (Élevé #3) ───────────────────
+// Avant ce correctif : (1) le secret service_role était comparé par simple
+// égalité de chaîne JS (`===`), qui s'arrête au premier octet différent —
+// donc en théorie mesurable par timing pour deviner le secret octet par octet ;
+// (2) aucun des champs `title`/`body`/`url` fournis dans le corps de la requête
+// n'était validé (type/longueur), y compris sur le chemin service_role — si
+// `SERVICE_ROLE_KEY` fuitait un jour, ou si un appelant interne était compromis,
+// rien n'empêchait de pousser un contenu de phishing arbitraire (taille
+// illimitée, `url` non contrainte) à n'importe quel utilisateur.
+// Fix : comparaison en temps constant pour le secret, + validation stricte du
+// contenu (types, longueurs bornées, `url` restreinte à un chemin relatif —
+// même contrainte que celle déjà appliquée côté client par `sw.js` au clic).
+function timingSafeEqual(a: string, b: string): boolean {
+  const aBuf = new TextEncoder().encode(a);
+  const bBuf = new TextEncoder().encode(b);
+  const len = Math.max(aBuf.length, bBuf.length, 32);
+  let diff = aBuf.length ^ bBuf.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (i < aBuf.length ? aBuf[i] : 0) ^ (i < bBuf.length ? bBuf[i] : 0);
+  }
+  return diff === 0;
+}
+
+const MAX_TITLE_LEN = 100;
+const MAX_BODY_LEN = 300;
+const MAX_URL_LEN = 200;
+
+function validatePushContent(title: unknown, body: unknown, url: unknown): { ok: true; title: string; body: string; url: string } | { ok: false; error: string } {
+  if (typeof title !== 'string' || !title.trim() || title.length > MAX_TITLE_LEN) {
+    return { ok: false, error: `title invalide (chaîne non vide, max ${MAX_TITLE_LEN} caractères)` };
+  }
+  if (body !== undefined && body !== null && (typeof body !== 'string' || body.length > MAX_BODY_LEN)) {
+    return { ok: false, error: `body invalide (chaîne, max ${MAX_BODY_LEN} caractères)` };
+  }
+  const rawUrl = url ?? '/';
+  if (typeof rawUrl !== 'string' || rawUrl.length > MAX_URL_LEN || !rawUrl.startsWith('/') || rawUrl.startsWith('//')) {
+    return { ok: false, error: 'url invalide (doit être un chemin relatif commençant par /)' };
+  }
+  return { ok: true, title, body: typeof body === 'string' ? body : '', url: rawUrl };
+}
+
 // ── Main handler ─────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -96,11 +137,14 @@ Deno.serve(async (req) => {
   // Auth : service_role (serveur→serveur) OU JWT anon valide (auto-test, envoi à soi-même uniquement)
   const authHeader = req.headers.get('authorization') || '';
   const serviceKey  = Deno.env.get('SERVICE_ROLE_KEY') || '';
-  const isServiceRole = !!serviceKey && authHeader === `Bearer ${serviceKey}`;
+  const isServiceRole = !!serviceKey && timingSafeEqual(authHeader, `Bearer ${serviceKey}`);
 
   try {
     const { user_id, title, body, url = '/' } = await req.json();
-    if (!user_id || !title) return new Response(JSON.stringify({ error: 'user_id and title required' }), { status: 400, headers: corsHeaders });
+    if (!user_id) return new Response(JSON.stringify({ error: 'user_id required' }), { status: 400, headers: corsHeaders });
+
+    const validated = validatePushContent(title, body, url);
+    if (!validated.ok) return new Response(JSON.stringify({ error: validated.error }), { status: 400, headers: corsHeaders });
 
     if (!isServiceRole) {
       // Validation JWT anon : l'utilisateur ne peut pusher qu'à lui-même
@@ -113,15 +157,31 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
+
+    // ── Rate-limiting (audit 2026-07-23, Moyen) — clé sur le user_id CIBLE (le
+    // destinataire), pas l'appelant : ça borne les dégâts même dans le pire cas
+    // (SERVICE_ROLE_KEY qui fuit, cf. Élevé #3 ci-dessus), sans gêner le flux
+    // normal (stripe-webhook envoie ~1 push par évènement de commande).
+    // En échec (erreur RPC/infra), on n'échoue pas la requête : le rate-limiting
+    // est une protection en profondeur, pas la barrière de sécurité principale.
+    try {
+      const { data: allowed, error: rlErr } = await supabase.rpc('check_rate_limit', {
+        p_bucket: `send-push:${user_id}`, p_max_hits: 20, p_window_seconds: 600,
+      });
+      if (!rlErr && allowed === false) {
+        return new Response(JSON.stringify({ error: 'Trop de notifications envoyées, réessayez plus tard.' }), { status: 429, headers: corsHeaders });
+      }
+    } catch (_e) { /* fail-open volontaire, voir commentaire ci-dessus */ }
+
     const vapidPublic  = Deno.env.get('VAPID_PUBLIC_KEY')!;
     const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY')!;
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:contact@livraisante.fr';
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:administratif@livraisante.fr';
 
     // Récupère tous les abonnements de cet utilisateur
     const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('user_id', user_id);
     if (!subs || subs.length === 0) return new Response(JSON.stringify({ sent: 0 }), { headers: corsHeaders });
 
-    const payload = JSON.stringify({ title, body, url, tag: 'commande' });
+    const payload = JSON.stringify({ title: validated.title, body: validated.body, url: validated.url, tag: 'commande' });
     let sent = 0;
 
     for (const sub of subs) {

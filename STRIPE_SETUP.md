@@ -33,4 +33,4 @@ Pour tester sans facturation réelle, utiliser les clés `pk_test_...` / `sk_tes
 
 ---
 
-Pour toute question : contact@livraisante.fr
+Pour toute question : administratif@livraisante.fr

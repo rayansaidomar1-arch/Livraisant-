@@ -12,35 +12,64 @@
 //   orders:driver               — tous les livreurs actifs suivent les commandes disponibles
 
 const { WebSocketServer } = require('ws');
-const { verifyAccessToken } = require('./auth');
+const { verifyToken } = require('./auth'); // vérification JWT Supabase (JWKS) — async
+const { isActiveDriver } = require('./supabaseDb');
+const prisma = require('./prisma');
 
 let wss = null;
 // Map<topic, Set<ws>>
 const subscriptions = new Map();
 
+/**
+ * Autorisation par topic (correctif audit sécurité 2026-07-21) — jusqu'ici
+ * seul le topic `orders:patient:<id>` était vérifié ; `orders:pharmacy:<id>`
+ * et `orders:driver` étaient accessibles à N'IMPORTE QUI (même sans token),
+ * exposant en clair les commandes (adresses, médicaments) de n'importe
+ * quelle pharmacie et le flux des commandes disponibles pour les livreurs.
+ * Chaque abonnement est désormais vérifié contre le rôle applicatif
+ * (jamais celui du JWT — mêmes garanties que attachProfile/requireRole).
+ */
+async function isAuthorizedForTopic(ws, topic) {
+  if (topic.startsWith('orders:patient:')) {
+    return !!ws.user && topic === `orders:patient:${ws.user.sub}`;
+  }
+  if (topic.startsWith('orders:pharmacy:')) {
+    if (!ws.user) return false;
+    const pharmacyId = topic.slice('orders:pharmacy:'.length);
+    try {
+      const pharmacy = await prisma.pharmacy.findUnique({ where: { userId: ws.user.sub } });
+      return !!pharmacy && pharmacy.id === pharmacyId;
+    } catch (_) {
+      return false;
+    }
+  }
+  if (topic === 'orders:driver') {
+    if (!ws.user) return false;
+    try { return await isActiveDriver(ws.user.sub); } catch (_) { return false; }
+  }
+  // Topic inconnu : refusé par défaut (deny-by-default).
+  return false;
+}
+
 function attach(server) {
   wss = new WebSocketServer({ server, path: '/realtime' });
 
-  wss.on('connection', (ws, req) => {
+  wss.on('connection', async (ws, req) => {
     const url = new URL(req.url, 'http://localhost');
     const token = url.searchParams.get('token');
     let user = null;
     if (token) {
-      try { user = verifyAccessToken(token); } catch (_) { /* connexion anonyme refusée aux topics protégés */ }
+      try { user = await verifyToken(token); } catch (_) { /* connexion anonyme refusée aux topics protégés */ }
     }
     ws.user = user;
     ws.topics = new Set();
 
-    ws.on('message', (raw) => {
+    ws.on('message', async (raw) => {
       let msg;
       try { msg = JSON.parse(raw.toString()); } catch (_) { return; }
       if (msg.action === 'subscribe' && typeof msg.topic === 'string') {
-        // Autorisation basique : un patient ne peut s'abonner qu'à ses propres commandes,
-        // une pharmacie qu'à orders:pharmacy:<sa propre pharmacyId> (vérifié côté route au moment
-        // de la récupération de pharmacyId — ici on vérifie juste la cohérence userId pour le topic patient).
-        if (msg.topic.startsWith('orders:patient:') && (!ws.user || msg.topic !== `orders:patient:${ws.user.sub}`)) {
-          return; // refuse silencieusement
-        }
+        const allowed = await isAuthorizedForTopic(ws, msg.topic);
+        if (!allowed) return; // refuse silencieusement (pas d'oracle d'existence)
         if (!subscriptions.has(msg.topic)) subscriptions.set(msg.topic, new Set());
         subscriptions.get(msg.topic).add(ws);
         ws.topics.add(msg.topic);

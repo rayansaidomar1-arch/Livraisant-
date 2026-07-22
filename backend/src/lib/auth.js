@@ -1,84 +1,100 @@
-// Auth maison — remplace Supabase Auth (bcrypt + JWT)
-const bcrypt = require('bcryptjs');
+// ═══════════════════════════════════════════════════════════════════════
+// Vérification des JWT émis par Supabase Auth (architecture hybride —
+// Supabase reste l'unique fournisseur d'identité, ce backend ne gère plus
+// signup/signin/mot de passe/OAuth lui-même : tout ça est déjà couvert
+// nativement par Supabase Auth côté client, via js/supabase-client.js).
+//
+// Clés de signature ES256 asymétriques → vérification via l'endpoint JWKS
+// public (SUPABASE_JWKS_URL), pas de secret partagé à conserver ici.
+//
+// IMPORTANT (sécurité) : on ne fait JAMAIS confiance à un rôle porté par
+// le JWT (`user_metadata.role` est modifiable par l'utilisateur lui-même
+// via supabase.auth.updateUser — c'est exactement la faille d'escalade de
+// rôle corrigée côté Supabase le 17/07/2026, cf. handle_new_user /
+// prevent_role_self_escalation dans supabase/migrations). Le rôle
+// applicatif est systématiquement relu depuis `profiles` (Supabase),
+// seule source de vérité, via attachProfile/requireRole ci-dessous.
+// ═══════════════════════════════════════════════════════════════════════
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
+const { getProfile } = require('./supabaseDb');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+const client = jwksClient({
+  jwksUri: process.env.SUPABASE_JWKS_URL,
+  cache: true,
+  cacheMaxAge: 10 * 60 * 1000,
+  rateLimit: true,
+  jwksRequestsPerMinute: 10,
+});
 
-if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-  console.warn('⚠️  JWT_SECRET / JWT_REFRESH_SECRET absents des variables d\'environnement — à définir avant la mise en prod.');
+function getSigningKey(header, callback) {
+  client.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
+    callback(null, key.getPublicKey());
+  });
 }
 
-async function hashPassword(plain) {
-  return bcrypt.hash(plain, 12);
+function verifyToken(token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, getSigningKey, { algorithms: ['ES256', 'RS256'] }, (err, decoded) => {
+      if (err) return reject(err);
+      resolve(decoded);
+    });
+  });
 }
 
-async function verifyPassword(plain, hash) {
-  if (!hash) return false;
-  return bcrypt.compare(plain, hash);
-}
-
-function signAccessToken(user) {
-  return jwt.sign({ sub: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
-
-function signRefreshToken(user) {
-  return jwt.sign({ sub: user.id, type: 'refresh' }, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
-}
-
-function verifyAccessToken(token) {
-  return jwt.verify(token, JWT_SECRET);
-}
-
-function verifyRefreshToken(token) {
-  return jwt.verify(token, JWT_REFRESH_SECRET);
-}
-
-// Middleware Express : exige un JWT valide, attache req.user = { id, role, email }
-function requireAuth(req, res, next) {
+/** Middleware Express : exige un JWT Supabase valide, attache req.user = { id, email }. */
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Non authentifié' });
   try {
-    const payload = verifyAccessToken(token);
-    req.user = { id: payload.sub, role: payload.role, email: payload.email };
+    const decoded = await verifyToken(token);
+    req.user = { id: decoded.sub, email: decoded.email };
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
 }
 
-// Middleware : comme requireAuth mais n'échoue pas si absent (req.user reste undefined)
-function optionalAuth(req, res, next) {
+/** Comme requireAuth mais n'échoue pas si le token est absent/invalide. */
+async function optionalAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return next();
   try {
-    const payload = verifyAccessToken(token);
-    req.user = { id: payload.sub, role: payload.role, email: payload.email };
+    const decoded = await verifyToken(token);
+    req.user = { id: decoded.sub, email: decoded.email };
   } catch (_) { /* ignore */ }
   next();
 }
 
-// Middleware : restreint à certains rôles (ex. requireRole('pharmacie'))
-function requireRole(...roles) {
-  return (req, res, next) => {
-    if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
-    if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Accès refusé' });
+/**
+ * Charge le profil (dont le rôle faisant autorité) depuis Supabase et
+ * l'attache à req.profile. À utiliser après requireAuth.
+ */
+async function attachProfile(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
+  try {
+    const profile = await getProfile(req.user.id);
+    if (!profile) return res.status(404).json({ error: 'Profil introuvable' });
+    req.profile = profile;
+    req.user.role = profile.role; // pratique pour les routes qui lisent req.user.role
     next();
-  };
+  } catch (err) {
+    next(err);
+  }
 }
 
-module.exports = {
-  hashPassword,
-  verifyPassword,
-  signAccessToken,
-  signRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-  requireAuth,
-  optionalAuth,
-  requireRole,
-};
+/** Middleware : exige que le rôle en base Supabase (jamais celui du JWT) soit autorisé. */
+function requireRole(...roles) {
+  return [
+    attachProfile,
+    (req, res, next) => {
+      if (!roles.includes(req.profile.role)) return res.status(403).json({ error: 'Accès refusé' });
+      next();
+    },
+  ];
+}
+
+module.exports = { requireAuth, optionalAuth, attachProfile, requireRole, verifyToken };

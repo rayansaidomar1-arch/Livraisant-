@@ -1,0 +1,10 @@
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+node_modules/
+backend/node_modules/
+.DS_Store
+.claude/
+supabase/.temp/

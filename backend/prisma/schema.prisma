@@ -1,10 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════
-// Livraisanté — Schéma Prisma (Clever Cloud PostgreSQL)
-// Remplace la base Supabase. Statut des modèles :
-//   [CONFIRMÉ]    = copié depuis une migration SQL Supabase existante
-//   [À VÉRIFIER]  = déduit des policies RLS / du code frontend, colonnes
-//                   exactes à confirmer avec un export pg_dump --schema-only
-//                   de la base Supabase actuelle avant migration définitive
+// Livraisanté — Schéma Prisma (Clever Cloud PostgreSQL — Paris HDS)
+//
+// ARCHITECTURE HYBRIDE (2026-07-18) : Supabase reste l'IdP (auth.users,
+// JWT). Seules les données de santé sensibles + les tables qui en
+// dépendent directement vivent ici, dans la base certifiée HDS.
+// Le backend vérifie les JWT émis par Supabase (SUPABASE_JWT_SECRET) —
+// il ne gère PAS l'authentification lui-même.
+//
+// Toute colonne "xxxId" faisant référence à un utilisateur Supabase
+// (ex. userId, patientId) est un simple UUID (id de auth.users côté
+// Supabase) — PAS de foreign key SQL possible entre les deux bases.
+// L'intégrité référentielle vis-à-vis de l'identité est garantie côté
+// application (le backend fait confiance au `sub` du JWT vérifié).
+//
+// Restent sur Supabase (non dupliqués ici) : profiles (identité de
+// base), drivers, clubs, club_members, settlements, push_subscriptions.
 // ═══════════════════════════════════════════════════════════════════════
 
 generator client {
@@ -16,59 +26,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Auth maison (remplace auth.users de Supabase) ── [NOUVEAU]
-enum Role {
-  patient
-  pharmacie
-  livreur
-  club
-  pro
-  admin
+// ── health_profiles [NOUVEAU] — remplace profiles.health_profile (Supabase) ──
+// Une ligne par patient. Clé = id utilisateur Supabase (auth.users.id).
+model HealthProfile {
+  userId       String   @id @map("user_id")
+  ageRange     String?  @map("age_range")
+  pregnancy    String?
+  sex          String?
+  meds         Json?
+  weight       Decimal? @db.Decimal(5, 2)
+  height       Decimal? @db.Decimal(5, 2)
+  bmi          Decimal? @db.Decimal(5, 2)
+  address      String?
+  sportLicense String?  @map("sport_license")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("health_profiles")
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String?  @map("password_hash") // null si compte créé via Google OAuth uniquement
-  googleId     String?  @unique @map("google_id")
-  role         Role     @default(patient)
-  nom          String?
-  telephone    String?
-  emailConfirmedAt DateTime? @map("email_confirmed_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  pharmacy          Pharmacy?
-  driver            Driver?
-  club              Club?
-  healthProfessional HealthProfessional?
-  ordersAsPatient   Order[]             @relation("OrderPatient")
-  appointments      Appointment[]       @relation("AppointmentPatient")
-  clubMemberships   ClubMember[]
-  pushSubscriptions PushSubscription[]
-
-  @@map("users")
-}
-
-// ── pharmacies [À VÉRIFIER — colonnes nom/adresse/siret/etc. à confirmer] ──
+// ── pharmacies [CONFIRMÉ — colonnes alignées sur js/supabase-client.js + index.html] ──
 model Pharmacy {
   id         String   @id @default(uuid())
-  userId     String   @unique @map("user_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @unique @map("user_id") // id utilisateur Supabase (role pharmacien)
   nom        String?
   adresse    String?
   ville      String?
   codePostal String?  @map("code_postal")
   telephone  String?
   siret      String?
+  rpps       String?
+  rppsStatus String?  @map("rpps_status")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  orders  Order[]
+  orders Order[]
 
   @@map("pharmacies")
 }
 
-// ── orders [À VÉRIFIER — items/patient probablement en JSONB dans l'original] ──
+// ── orders [CONFIRMÉ — remplace le localStorage ORDERS ; colonnes lues dans index.html] ──
 enum OrderStatus {
   en_attente
   validee
@@ -79,127 +74,59 @@ enum OrderStatus {
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  patientId  String      @map("patient_id")
-  patient    User        @relation("OrderPatient", fields: [patientId], references: [id])
-  pharmacyId String?     @map("pharmacy_id")
-  pharmacy   Pharmacy?   @relation(fields: [pharmacyId], references: [id])
-  status     OrderStatus @default(en_attente)
-  items      Json?
-  patientSnapshot Json?  @map("patient_snapshot") // copie dénormalisée (nom, email, adresse) au moment de la commande
-  totalEur   Decimal?    @map("total_eur") @db.Decimal(10, 2)
-  trackId    String?     @map("track_id")
-  kind       String?
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
+  id              String      @id @default(uuid())
+  patientId       String      @map("patient_id") // id utilisateur Supabase (role patient)
+  pharmacyId      String?     @map("pharmacy_id")
+  pharmacy        Pharmacy?   @relation(fields: [pharmacyId], references: [id])
+  driverId        String?     @map("driver_id") // id utilisateur Supabase (role livreur), assigné à la prise en charge
+  status          OrderStatus @default(en_attente)
+  items           Json?
+  patientSnapshot Json?       @map("patient_snapshot") // copie dénormalisée (nom, email, adresse) au moment de la commande — évite un appel à Supabase pour notifier le patient
+  totalPrice      Decimal?    @map("total_price") @db.Decimal(10, 2)
+  deliveryFee     Decimal?    @map("delivery_fee") @db.Decimal(10, 2)
+  trackId         String?     @map("track_id")
+  kind            String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
 
+  @@index([patientId])
+  @@index([pharmacyId])
+  @@index([driverId])
+  @@index([status])
   @@map("orders")
 }
 
-// ── drivers [À VÉRIFIER] ──
-model Driver {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  active    Boolean  @default(true)
-  vehicule  String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("drivers")
-}
-
-// ── clubs [À VÉRIFIER] ──
-model Club {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nom       String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  members            ClubMember[]
-  healthProfessionals HealthProfessional[]
-
-  @@map("clubs")
-}
-
-// ── club_members [À VÉRIFIER] ──
-model ClubMember {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clubId    String   @map("club_id")
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  status    String?  @default("actif")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@unique([userId, clubId])
-  @@map("club_members")
-}
-
-// ── club_join_requests [À VÉRIFIER — structure encore inconnue] ──
-model ClubJoinRequest {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  clubId    String   @map("club_id")
-  status    String   @default("en_attente")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("club_join_requests")
-}
-
-// ── health_professionals [À VÉRIFIER] ──
+// ── health_professionals [CONFIRMÉ — colonnes alignées sur js/supabase-client.js] ──
 model HealthProfessional {
-  id         String   @id @default(uuid())
-  userId     String   @unique @map("user_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clubId     String?  @map("club_id")
-  club       Club?    @relation(fields: [clubId], references: [id])
-  specialite String?
-  validated  Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id                String   @id @default(uuid())
+  userId            String   @unique @map("user_id") // id utilisateur Supabase (role professionnel_sante)
+  clubId            String?  @map("club_id") // id club côté Supabase — pas de FK (base distincte)
+  profession        String?
+  rpps              String?
+  partnerClubs      Json?    @map("partner_clubs")
+  validatedByClub   Boolean  @default(false) @map("validated_by_club")
+  rejected          Boolean  @default(false)
+  createdAt         DateTime @default(now()) @map("created_at")
 
   appointments Appointment[]
 
   @@map("health_professionals")
 }
 
-// ── appointments [À VÉRIFIER] ──
+// ── appointments [CONFIRMÉ — colonnes alignées sur sbInsertAppointment] ──
 model Appointment {
-  id        String   @id @default(uuid())
-  patientId String   @map("patient_id")
-  patient   User     @relation("AppointmentPatient", fields: [patientId], references: [id])
-  proId     String   @map("pro_id")
-  pro       HealthProfessional @relation(fields: [proId], references: [id])
-  date      DateTime?
-  status    String?  @default("en_attente")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  patientId   String   @map("patient_id") // id utilisateur Supabase (role patient)
+  proId       String   @map("pro_id")
+  pro         HealthProfessional @relation(fields: [proId], references: [id])
+  clubId      String?  @map("club_id")
+  scheduledAt DateTime? @map("scheduled_at")
+  motif       String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([patientId])
+  @@index([proId])
   @@map("appointments")
-}
-
-// ── settlements [À VÉRIFIER — structure encore inconnue, table de règlement pharmacie/livreur] ──
-model Settlement {
-  id         String   @id @default(uuid())
-  targetType String   @map("target_type") // 'pharmacy' | 'driver'
-  targetId   String   @map("target_id")
-  montantEur Decimal  @map("montant_eur") @db.Decimal(10, 2)
-  periode    String?
-  status     String   @default("en_attente")
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@map("settlements")
-}
-
-// ── push_subscriptions [CONFIRMÉ — copié de 20260624000001_push_subscriptions.sql] ──
-model PushSubscription {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint  String
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@unique([userId, endpoint])
-  @@map("push_subscriptions")
 }

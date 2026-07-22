@@ -85,35 +85,250 @@ async function sbUpsertPharmacy(userId, pharmacyData){
   return { error: error?.message || null };
 }
 
-// ── Orders ───────────────────────────────────────────────────────
+// Table Supabase `pharmacies` (colonnes snake_case) <-> objet JS
+// `livraisante_pharmacy` utilisé partout dans index.html (camelCase :
+// priorityMode, priorityLabs, planName, signupTs, ...). Comme pour les
+// commandes, ces deux fonctions sont le seul point de traduction — les
+// réglages sans colonne dédiée (busyPattern, googleHours, googlePlaceId,
+// customAdvice, promoCode) sont rangés dans la colonne fourre-tout
+// `extra_settings` (jsonb) pour éviter de multiplier les migrations.
+function pharmacyRowToJs(row){
+  if(!row) return null;
+  const extra = row.extra_settings || {};
+  return {
+    id: row.id,
+    userId: row.user_id,
+    nom: row.nom,
+    adresse: row.adresse,
+    ville: row.ville,
+    cp: row.cp,
+    tel: row.tel,
+    email: row.email,
+    finess: row.finess,
+    rpps: row.rpps,
+    ordreNum: row.ordre_num,
+    siret: row.siret,
+    rcs: row.rcs,
+    iban: row.iban,
+    plan: row.plan,
+    period: row.period,
+    planName: row.plan_name,
+    priorityMode: row.priority_mode,
+    priorityLabs: row.priority_labs || [],
+    active_labs: row.active_labs || [], // conservé en snake_case : lu tel quel à la restauration de session
+    catalogMode: row.catalog_mode,
+    activeSubstances: row.active_substances || [],
+    signupTs: row.signup_ts ? new Date(row.signup_ts).getTime() : null,
+    lat: row.lat,
+    lon: row.lon,
+    horaires: row.horaires,
+    busyPattern: extra.busyPattern || null,
+    googleHours: extra.googleHours || null,
+    googlePlaceId: extra.googlePlaceId || null,
+    customAdvice: extra.customAdvice || [],
+    promoCode: extra.promoCode || null,
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : null,
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null
+  };
+}
 
-async function sbGetOrders(pharmacyId){
+function pharmacyJsToRow(ph){
+  return {
+    nom: ph.nom ?? null,
+    adresse: ph.adresse ?? null,
+    ville: ph.ville ?? null,
+    cp: ph.cp ?? null,
+    tel: ph.tel ?? null,
+    email: ph.email ?? null,
+    finess: ph.finess ?? null,
+    rpps: ph.rpps ?? null,
+    ordre_num: ph.ordreNum ?? null,
+    siret: ph.siret ?? null,
+    rcs: ph.rcs ?? null,
+    iban: ph.iban ?? null,
+    priority_mode: ph.priorityMode ?? null,
+    priority_labs: ph.priorityLabs || [],
+    active_labs: ph.active_labs || [],
+    catalog_mode: ph.catalogMode ?? null,
+    active_substances: ph.activeSubstances || [],
+    lat: ph.lat ?? null,
+    lon: ph.lon ?? null,
+    horaires: ph.horaires ?? null,
+    extra_settings: {
+      busyPattern: ph.busyPattern || null,
+      googleHours: ph.googleHours || null,
+      googlePlaceId: ph.googlePlaceId || null,
+      customAdvice: ph.customAdvice || [],
+      promoCode: ph.promoCode || null
+    }
+    // NB : plan / period / plan_name volontairement exclus du payload —
+    // verrouillés côté DB (trigger lock_pharmacy_plan_fields, migration
+    // 20260721000001) pour tout appelant qui n'est pas service_role.
+  };
+}
+
+// ── Orders ───────────────────────────────────────────────────────
+// Table Supabase `orders` (colonnes snake_case) <-> objet JS utilisé par
+// index.html (ORDERS[id] = {id,code,createdAt,kind,patient:{...},items,
+// status,driver,totalEur,codeValidated,substitution,arrival}). Ces deux
+// fonctions sont le seul point de traduction entre les deux formats —
+// index.html ne doit jamais construire une ligne `orders` à la main.
+
+function orderRowToJs(row){
+  if(!row) return null;
+  return {
+    id: row.id,
+    code: row.code,
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    kind: row.kind,
+    deliveryMode: row.delivery_mode,
+    patientId: row.patient_id,
+    pharmacyId: row.pharmacy_id,
+    patient: {
+      name: row.patient_name,
+      addr: row.patient_address,
+      pos: row.patient_pos || null,
+      donation: row.payment?.donation || null,
+      email: row.payment?.email || ''
+    },
+    items: row.items || [],
+    status: row.status,
+    driver: !!row.driver_id,
+    driverId: row.driver_id || null,
+    totalEur: (row.pricing && row.pricing.totalEur != null) ? row.pricing.totalEur : null,
+    deliveryFeeEur: (row.pricing && row.pricing.deliveryFeeEur != null) ? row.pricing.deliveryFeeEur : null,
+    pricing: row.pricing || null,
+    codeValidated: !!row.code_validated,
+    substitution: row.substitution || null,
+    arrival: row.arrival || null,
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null
+  };
+}
+
+function orderJsToInsertRow(o){
+  return {
+    id: o.id,
+    patient_id: o.patientId,
+    pharmacy_id: o.pharmacyId,
+    status: o.status || 'nouvelle',
+    items: o.items || [],
+    delivery_mode: o.deliveryMode || 'livraison',
+    patient_name: o.patient?.name || null,
+    patient_address: o.patient?.addr || null,
+    patient_pos: o.patient?.pos || null,
+    code: o.code || null,
+    kind: o.kind || 'santé',
+    // NB : `orders` n'a pas de colonnes `total_price`/`delivery_fee` dédiées — tout
+    // passe par ce JSONB `pricing` (voir migration du 2026-07-22 documentant le bug
+    // inverse : du code lisait des colonnes plates inexistantes et cassait les requêtes).
+    pricing: { totalEur: (o.totalEur != null ? o.totalEur : null), deliveryFeeEur: (o.deliveryFeeEur != null ? o.deliveryFeeEur : null) },
+    payment: { email: o.patient?.email || '', donation: o.patient?.donation || null }
+  };
+}
+
+/** Liste des pharmacies partenaires visibles publiquement (vue pharmacies_public) */
+async function sbGetPublicPharmacies(){
   const sb = getSB(); if(!sb) return [];
-  const { data } = await sb.from('orders').select('*').eq('pharmacy_id', pharmacyId).order('created_at', { ascending: false });
+  const { data } = await sb.from('pharmacies_public').select('*').order('nom', { ascending: true });
   return data || [];
 }
 
+/** Crée une commande — retourne { order (format JS), error } */
+async function sbInsertOrderFull(orderJs){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const row = orderJsToInsertRow(orderJs);
+  const { data, error } = await sb.from('orders').insert(row).select().single();
+  if(error) return { error: error.message };
+  return { order: orderRowToJs(data), error: null };
+}
+
+/** Commandes d'un patient (suivi "mes commandes") */
+async function sbGetPatientOrders(patientId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('orders').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
+  return (data || []).map(orderRowToJs);
+}
+
+/** Commandes d'une pharmacie (dashboard pharmacien) */
+async function sbGetOrdersForPharmacy(pharmacyId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('orders').select('*').eq('pharmacy_id', pharmacyId).order('created_at', { ascending: false });
+  return (data || []).map(orderRowToJs);
+}
+
+/** Commandes disponibles pour un livreur — vue à colonnes limitées
+ *  (id, pharmacy_id, status, created_at) tant que la commande n'est pas
+ *  prise en charge : la RLS `orders` interdit à un livreur de lire le détail
+ *  santé (médicaments, adresse patient) avant claim. */
+async function sbGetAvailableOrdersForDriver(){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('orders_driver_available').select('*').order('created_at', { ascending: false });
+  return data || [];
+}
+
+/** Commandes déjà prises en charge par ce livreur */
+async function sbGetMyDriverOrders(driverId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('orders').select('*').eq('driver_id', driverId).order('created_at', { ascending: false });
+  return (data || []).map(orderRowToJs);
+}
+
+/** Prise en charge atomique d'une commande disponible par un livreur.
+ *  Un seul UPDATE fixe driver_id ET status ensemble (exigé par la policy
+ *  RLS `orders_driver_claim` : WITH CHECK driver_id=auth.uid()). Si un autre
+ *  livreur a déjà pris la commande entre-temps, driver_id IS NULL ne matche
+ *  plus rien et .single() renvoie une erreur "no rows". */
+async function sbClaimOrder(orderId, driverId){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data, error } = await sb.from('orders')
+    .update({ driver_id: driverId, status: 'en_livraison' })
+    .eq('id', orderId)
+    .is('driver_id', null)
+    .in('status', ['validee','prete'])
+    .select().single();
+  if(error) return { error: error.message };
+  return { order: orderRowToJs(data), error: null };
+}
+
+/** Met à jour des colonnes arbitraires d'une commande (statut, code_validated,
+ *  substitution, arrival...). `patch` utilise déjà les noms de colonnes DB. */
+async function sbUpdateOrderFields(orderId, patch){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data, error } = await sb.from('orders').update(patch).eq('id', orderId).select().single();
+  if(error) return { error: error.message };
+  return { order: orderRowToJs(data), error: null };
+}
+
+/** Legacy — conservé pour compat (non utilisé par index.html à ce jour) */
+async function sbGetOrders(pharmacyId){ return sbGetOrdersForPharmacy(pharmacyId); }
 async function sbInsertOrder(order){
   const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
   const { error } = await sb.from('orders').insert(order);
   return { error: error?.message || null };
 }
-
 async function sbUpdateOrderStatus(orderId, status, extra = {}){
-  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
-  const { error } = await sb.from('orders').update({ status, ...extra, updated_at: new Date().toISOString() }).eq('id', orderId);
-  return { error: error?.message || null };
+  return sbUpdateOrderFields(orderId, { status, ...extra });
 }
 
-/** Real-time order subscription for pharmacy dashboard */
-function sbSubscribeOrders(pharmacyId, callback){
+/** Real-time — écoute générique par colonne (pharmacy_id / patient_id / driver_id) */
+function sbSubscribeOrdersByColumn(column, value, callback){
   const sb = getSB(); if(!sb) return null;
-  return sb.channel('orders_'+pharmacyId)
+  return sb.channel('orders_'+column+'_'+value)
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'orders',
-      filter: `pharmacy_id=eq.${pharmacyId}`
+      filter: `${column}=eq.${value}`
     }, payload => callback(payload))
     .subscribe();
+}
+
+/** Real-time order subscription for pharmacy dashboard (legacy alias) */
+function sbSubscribeOrders(pharmacyId, callback){
+  return sbSubscribeOrdersByColumn('pharmacy_id', pharmacyId, callback);
+}
+
+function sbUnsubscribeChannel(channel){
+  const sb = getSB(); if(!sb || !channel) return;
+  sb.removeChannel(channel);
 }
 
 // ── Driver ───────────────────────────────────────────────────────
@@ -136,6 +351,26 @@ async function sbGetSettlements(pharmacyId){
   const sb = getSB(); if(!sb) return [];
   const { data } = await sb.from('settlements').select('*').eq('pharmacy_id', pharmacyId).order('settled_at', { ascending: false });
   return data || [];
+}
+
+// ── Événements d'usage (stats serveur : consultations / abandons) ────────
+// Best-effort : ne doit jamais bloquer le parcours utilisateur si Supabase
+// est indisponible ou si l'insertion échoue (voir table app_events, migration
+// 20260722000000_blocking_and_important_fixes.sql).
+async function sbLogEvent(userId, kind, payload){
+  const sb = getSB(); if(!sb) return;
+  try{ await sb.from('app_events').insert({ user_id: userId || null, kind, payload: payload || {} }); }catch(e){}
+}
+
+// ── Codes promo (validation/consommation atomique côté serveur) ──────────
+// Passe par la fonction SECURITY DEFINER redeem_promo_code() plutôt que par
+// une lecture directe de la table : évite d'exposer la liste complète des
+// codes (et leurs compteurs d'utilisation) à n'importe quel compte connecté.
+async function sbRedeemPromoCode(code, role){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data, error } = await sb.rpc('redeem_promo_code', { p_code: code, p_role: role });
+  if(error) return { error: error.message };
+  return data; // { promo:{...} } ou { error:'...' }
 }
 
 // ── Clubs ────────────────────────────────────────────────────────
@@ -237,16 +472,55 @@ async function sbUpdatePassword(newPassword) {
 }
 
 // ── Stripe PaymentIntent ─────────────────────────────────────────────
-/** Crée un PaymentIntent Stripe via la Supabase Edge Function `create-payment-intent` */
-async function sbCreatePaymentIntent(amountCents, metadata={}){
+/**
+ * Crée un PaymentIntent Stripe via la Supabase Edge Function `create-payment-intent`.
+ *
+ * NB (2026-07-22) : ne prend plus un montant en paramètre. L'Edge Function
+ * recalcule désormais le montant exact côté serveur à partir du panier
+ * (items) et du catalogue produit en base (`products`) — le montant n'est
+ * plus jamais fourni par le client (voir migration
+ * 20260722020000_products_catalog_and_payment_integrity.sql). Retourne le
+ * montant réellement facturé (`amountEur`) pour affichage/enregistrement.
+ *
+ * @param {{items:{lab:string,name:string}[], deliveryMode:string, distanceKm:number|null, donationEnabled:boolean}} cart
+ * @param {object} metadata
+ */
+async function sbCreatePaymentIntent(cart, metadata={}){
   const sb=getSB(); if(!sb) return {error:'supabase_not_configured'};
   try{
     const {data,error}=await sb.functions.invoke('create-payment-intent',{
-      body:{amount:amountCents,currency:'eur',metadata}
+      body:{
+        items:cart?.items||[],
+        deliveryMode:cart?.deliveryMode||'livraison',
+        distanceKm:(typeof cart?.distanceKm==='number')?cart.distanceKm:null,
+        donationEnabled:!!cart?.donationEnabled,
+        currency:'eur',
+        metadata,
+      }
     });
     if(error) return {error:error.message};
-    return {clientSecret:data?.clientSecret||null,error:null};
+    if(!data?.clientSecret) return {error:data?.error||'unknown_error'};
+    return {clientSecret:data.clientSecret,paymentIntentId:data.paymentIntentId||null,amountEur:data.amountEur,deliveryFeeEur:data.deliveryFeeEur,error:null};
   }catch(e){return {error:e.message||'invoke_failed'};}
+}
+
+/** Confirme une commande PAYANTE (santé / click-collect / cnc-club) après un paiement
+ *  Stripe réussi côté client. N'envoie JAMAIS de montant : seul `paymentIntentId` est
+ *  transmis. La Edge Function `confirm-order` relit le montant réel auprès de Stripe
+ *  (avec la clé secrète, côté serveur), vérifie que ce paiement appartient bien à
+ *  l'utilisateur connecté et n'a pas déjà servi pour une autre commande, puis insère
+ *  la commande avec service_role (cf. migration 20260722030000_order_pricing_integrity_and_perf.sql
+ *  qui interdit désormais un insert direct côté patient avec un `pricing.totalEur` non nul). */
+async function sbConfirmOrder(payload){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  try{
+    const { data, error } = await sb.functions.invoke('confirm-order', { body: payload });
+    if(error) return { error: error.message || 'confirm_order_failed' };
+    if(!data?.order) return { error: data?.error || 'confirm_order_failed' };
+    return { order: orderRowToJs(data.order), error: null };
+  }catch(e){
+    return { error: e?.message || 'confirm_order_failed' };
+  }
 }
 
 // ── Web Push ─────────────────────────────────────────────────────
@@ -298,4 +572,12 @@ window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, s
   sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
   sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
   sbGetAppointments, sbInsertAppointment, sbUpdateAppointment,
-  sbCreatePaymentIntent, sbSubscribePush };
+  sbCreatePaymentIntent, sbSubscribePush,
+  // Commandes (branchement réel 2026-07-18)
+  sbGetPublicPharmacies, sbInsertOrderFull, sbConfirmOrder, sbGetPatientOrders, sbGetOrdersForPharmacy,
+  sbGetAvailableOrdersForDriver, sbGetMyDriverOrders, sbClaimOrder, sbUpdateOrderFields,
+  sbSubscribeOrdersByColumn, sbUnsubscribeChannel, orderRowToJs,
+  // Réglages pharmacie / profil livreur / règlements (branchement réel 2026-07-21)
+  pharmacyRowToJs, pharmacyJsToRow,
+  // Événements d'usage / codes promo (branchement réel 2026-07-22)
+  sbLogEvent, sbRedeemPromoCode };

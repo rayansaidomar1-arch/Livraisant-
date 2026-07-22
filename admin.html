@@ -203,7 +203,7 @@ async function doAdminLogin(){
     adminUser={id:data.user.id,email:data.user.email,name:(profile.prenom||'')+' '+(profile.nom||'')};
     document.getElementById('loginScreen').style.display='none';
     const app=document.getElementById('adminApp');app.style.display='flex';
-    showPage('dashboard');
+    await showPage('dashboard');
   }catch(e){
     errEl.textContent='Erreur réseau. Réessayez.';errEl.style.display='block';
   }
@@ -225,42 +225,131 @@ async function doAdminLogout(){
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // ════════════════════════════════════════════════════════════
-// DATA — lectures depuis localStorage de l'app principale
+// DATA — branchement réel Supabase (2026-07-22, complété 2026-07-22). `profiles`,
+// `pharmacies`, `drivers`, `orders` sont lus directement en base (RLS admin :
+// migration 20260721000002_pharmacy_settings_and_admin_rls). Les codes promo
+// utilisent désormais la table serveur unique `promo_codes` (migration
+// 20260722000000_blocking_and_important_fixes.sql), partagée avec l'admin
+// intégré de index.html — les deux interfaces lisent/écrivent la même donnée.
+// `stats` (consultations/ailments/abandons) restent partiellement en
+// localStorage le temps du branchement `app_events` (voir pageDashboard()).
 // ════════════════════════════════════════════════════════════
-function getAccounts(){try{return JSON.parse(localStorage.getItem('livraisante_accounts_v2')||'{}');}catch(e){return {};}}
-function getOrders(){try{return JSON.parse(localStorage.getItem('livraisante_orders_v2')||'{}');}catch(e){return {};}}
+let ADMIN_DATA={profiles:[],pharmacies:[],drivers:[],orders:[],promoCodes:[],pharmacyApplications:[],loaded:false};
+async function loadAdminData(force){
+  if(ADMIN_DATA.loaded&&!force) return ADMIN_DATA;
+  const [{data:profiles,error:e1},{data:pharmacies,error:e2},{data:drivers,error:e3},{data:orders,error:e4}]=await Promise.all([
+    _sbAdmin.from('profiles').select('*'),
+    _sbAdmin.from('pharmacies').select('*'),
+    _sbAdmin.from('drivers').select('*'),
+    _sbAdmin.from('orders').select('*').order('created_at',{ascending:false}).limit(2000),
+  ]);
+  if(e1||e2||e3||e4) console.error('Erreur chargement données admin :',e1||e2||e3||e4);
+  ADMIN_DATA={...ADMIN_DATA,profiles:profiles||[],pharmacies:pharmacies||[],drivers:drivers||[],orders:orders||[],loaded:true};
+  return ADMIN_DATA;
+}
 function getStats(){try{return JSON.parse(localStorage.getItem('livraisante_stats_v2')||'{}');}catch(e){return {};}}
-function getPromoCodes(){try{return JSON.parse(localStorage.getItem('livraisante_promo_codes')||'[]');}catch(e){return [];}}
-function savePromoCodes(codes){localStorage.setItem('livraisante_promo_codes',JSON.stringify(codes));}
+// Agrégat serveur des consultations/abandons (table app_events, migration
+// 20260722000000) — remplace l'ancienne mesure 100% localStorage : ces
+// événements sont désormais centralisés tous utilisateurs confondus.
+async function loadAppEventsAdmin(){
+  const {data,error}=await _sbAdmin.from('app_events').select('kind,payload').order('created_at',{ascending:false}).limit(5000);
+  if(error){ console.error('Erreur chargement app_events :',error); return {consultations:0,abandoned:0,byAilment:{},abandonReasons:{}}; }
+  const byAilment={}, abandonReasons={};
+  let consultations=0, abandoned=0;
+  (data||[]).forEach(ev=>{
+    if(ev.kind==='consultation'){
+      consultations++;
+      (ev.payload?.ailments||[]).forEach(id=>{ byAilment[id]=byAilment[id]||{c:0}; byAilment[id].c++; });
+    }else if(ev.kind==='abandon'){
+      abandoned++;
+      const r=ev.payload?.reason;
+      if(r) abandonReasons[r]=(abandonReasons[r]||0)+1;
+    }
+  });
+  return {consultations,abandoned,byAilment,abandonReasons};
+}
+async function loadPromoCodesAdmin(){
+  const {data,error}=await _sbAdmin.from('promo_codes').select('*').order('created_at',{ascending:false});
+  if(error){ console.error('Erreur chargement promo_codes :',error); return []; }
+  ADMIN_DATA.promoCodes=data||[];
+  return ADMIN_DATA.promoCodes;
+}
+// Candidatures « devenir pharmacie partenaire » (table pharmacy_applications,
+// remplie par index.html #pharmacySignup). Avant le 2026-07-22 aucune interface
+// admin n'affichait ces dossiers ni ne pouvait changer leur statut (policy
+// UPDATE manquante) — un admin ne pouvait donc jamais « valider » un compte
+// pharmacien candidat malgré le message promis au candidat.
+async function loadPharmacyApplicationsAdmin(){
+  const {data,error}=await _sbAdmin.from('pharmacy_applications').select('*').eq('status','en_attente').order('created_at',{ascending:false}).limit(100);
+  if(error){ console.error('Erreur chargement pharmacy_applications :',error); ADMIN_DATA.pharmacyApplications=[]; return []; }
+  ADMIN_DATA.pharmacyApplications=data||[];
+  return ADMIN_DATA.pharmacyApplications;
+}
+async function resolvePharmacyApplicationAdmin(id,status){
+  const {error}=await _sbAdmin.from('pharmacy_applications').update({status}).eq('id',id);
+  if(error){ alert('Erreur : '+error.message); return; }
+  await loadPharmacyApplicationsAdmin();
+  showPage('pharmacies');
+}
+async function createPromoCodeAdmin(row){
+  const {data,error}=await _sbAdmin.from('promo_codes').insert(row).select().single();
+  if(error) return {error};
+  return {data};
+}
+async function togglePromoCodeAdmin(code,active){
+  const {error}=await _sbAdmin.from('promo_codes').update({active}).eq('code',code);
+  return {error};
+}
+async function deletePromoCodeAdmin(code){
+  const {error}=await _sbAdmin.from('promo_codes').delete().eq('code',code);
+  return {error};
+}
 
 function computeKPIs(){
-  const accs=Object.values(getAccounts());
-  const patients=accs.filter(a=>a.role==='patient');
-  const pharmacies=accs.filter(a=>a.role==='pharmacien');
-  const drivers=accs.filter(a=>a.role==='livreur');
-  const orders=Object.values(getOrders());
-  const stats=getStats();
-  // MRR
+  const profiles=ADMIN_DATA.profiles||[];
+  const pharmacies=ADMIN_DATA.pharmacies||[];
+  const drivers=profiles.filter(p=>p.role==='livreur');
+  const patients=profiles.filter(p=>p.role==='patient'||p.role==='patient_licencie');
+  const orders=ADMIN_DATA.orders||[];
+  const stats=ADMIN_DATA.eventStats||{consultations:0,abandoned:0,byAilment:{},abandonReasons:{}};
+  // MRR — colonne réelle `pharmacies.plan` (verrouillée côté DB hors service_role)
   const planPrices={free:0,ref:49,prio:99,alt:199};
-  const mrr=pharmacies.reduce((s,p)=>s+(planPrices[p.pharmacyInfo?.plan||'free']||0),0);
+  const mrr=pharmacies.reduce((s,p)=>s+(planPrices[p.plan||'free']||0),0);
   // Plan breakdown
   const planBreak={free:0,ref:0,prio:0,alt:0};
-  pharmacies.forEach(p=>{const pl=p.pharmacyInfo?.plan||'free';planBreak[pl]=(planBreak[pl]||0)+1;});
+  pharmacies.forEach(p=>{const pl=p.plan||'free';planBreak[pl]=(planBreak[pl]||0)+1;});
   // Orders this month
   const monthStart=new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-  const ordersMonth=orders.filter(o=>o.createdAt>monthStart.getTime()).length;
+  const ordersMonth=orders.filter(o=>o.created_at&&new Date(o.created_at).getTime()>monthStart.getTime()).length;
   return {patients,pharmacies,drivers,orders,stats,mrr,planBreak,ordersMonth};
 }
 
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
-function showPage(page){
+async function showPage(page){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));
   const map={dashboard:0,users:1,pharmacies:2,orders:3,promo:4,association:5,system:6};
   const items=document.querySelectorAll('.sb-item');
   if(items[map[page]]) items[map[page]].classList.add('on');
   const c=document.getElementById('mainContent');
+  // Ces pages affichent des données réelles Supabase — on les recharge à
+  // chaque navigation pour rester à jour (petit tableau de bord, faible
+  // trafic admin attendu : pas besoin de cache plus élaboré).
+  if(['dashboard','users','pharmacies','orders','system'].includes(page)){
+    c.innerHTML='<div class="page-title">Chargement…</div>';
+    await loadAdminData(true);
+  }
+  if(page==='dashboard'){
+    ADMIN_DATA.eventStats=await loadAppEventsAdmin();
+  }
+  if(page==='pharmacies'){
+    await loadPharmacyApplicationsAdmin();
+  }
+  if(['promo','system'].includes(page)){
+    c.innerHTML='<div class="page-title">Chargement…</div>';
+    await loadPromoCodesAdmin();
+  }
   switch(page){
     case 'dashboard': c.innerHTML=pageDashboard(); break;
     case 'users': c.innerHTML=pageUsers(); break;
@@ -278,7 +367,7 @@ function showPage(page){
 // ════════════════════════════════════════════════════════════
 function pageDashboard(){
   const {patients,pharmacies,drivers,orders,stats,mrr,planBreak,ordersMonth}=computeKPIs();
-  const convRate=stats.consultations?Math.round((stats.orders||0)/stats.consultations*100):0;
+  const convRate=stats.consultations?Math.round(orders.length/stats.consultations*100):0;
   const planColors={free:'#888',ref:'#16A34A',prio:'#7C3AED',alt:'#C2F23E'};
   const planNames={free:'Essai gratuit',ref:'Démarrage',prio:'Développement',alt:'Premium'};
   const maxPlan=Math.max(...Object.values(planBreak),1);
@@ -322,7 +411,7 @@ function pageDashboard(){
     <div class="kpi">
       <div class="k-label">Taux de conversion</div>
       <div class="k-value">${convRate}%</div>
-      <div class="k-sub">${stats.consultations||0} consultations · ${stats.orders||0} cmd</div>
+      <div class="k-sub">${stats.consultations||0} consultations · ${orders.length} cmd</div>
     </div>
   </div>
 
@@ -366,6 +455,7 @@ function pageDashboard(){
           <span class="bar-val">${cnt}</span>
         </div>`;}).join('')}
     </div>
+    <div style="font-size:12px;color:var(--mid);margin-top:12px">Consultations, top motifs et raisons d'abandon sont désormais centralisés côté serveur (table <code>app_events</code>, tous utilisateurs confondus) — comme le reste des données ci-dessus, directement depuis Supabase.</div>
   </div>`;
 }
 
@@ -373,26 +463,26 @@ function pageDashboard(){
 // UTILISATEURS
 // ════════════════════════════════════════════════════════════
 function pageUsers(){
-  const accs=Object.values(getAccounts());
-  const patients=accs.filter(a=>a.role==='patient');
+  const patients=(ADMIN_DATA.profiles||[]).filter(a=>a.role==='patient'||a.role==='patient_licencie');
   return `
   <div class="page-title">👥 Patients inscrits</div>
   <div class="card">
     <h3>${patients.length} compte${patients.length>1?'s':''} patient${patients.length>1?'s':''}</h3>
     <table class="table">
-      <thead><tr><th>Prénom</th><th>Email</th><th>Profil santé</th><th>Cagnotte</th><th>Inscrit le</th></tr></thead>
+      <thead><tr><th>Prénom</th><th>Email</th><th>Profil santé</th><th>Inscrit le</th></tr></thead>
       <tbody>
-        ${patients.length?patients.map(p=>`<tr>
-          <td style="font-weight:700">${esc(p.prenom||'—')}</td>
+        ${patients.length?patients.map(p=>{
+          const hp=p.health_profile||{};
+          return `<tr>
+          <td style="font-weight:700">${esc(p.prenom||'—')}${p.role==='patient_licencie'?' <span class="badge b-pharma" style="margin-left:4px">licencié</span>':''}</td>
           <td style="color:var(--mid)">${esc(p.email)}</td>
-          <td>${p.healthProfile?`
-            <span class="badge b-ok">${p.healthProfile.ageRange||'—'}</span>
-            ${p.healthProfile.pregnancy!=='non'&&p.healthProfile.pregnancy?`<span class="badge b-pharma" style="margin-left:4px">${p.healthProfile.pregnancy}</span>`:''}
-            ${(p.healthProfile.meds||[]).length?`<span class="badge b-warn" style="margin-left:4px">${p.healthProfile.meds.length} trait.</span>`:''}
+          <td>${Object.keys(hp).length?`
+            <span class="badge b-ok">${esc(hp.ageRange||'—')}</span>
+            ${hp.pregnancy&&hp.pregnancy!=='non'?`<span class="badge b-pharma" style="margin-left:4px">${esc(hp.pregnancy)}</span>`:''}
+            ${(hp.meds||[]).length?`<span class="badge b-warn" style="margin-left:4px">${hp.meds.length} trait.</span>`:''}
           `:'<span style="color:var(--mid);font-size:12px">—</span>'}</td>
-          <td style="font-weight:700;color:var(--ok)">€${(p.cagnotte?.total||0).toFixed(2)}</td>
-          <td style="color:var(--mid);font-size:12px">${p.id?'Récent':'—'}</td>
-        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--mid)">Aucun patient inscrit pour l\'instant</td></tr>'}
+          <td style="color:var(--mid);font-size:12px">${p.created_at?new Date(p.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+        </tr>`;}).join(''):'<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--mid)">Aucun patient inscrit pour l\'instant</td></tr>'}
       </tbody>
     </table>
   </div>`;
@@ -402,28 +492,45 @@ function pageUsers(){
 // PHARMACIES
 // ════════════════════════════════════════════════════════════
 function pagePharmacies(){
-  const accs=Object.values(getAccounts());
-  const pharmacies=accs.filter(a=>a.role==='pharmacien');
+  const pharmacies=ADMIN_DATA.pharmacies||[];
+  const apps=ADMIN_DATA.pharmacyApplications||[];
   const planBadge={free:'b-warn',ref:'b-ok',prio:'b-pharma',alt:'b-dark'};
   const planName={free:'Essai gratuit',ref:'Démarrage',prio:'Développement',alt:'Premium'};
   return `
   <div class="page-title">💊 Pharmacies partenaires</div>
   <div class="card">
+    <h3>📋 Candidatures en attente (${apps.length})</h3>
+    <div style="font-size:12px;color:var(--mid);margin:-4px 0 14px">Dossiers envoyés via le formulaire « Devenir pharmacie partenaire ». Valider ici est l'unique action requise pour tenir la promesse « un conseiller vous contactera dans les 24h » faite au candidat.</div>
+    ${apps.length?apps.map(a=>`
+      <div style="border:1.5px solid var(--line,#e5e5e5);border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+          <div style="font-weight:700">${esc(a.nom||'—')}</div>
+          <div style="font-size:12px;color:var(--mid)">${a.created_at?new Date(a.created_at).toLocaleDateString('fr-FR'):'—'}</div>
+        </div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:2px">📍 ${esc(a.adresse||[a.rue,a.cp,a.ville].filter(Boolean).join(' ')||'—')}</div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:2px">🧑‍⚕️ ${esc(a.titulaire_prenom||'')} ${esc(a.titulaire_nom||'')} · RPPS ${esc(a.titulaire_rpps||'—')}</div>
+        <div style="font-size:13px;color:var(--mid);margin-bottom:8px">✉️ ${esc(a.email||'—')} ${a.tel?'· ☎ '+esc(a.tel):''}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" style="border:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;background:#16A34A;color:white" onclick="resolvePharmacyApplicationAdmin('${a.id}','validee')">✅ Valider</button>
+          <button class="btn-sm" style="border:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:12px;cursor:pointer;background:#dc2626;color:white" onclick="resolvePharmacyApplicationAdmin('${a.id}','rejetee')">❌ Rejeter</button>
+        </div>
+      </div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--mid)">Aucune candidature en attente.</div>'}
+  </div>
+  <div class="card">
     <h3>${pharmacies.length} officine${pharmacies.length>1?'s':''}</h3>
     <table class="table">
       <thead><tr><th>Officine</th><th>Ville</th><th>FINESS</th><th>Plan</th><th>MRR</th><th>Contact</th></tr></thead>
       <tbody>
-        ${pharmacies.length?pharmacies.map(p=>{
-          const ph=p.pharmacyInfo||{};
+        ${pharmacies.length?pharmacies.map(ph=>{
           const plan=ph.plan||'free';
           const prices={free:0,ref:49,prio:99,alt:199};
           return `<tr>
-            <td style="font-weight:700">${esc(ph.nom||p.prenom||'—')}</td>
+            <td style="font-weight:700">${esc(ph.nom||'—')}</td>
             <td style="color:var(--mid);font-size:13px">${esc(ph.ville||'—')}</td>
             <td style="font-family:monospace;font-size:12px">${esc(ph.finess||'—')}</td>
-            <td><span class="badge ${planBadge[plan]}">${planName[plan]}</span></td>
+            <td><span class="badge ${planBadge[plan]||'b-warn'}">${planName[plan]||plan}</span></td>
             <td style="font-weight:700;color:var(--ok)">€${prices[plan]||0}/mois</td>
-            <td><a href="mailto:${esc(p.email)}" style="color:var(--pharma);font-size:12px">${esc(p.email)}</a></td>
+            <td><a href="mailto:${esc(ph.email||'')}" style="color:var(--pharma);font-size:12px">${esc(ph.email||'—')}</a></td>
           </tr>`;}).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--mid)">Aucune pharmacie inscrite</td></tr>'}
       </tbody>
     </table>
@@ -431,7 +538,7 @@ function pagePharmacies(){
   <div class="card">
     <h3>Répartition par abonnement</h3>
     ${['free','ref','prio','alt'].map(pl=>{
-      const count=pharmacies.filter(p=>(p.pharmacyInfo?.plan||'free')===pl).length;
+      const count=pharmacies.filter(p=>(p.plan||'free')===pl).length;
       const pct=pharmacies.length?Math.round(count/pharmacies.length*100):0;
       return `<div class="bar-row" style="margin-bottom:10px">
         <span style="font-size:13px;font-weight:600">${planName[pl]}</span>
@@ -445,7 +552,7 @@ function pagePharmacies(){
 // COMMANDES
 // ════════════════════════════════════════════════════════════
 function pageOrders(){
-  const orders=Object.values(getOrders()).sort((a,b)=>b.createdAt-a.createdAt);
+  const orders=(ADMIN_DATA.orders||[]).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   const statusLabel={nouvelle:'Nouvelle',validee:'Validée',prete:'Prête',en_livraison:'En livraison',livree:'Livrée',refusee:'Refusée'};
   const statusBadge={nouvelle:'b-warn',validee:'b-ok',prete:'b-lime',en_livraison:'b-pharma',livree:'b-dark',refusee:'b-err'};
   return `
@@ -461,11 +568,11 @@ function pageOrders(){
       <tbody>
         ${orders.length?orders.slice(0,50).map(o=>`<tr>
           <td style="font-family:monospace;font-size:12px;font-weight:700">${esc(o.id||'—')}</td>
-          <td>${esc(o.patient?.name||'—')}</td>
-          <td><span style="font-size:11px;background:var(--grey);padding:3px 7px;border-radius:4px">${o.kind||'santé'}</span></td>
+          <td>${esc(o.patient_name||'—')}</td>
+          <td><span style="font-size:11px;background:var(--grey);padding:3px 7px;border-radius:4px">${esc(o.kind||'santé')}</span></td>
           <td><span class="badge ${statusBadge[o.status]||'b-warn'}">${statusLabel[o.status]||o.status}</span></td>
-          <td style="font-weight:700">—</td>
-          <td style="color:var(--mid);font-size:12px">${o.createdAt?new Date(o.createdAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}</td>
+          <td style="font-weight:700">${o.pricing?.totalEur!=null?'€'+Number(o.pricing.totalEur).toFixed(2):'—'}</td>
+          <td style="color:var(--mid);font-size:12px">${o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'}</td>
         </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--mid)">Aucune commande</td></tr>'}
       </tbody>
     </table>
@@ -476,9 +583,10 @@ function pageOrders(){
 // CODES PROMO
 // ════════════════════════════════════════════════════════════
 function pagePromo(){
-  const codes=getPromoCodes();
+  const codes=ADMIN_DATA.promoCodes||[];
   return `
   <div class="page-title">🎁 Codes promotionnels</div>
+  <div style="font-size:12px;color:var(--mid);margin:-10px 0 16px">Table Supabase partagée <code>promo_codes</code> — synchronisée avec l'admin intégré (index.html).</div>
   <div class="card">
     <h3>Générer un nouveau code</h3>
     <div class="promo-form">
@@ -489,10 +597,8 @@ function pagePromo(){
       <div class="f-group">
         <label class="f-label">Type de réduction</label>
         <select class="f-select" id="disc-type">
-          <option value="pct">Pourcentage (%)</option>
+          <option value="percent">Pourcentage (%)</option>
           <option value="fixed">Montant fixe (€)</option>
-          <option value="trial">Extension d'essai (jours)</option>
-          <option value="free">1er mois offert</option>
         </select>
       </div>
       <div class="f-group">
@@ -502,9 +608,10 @@ function pagePromo(){
       <div class="f-group">
         <label class="f-label">Cible</label>
         <select class="f-select" id="disc-target">
-          <option value="pharmacy">Pharmacies uniquement</option>
-          <option value="patient">Patients uniquement</option>
           <option value="all">Tous les utilisateurs</option>
+          <option value="patient">Patients uniquement</option>
+          <option value="pharmacie">Pharmacies uniquement</option>
+          <option value="livreur">Livreurs uniquement</option>
         </select>
       </div>
       <div class="f-group">
@@ -547,58 +654,66 @@ function pagePromo(){
 }
 function initPromoEvents(){}
 
-function generateCode(){
+async function generateCode(){
+  const btn=document.querySelector('.gen-btn');
   const pfx=(document.getElementById('pfx').value.toUpperCase().replace(/[^A-Z0-9]/g,'')||'LIVRAI').slice(0,8);
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const _rb=new Uint8Array(6); crypto.getRandomValues(_rb);
   const rnd=Array.from(_rb,b=>chars[b%chars.length]).join('');
   const code=pfx+rnd;
   const type=document.getElementById('disc-type').value;
-  const val=parseInt(document.getElementById('disc-val').value)||20;
+  const value=parseInt(document.getElementById('disc-val').value)||20;
   const target=document.getElementById('disc-target').value;
   const maxUses=parseInt(document.getElementById('disc-uses').value);
   const expDays=parseInt(document.getElementById('disc-exp').value);
-  const typeLabels={pct:`-${val}%`,fixed:`-€${val}`,trial:`+${val}j essai`,free:'1er mois offert'};
-  const newCode={
-    code, type, val, target, maxUses, used:0,
-    active:true,
-    createdAt:Date.now(),
-    expiresAt:expDays?Date.now()+expDays*86400000:null,
-    label:typeLabels[type]||`-${val}%`
+  const row={
+    code, type, value, target,
+    max_uses:maxUses, active:true,
+    expires_at:expDays?new Date(Date.now()+expDays*86400000).toISOString():null,
+    created_by:adminUser?.id||null
   };
-  const codes=getPromoCodes();
-  codes.unshift(newCode);
-  savePromoCodes(codes);
-  // Afficher le résultat
+  if(btn){btn.disabled=true;btn.textContent='Création…';}
+  const {data,error}=await createPromoCodeAdmin(row);
+  if(btn){btn.disabled=false;btn.textContent='⚡ Générer le code';}
+  if(error){
+    document.getElementById('gen-result').innerHTML=`<span style="font-size:13px;color:var(--err);font-weight:600">Erreur : ${esc(error.code==='23505'?'ce code existe déjà.':error.message)}</span>`;
+    return;
+  }
   document.getElementById('gen-result').innerHTML=`
-    <span class="code-tag">${code}</span>
-    <button class="copy-btn" onclick="copyCode('${code}')">📋 Copier</button>
+    <span class="code-tag">${esc(code)}</span>
+    <button class="copy-btn" onclick="copyCode('${esc(code)}')">📋 Copier</button>
     <span style="font-size:13px;color:var(--ok);font-weight:600">✓ Créé</span>`;
-  // Refresh table
+  await loadPromoCodesAdmin();
   const tbody=document.getElementById('promo-table');
-  if(tbody) tbody.innerHTML=renderPromoRows(codes);
+  if(tbody) tbody.innerHTML=renderPromoRows(ADMIN_DATA.promoCodes);
 }
 
 function renderPromoRows(codes){
+  codes=codes||ADMIN_DATA.promoCodes||[];
   if(!codes.length) return '';
+  const targetLabels={all:'Tous',patient:'Patients',pharmacie:'Pharmacies',livreur:'Livreurs'};
+  const typeLabels={percent:v=>`-${v}%`,fixed:v=>`-€${v}`};
   return codes.map(c=>{
-    const targetLabel={pharmacy:'Pharmacies',patient:'Patients',all:'Tous'}[c.target]||c.target;
-    const expired=c.expiresAt&&Date.now()>c.expiresAt;
+    const targetLabel=targetLabels[c.target]||c.target;
+    const label=(typeLabels[c.type]||(v=>`-${v}`))(c.value);
+    const expiresMs=c.expires_at?new Date(c.expires_at).getTime():null;
+    const expired=expiresMs&&Date.now()>expiresMs;
     const status=!c.active?'Désactivé':expired?'Expiré':'Actif';
     const statusBadge={'Actif':'b-ok','Expiré':'b-err','Désactivé':'b-warn'}[status];
-    const expLabel=c.expiresAt?new Date(c.expiresAt).toLocaleDateString('fr-FR'):'Jamais';
+    const expLabel=c.expires_at?new Date(c.expires_at).toLocaleDateString('fr-FR'):'Jamais';
     return `<tr>
       <td><span class="code-tag" style="font-size:13px;letter-spacing:2px">${esc(c.code)}</span></td>
-      <td style="font-weight:700">${c.label}</td>
-      <td><span class="badge b-pharma">${targetLabel}</span></td>
-      <td style="font-size:13px">${c.used}/${c.maxUses||'∞'}</td>
+      <td style="font-weight:700">${esc(label)}</td>
+      <td><span class="badge b-pharma">${esc(targetLabel)}</span></td>
+      <td style="font-size:13px">${c.used_count||0}/${c.max_uses||'∞'}</td>
       <td style="font-size:12px;color:var(--mid)">${expLabel}</td>
       <td><span class="badge ${statusBadge}">${status}</span></td>
       <td style="display:flex;gap:6px">
-        <button class="copy-btn" onclick="copyCode('${c.code}')">📋</button>
-        <button class="copy-btn" style="color:var(--err);border-color:var(--err)" onclick="toggleCode('${c.code}')">
+        <button class="copy-btn" onclick="copyCode('${esc(c.code)}')">📋</button>
+        <button class="copy-btn" style="color:var(--err);border-color:var(--err)" onclick="toggleCode('${esc(c.code)}',${!c.active})">
           ${c.active?'⏸':'▶'}
         </button>
+        <button class="copy-btn" style="color:var(--err);border-color:var(--err)" onclick="deleteCode('${esc(c.code)}')">🗑</button>
       </td>
     </tr>`;}).join('');
 }
@@ -611,13 +726,21 @@ function copyCode(code){
   }).catch(()=>alert('Code: '+code));
 }
 
-function toggleCode(code){
-  const codes=getPromoCodes();
-  const c=codes.find(x=>x.code===code);
-  if(c) c.active=!c.active;
-  savePromoCodes(codes);
+async function toggleCode(code,active){
+  const {error}=await togglePromoCodeAdmin(code,active);
+  if(error){alert('Erreur : '+error.message);return;}
+  await loadPromoCodesAdmin();
   const tbody=document.getElementById('promo-table');
-  if(tbody) tbody.innerHTML=renderPromoRows(codes);
+  if(tbody) tbody.innerHTML=renderPromoRows(ADMIN_DATA.promoCodes);
+}
+
+async function deleteCode(code){
+  if(!confirm('Supprimer ce code ?')) return;
+  const {error}=await deletePromoCodeAdmin(code);
+  if(error){alert('Erreur : '+error.message);return;}
+  await loadPromoCodesAdmin();
+  const tbody=document.getElementById('promo-table');
+  if(tbody) tbody.innerHTML=renderPromoRows(ADMIN_DATA.promoCodes);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -688,11 +811,13 @@ function pageSystem(){
       <h3>État de la base de données</h3>
       <table class="table">
         <tbody>
-          <tr><td>Storage utilisé</td><td style="font-weight:700">${kb} Ko</td></tr>
-          <tr><td>Clés Livraisanté</td><td style="font-weight:700">${keys.length}</td></tr>
-          <tr><td>Comptes</td><td style="font-weight:700">${Object.keys(getAccounts()).length}</td></tr>
-          <tr><td>Commandes</td><td style="font-weight:700">${Object.keys(getOrders()).length}</td></tr>
-          <tr><td>Codes promo</td><td style="font-weight:700">${getPromoCodes().length}</td></tr>
+          <tr><td>Storage utilisé (ce navigateur)</td><td style="font-weight:700">${kb} Ko</td></tr>
+          <tr><td>Clés Livraisanté (local)</td><td style="font-weight:700">${keys.length}</td></tr>
+          <tr><td>Comptes (Supabase)</td><td style="font-weight:700">${(ADMIN_DATA.profiles||[]).length}</td></tr>
+          <tr><td>Pharmacies (Supabase)</td><td style="font-weight:700">${(ADMIN_DATA.pharmacies||[]).length}</td></tr>
+          <tr><td>Livreurs (Supabase)</td><td style="font-weight:700">${(ADMIN_DATA.drivers||[]).length}</td></tr>
+          <tr><td>Commandes (Supabase)</td><td style="font-weight:700">${(ADMIN_DATA.orders||[]).length}</td></tr>
+          <tr><td>Codes promo (Supabase)</td><td style="font-weight:700">${(ADMIN_DATA.promoCodes||[]).length}</td></tr>
         </tbody>
       </table>
     </div>
@@ -723,10 +848,13 @@ function pageSystem(){
 function exportData(){
   const data={
     exportedAt:new Date().toISOString(),
-    accounts:getAccounts(),
-    orders:getOrders(),
+    profiles:ADMIN_DATA.profiles||[],
+    pharmacies:ADMIN_DATA.pharmacies||[],
+    drivers:ADMIN_DATA.drivers||[],
+    orders:ADMIN_DATA.orders||[],
     stats:getStats(),
-    promoCodes:getPromoCodes(),
+    eventStats:ADMIN_DATA.eventStats||null,
+    promoCodes:ADMIN_DATA.promoCodes||[],
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);

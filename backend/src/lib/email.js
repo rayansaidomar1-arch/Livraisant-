@@ -3,7 +3,21 @@ const { Resend } = require('resend');
 const fs = require('fs');
 const path = require('path');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Instanciation paresseuse : le SDK Resend lève une exception dès le
+// constructeur si la clé est absente, ce qui ferait planter tout le
+// process au démarrage (require de ce module) si RESEND_API_KEY n'est pas
+// encore configurée côté Clever Cloud. On ne construit le client qu'au
+// premier envoi réel.
+let resend = null;
+function getClient() {
+  if (!resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY absente des variables d\'environnement');
+    }
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 // Cache des templates HTML chargés depuis /templates
 const templateCache = new Map();
@@ -29,8 +43,8 @@ function renderTemplate(key, vars = {}) {
  */
 async function sendEmail({ to, subject, templateKey, vars = {}, html }) {
   const body = html || renderTemplate(templateKey, vars);
-  const from = process.env.EMAIL_FROM || 'Livraisanté <contact@livraisante.fr>';
-  const { data, error } = await resend.emails.send({ from, to, subject, html: body });
+  const from = process.env.EMAIL_FROM || 'Livraisanté <administratif@livraisante.fr>';
+  const { data, error } = await getClient().emails.send({ from, to, subject, html: body });
   if (error) throw new Error(typeof error === 'string' ? error : error.message || 'Échec envoi email');
   return data;
 }

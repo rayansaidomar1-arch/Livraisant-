@@ -47,7 +47,7 @@
     "@type": "Organization",
     "name": "Livraisanté SAS",
     "url": "https://livraisante.fr",
-    "email": "contact@livraisante.fr",
+    "email": "administratif@livraisante.fr",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "1 Rue des Vergers",
@@ -66,12 +66,16 @@
 
 <!-- Plausible Analytics — RGPD-compliant, sans cookie, sans consentement requis -->
 <script defer data-domain="livraisante.fr" src="https://plausible.io/js/script.js"></script>
-<!-- Sentry — monitoring erreurs production -->
+<!-- Sentry — monitoring erreurs production. `defer` sur les deux scripts : le
+     navigateur exécute les scripts deferred dans l'ordre du document, donc ce
+     script inline s'exécutera bien après que Sentry soit défini, tout en
+     laissant le HTML se parser sans bloquer sur le CDN. -->
 <script
   src="https://browser.sentry-cdn.com/7.99.0/bundle.tracing.min.js"
   crossorigin="anonymous"
+  defer
 ></script>
-<script>
+<script defer>
   if(typeof Sentry !== 'undefined'){
     Sentry.init({
       dsn: (window.LIVR_CONFIG?.sentry_dsn) || '',
@@ -1952,7 +1956,7 @@
           <span>J'accepte de recevoir des communications sur les nouveaux services et promotions de Livraisanté <span style="color:var(--ink-soft)">(facultatif)</span></span>
         </label>
 
-        <div style="font-size:11px;color:var(--ink-soft);margin-top:10px;border-top:1px solid #e5e5e5;padding-top:8px">* Champs obligatoires · Vous pouvez retirer votre consentement à tout moment depuis votre profil · DPO : <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a> · <a href="https://www.cnil.fr" target="_blank" style="color:var(--pharma)">CNIL</a></div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:10px;border-top:1px solid #e5e5e5;padding-top:8px">* Champs obligatoires · Vous pouvez retirer votre consentement à tout moment depuis votre profil · Contact protection des données : <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> · <a href="https://www.cnil.fr" target="_blank" style="color:var(--pharma)">CNIL</a></div>
       </div>
 
       <button class="btn primary" style="width:100%;font-size:16px;padding:13px;margin-top:6px" onclick="doRegister()">Créer mon compte →</button>
@@ -2333,6 +2337,25 @@ function getStripe(){
   if(typeof Stripe==='undefined'||STRIPE_PUBLISHABLE_KEY.includes('VOTRE_CLE')) return null;
   _stripeInstance=Stripe(STRIPE_PUBLISHABLE_KEY);
   return _stripeInstance;
+}
+
+/* ── Persistance pharmacie (Supabase, en plus du localStorage) ──────────
+   Écrit immédiatement en local (comme avant, aucun changement de
+   comportement offline) puis synchronise vers la table `pharmacies` après
+   un court debounce, UNIQUEMENT si une session pharmacien Supabase réelle
+   est active (sinon rien à synchroniser : mode démo / compte local pur —
+   cf. le fallback localStorage explicitement laissé de côté ailleurs).
+   Traduction camelCase -> snake_case via pharmacyJsToRow() (branchement
+   réel 2026-07-21, js/supabase-client.js). */
+let _pharmacySyncTimer=null;
+function persistPharmacyData(ph){
+  try{ localStorage.setItem('livraisante_pharmacy', JSON.stringify(ph)); }catch(e){}
+  if(!(window.LS_SB?.SB_READY && currentUser?.id && currentUser.role==='pharmacien')) return;
+  clearTimeout(_pharmacySyncTimer);
+  _pharmacySyncTimer=setTimeout(()=>{
+    const row=window.LS_SB.pharmacyJsToRow(ph);
+    window.LS_SB.sbUpsertPharmacy(currentUser.id, row).catch(()=>{});
+  },800);
 }
 
 /* ── TARIFICATION PHARMACIE ── */
@@ -4354,9 +4377,9 @@ function showRgpdModal(section='intro'){
   const existing=document.getElementById('rgpdModal'); if(existing) existing.remove();
   const sections={
     intro:`<h3>Politique de confidentialité</h3>
-      <p><b>Responsable de traitement :</b> Livraisanté SAS — RCS 933 484 917 R.C.S. Lyon · 1 Rue des Vergers, 69120 Vaulx-en-Velin<br><b>DPO :</b> <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a></p>
+      <p><b>Responsable de traitement :</b> Livraisanté SAS — RCS 933 484 917 R.C.S. Lyon · 1 Rue des Vergers, 69120 Vaulx-en-Velin<br><b>Contact protection des données :</b> <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a></p>
       <p><b>Données collectées :</b> Prénom, email, profil de santé (âge, grossesse, traitements chroniques), historique de commandes, position GPS (livraison uniquement, non conservée).</p>
-      <p><b>Base légale :</b> Consentement explicite et granulaire (Art. 6§1a et Art. 9§2a RGPD) pour les données de santé — recueilli via une case à cocher dédiée, distincte de l'acceptation des CGU, lors de l'inscription. Exécution du contrat (Art. 6§1b) pour les commandes. Le consentement peut être retiré à tout moment via <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a> ou depuis les réglages du compte.</p>
+      <p><b>Base légale :</b> Consentement explicite et granulaire (Art. 6§1a et Art. 9§2a RGPD) pour les données de santé — recueilli via une case à cocher dédiée, distincte de l'acceptation des CGU, lors de l'inscription. Exécution du contrat (Art. 6§1b) pour les commandes. Le consentement peut être retiré à tout moment via <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> ou depuis les réglages du compte.</p>
       <p><b>Durée de conservation :</b> Données de santé supprimées 3 ans après la dernière connexion. Données de commande conservées 5 ans (obligation légale comptable).</p>
       <p><b>Destinataires :</b> Pharmacien(s) partenaire(s) — dans le seul cadre de votre prise en charge. Aucune cession à des tiers à des fins commerciales.</p>
       <p><b>Vos droits (Art. 15–22 RGPD) :</b></p>
@@ -4368,7 +4391,7 @@ function showRgpdModal(section='intro'){
         <li>✅ Droit d'opposition</li>
         <li>✅ Droit de retirer votre consentement à tout moment</li>
       </ul>
-      <p>Pour exercer vos droits : <a href="mailto:dpo@livraisante.fr" style="color:var(--pharma)">dpo@livraisante.fr</a><br>Vous pouvez saisir la <a href="https://www.cnil.fr" target="_blank" style="color:var(--pharma)">CNIL</a> en cas de litige.</p>`,
+      <p>Pour exercer vos droits : <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a><br>Vous pouvez saisir la <a href="https://www.cnil.fr" target="_blank" style="color:var(--pharma)">CNIL</a> en cas de litige.</p>`,
     cookies:`<h3>Politique cookies</h3>
       <p><b>Cookies strictement nécessaires</b> (exemptés de consentement — CNIL) :<br>Session utilisateur · Préférences de langue</p>
       <p><b>Cookies de mesure d'audience anonymisés</b> (sans consentement si anonyme — CNIL délibération 2020-091) :<br>Comptage de sessions — aucune donnée personnelle transmise.</p>
@@ -4654,8 +4677,8 @@ function enterRole(r){
   const target=document.getElementById(APPS[r]); if(target) target.style.display='block';
   if(r==='sante') santeHome();
   if(r==='sportif'){ go(0); renderSportApp(); }
-  if(r==='pro') renderPro();
-  if(r==='livreur') renderLivreur();
+  if(r==='pro'){ renderPro(); loadOrdersForCurrentRole(); }
+  if(r==='livreur'){ renderLivreur(); loadOrdersForCurrentRole(); }
   if(r==='pharmacySignup'){ dsGo_ps(1); renderPlans(); }
   if(r==='driverSignup'){ dsGo(1); prefillDriverForm(); }
   if(r==='loginScreen') updateAccountChip();
@@ -4958,15 +4981,39 @@ function useMyPositionSante(){
 /* ══════════════════════════════════════════════════════════
    CARTE PHARMACIE — Google Maps + Plan + Horaires
 ══════════════════════════════════════════════════════════ */
+/* ── Pharmacies partenaires — vue publique Supabase (pharmacies_public) ──
+   Remplace l'ancien système 100% localStorage (getAccounts()) qui ne
+   reflétait jamais les pharmacies réellement inscrites côté serveur.
+   PHARMACIES_PUBLIC garde la même forme ({pharmacyInfo:{...}}) que l'ancien
+   tableau pour que renderPharmacyCard() n'ait rien à changer. */
+let PHARMACIES_PUBLIC=[];
+async function loadPublicPharmacies(){
+  if(!window.LS_SB?.SB_READY) return;
+  try{
+    const list=await window.LS_SB.sbGetPublicPharmacies();
+    PHARMACIES_PUBLIC=(list||[]).map(p=>({ pharmacyInfo:{
+      id:p.id, nom:p.nom, adresse:p.adresse, ville:p.ville, cp:p.cp, tel:p.tel,
+      lat:p.lat, lon:p.lon, horaires:p.horaires
+    }}));
+  }catch(e){ console.error('loadPublicPharmacies',e); }
+  // Re-rendre les écrans déjà affichés qui dépendent de la liste des pharmacies
+  try{ if(typeof deliveryMode!=='undefined' && document.getElementById('modeDetails')) setMode(deliveryMode); }catch(e){}
+}
+loadPublicPharmacies();
 function getRegisteredPharmacies(){
-  const accs=getAccounts();
-  return Object.values(accs).filter(a=>a.role==='pharmacien'&&a.pharmacyInfo?.nom);
+  return PHARMACIES_PUBLIC;
 }
 function getFirstPharmacyGPS(){
   for(const a of getRegisteredPharmacies()){
     if(a.pharmacyInfo?.lat&&a.pharmacyInfo?.lon) return a.pharmacyInfo;
   }
   return null;
+}
+/* Hypothèse pharmacie unique partenaire (cohérent avec le comportement actuel
+   du site : une seule officine réelle en production) — à faire évoluer le
+   jour où plusieurs pharmacies coexistent (choix patient de l'officine). */
+function getPatientPharmacyId(){
+  return PHARMACIES_PUBLIC[0]?.pharmacyInfo?.id || null;
 }
 function renderPharmacyCard(){
   const pharmas=getRegisteredPharmacies();
@@ -5114,16 +5161,26 @@ function renderCodeValidator(orderId, role){
   <div id="codeError-${orderId}" style="font-size:12px;color:var(--err);margin-top:5px;display:none">❌ Code incorrect — vérifiez avec le patient.</div>`;
 }
 
-function validateOrderCode(orderId){
+async function validateOrderCode(orderId){
   const o=ORDERS[orderId]; if(!o) return;
   const input=document.getElementById('codeInput-'+orderId);
   const errEl=document.getElementById('codeError-'+orderId);
   if(!input) return;
   const entered=input.value.trim().toUpperCase();
   if(entered===o.code){
+    const prevValidated=o.codeValidated, prevStatus=o.status;
     o.codeValidated=true;
     o.status='livree';
     saveOrder(o);
+    if(window.LS_SB?.SB_READY){
+      const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{code_validated:true,status:'livree'});
+      if(error){
+        o.codeValidated=prevValidated; o.status=prevStatus; saveOrder(o);
+        showToast('❌ Validation impossible : '+error,'#e11d48');
+        console.error('validateOrderCode',error);
+        return;
+      }
+    }
     showToast('✅ Code validé ! Commande confirmée.','var(--ok)');
     if(currentView==='pro') renderPro();
     if(currentView==='livreur') renderLivreur();
@@ -5134,15 +5191,61 @@ function validateOrderCode(orderId){
   }
 }
 
-function createOrder({items, patient, trackId, btn, kind, totalEur}){
+async function createOrder({items, patient, trackId, btn, kind, totalEur, deliveryFeeEur, paymentIntentId}){
   const track=document.getElementById(trackId);
   if(!items.length){ track.innerHTML='<div class="track-card">Coche au moins un produit à commander.</div>'; return; }
   if(!patient.addr){ track.innerHTML='<div class="track-card">Indique une adresse de livraison ou utilise 📍.</div>'; return; }
   const id='LS'+Date.now().toString().slice(-6);
   const code=generateOrderCode();
-  const o={ id, code, createdAt:Date.now(), kind:kind||'santé', patient, items, status:'nouvelle', driver:null, totalEur:totalEur||null };
-  currentPatientOrderId=id; currentTrackId=trackId;
-  saveOrder(o);
+  const kindVal=kind||'santé';
+  const deliveryModeDb=kindVal==='click-collect'?'cnc':kindVal==='cnc-club'?'cnc_club':'livraison';
+
+  // ── Mode démo (Supabase non configuré) : comportement historique, local uniquement ──
+  if(!window.LS_SB?.SB_READY){
+    const o={ id, code, createdAt:Date.now(), kind:kindVal, patient, items, status:'nouvelle', driver:null, totalEur:totalEur||null, deliveryFeeEur:deliveryFeeEur||null };
+    currentPatientOrderId=id; currentTrackId=trackId;
+    saveOrder(o);
+    logOrder();
+    if(btn) btn.textContent='Demande envoyée ✓';
+    return;
+  }
+
+  // ── Mode réel : la commande doit être écrite dans Supabase pour être visible
+  //    par la pharmacie et le livreur (branchement 2026-07-18) ──
+  if(!currentUser?.id){ track.innerHTML='<div class="track-card">Connectez-vous pour passer commande.</div>'; return; }
+  const pharmacyId=getPatientPharmacyId();
+  if(!pharmacyId){ track.innerHTML='<div class="track-card">Aucune pharmacie partenaire disponible pour le moment. Réessayez dans un instant.</div>'; return; }
+  if(btn){ btn.disabled=true; btn.textContent='Envoi en cours…'; }
+  // ── Correctif audit sécurité 2026-07-22 (Critique #2) ──────────────────────
+  // Commande PAYANTE (santé / click-collect / cnc-club) confirmée par un paiement
+  // Stripe réel : on passe par `confirm-order`, qui relit le montant réellement
+  // débité auprès de Stripe (jamais une valeur envoyée par ce client) et insère
+  // la commande avec service_role. Un insert direct ici avec `totalEur` non nul
+  // serait de toute façon rejeté par la policy RLS `orders_patient_insert`
+  // (migration 20260722030000_order_pricing_integrity_and_perf.sql).
+  // La commande GRATUITE (kind='sportif', pas de paymentIntentId) continue de
+  // passer par l'insert direct historique, inchangé.
+  let order, error;
+  if(paymentIntentId){
+    ({order,error}=await window.LS_SB.sbConfirmOrder({
+      paymentIntentId, id, code, kind:kindVal, deliveryMode:deliveryModeDb,
+      pharmacyId, patient, items
+    }));
+  } else {
+    ({order,error}=await window.LS_SB.sbInsertOrderFull({
+      id, code, kind:kindVal, deliveryMode:deliveryModeDb,
+      patientId:currentUser.id, pharmacyId, patient, items, status:'nouvelle', totalEur:totalEur||null, deliveryFeeEur:deliveryFeeEur||null
+    }));
+  }
+  if(btn) btn.disabled=false;
+  if(error){
+    track.innerHTML='<div class="track-card">❌ Impossible d\'enregistrer la commande. Réessayez.</div>';
+    showToast('❌ '+error,'#e11d48');
+    console.error('createOrder',error);
+    return;
+  }
+  currentPatientOrderId=order.id; currentTrackId=trackId;
+  saveOrder(order);
   logOrder();
   if(btn) btn.textContent='Demande envoyée ✓';
 }
@@ -5163,7 +5266,7 @@ function renderOrderTrack(id){
       const cd=subCountdown(s.proposedAt);
       subHtml=`<div class="sub-proposal">
         <h4>💊 Le pharmacien propose une substitution</h4>
-        <div>Produit proposé : <b>${s.newProduct}</b> · Prix : <b>€${(s.newPrice*(1+MARGE_PCT)).toFixed(2)}</b></div>
+        <div>Produit proposé : <b>${esc(s.newProduct)}</b> · Prix : <b>€${(s.newPrice*(1+MARGE_PCT)).toFixed(2)}</b></div>
         <div style="font-size:13px;color:var(--ok);margin-top:4px">✓ Économie dans votre cagnotte : <b>€${s.savings}</b></div>
         <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">⏱ Temps restant pour accepter : <span class="sub-timer">${cd}</span></div>
         <div class="sub-actions">
@@ -5172,7 +5275,7 @@ function renderOrderTrack(id){
         </div>
       </div>`;
     } else if(s.status==='accepted'){
-      subHtml=`<div class="cagnotte-badge"><span style="font-size:24px">🐷</span><div><div class="amount">+€${parseFloat(s.savings).toFixed(2)}</div><div style="font-size:12px">ajouté à votre cagnotte · Substitution acceptée : ${s.newProduct}</div></div></div>`;
+      subHtml=`<div class="cagnotte-badge"><span style="font-size:24px">🐷</span><div><div class="amount">+€${parseFloat(s.savings).toFixed(2)}</div><div style="font-size:12px">ajouté à votre cagnotte · Substitution acceptée : ${esc(s.newProduct)}</div></div></div>`;
     } else if(s.status==='expired'){
       subHtml=`<div class="help-box">⏰ La proposition de substitution a expiré (délai de 1h dépassé — refus tacite).</div>`;
     } else if(s.status==='refused'){
@@ -5206,9 +5309,20 @@ function orderAddrHtml(o){
 function timeAgo(ts){ const m=Math.round((Date.now()-ts)/60000); return m<1?'à l\'instant':m+' min'; }
 
 /* ---- PHARMACIEN ---- */
-function setStatus(id,st){
+async function setStatus(id,st){
   const o=ORDERS[id]; if(!o) return;
-  o.status=st; saveOrder(o);
+  const prevStatus=o.status;
+  o.status=st; saveOrder(o); // mise à jour optimiste (UI réactive immédiatement)
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(id,{status:st});
+    if(error){
+      // Rollback : la commande n'a pas pu être mise à jour côté serveur
+      o.status=prevStatus; saveOrder(o);
+      showToast('❌ Mise à jour impossible : '+error,'#e11d48');
+      console.error('setStatus',error);
+      return;
+    }
+  }
   // Notifications
   const pName=o.patient?.name||'Patient';
   const orderId=id;
@@ -5259,7 +5373,7 @@ function savePharmacyPriority(mode, labs){
   try{
     const d=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');
     d.priorityMode=mode; d.priorityLabs=labs||[];
-    localStorage.setItem('livraisante_pharmacy',JSON.stringify(d));
+    persistPharmacyData(d);
   }catch(e){}
 }
 function setPriorityMode(mode){
@@ -5285,8 +5399,8 @@ function togglePriorityLab(lab){
       labs.push(lab);
     }
     d.priorityLabs=labs;
-    localStorage.setItem('livraisante_pharmacy',JSON.stringify(d));
-    
+    persistPharmacyData(d);
+
     renderPriorityWidget();
   }catch(e){}
 }
@@ -5442,7 +5556,7 @@ function saveBusyPattern(){
   const slots=document.querySelectorAll('#busyEditorSlots button[data-h]');
   const bp={};slots.forEach(b=>{bp[b.dataset.h]=parseInt(b.dataset.v||1);});
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
-  phData.busyPattern=bp; localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  phData.busyPattern=bp; persistPharmacyData(phData);
   showToast('✅ Affluence enregistrée','var(--ok)'); renderPro();
 }
 async function syncGoogleHours(){
@@ -5470,7 +5584,7 @@ async function syncGoogleHours(){
     const periods=(oh?.weekday_text||[]).map((t,i)=>({day:t.split(':')[0],hours:t.split(':').slice(1).join(':').trim(),open:!t.toLowerCase().includes('fermé')&&!t.toLowerCase().includes('closed')}));
     let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
     phData.googleHours=periods; phData.googlePlaceId=placeId;
-    localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+    persistPharmacyData(phData);
     msg.innerHTML='<span style="color:var(--ok)">✅ Horaires synchronisés depuis Google</span>';
     renderPro();
   }catch(e){
@@ -5478,7 +5592,7 @@ async function syncGoogleHours(){
       // Guide the user
       let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e2){}
       phData.googlePlaceId=placeId;
-      localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+      persistPharmacyData(phData);
       msg.innerHTML=`<span style="color:var(--warn)">⚠ Place ID enregistré. Pour synchroniser automatiquement les horaires, configurez une clé API Google Places dans vos paramètres ou <a href="https://business.google.com" target="_blank" style="color:#1F6FEB;font-weight:700">saisissez vos horaires manuellement ci-dessous</a>.</span>`;
     } else {
       msg.innerHTML=`<span style="color:var(--err)">✗ Erreur de synchronisation (${esc(e.message)}). Vérifiez votre Place ID.</span>`;
@@ -5592,7 +5706,7 @@ function saveCustomAdvice(){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   if(!phData.customAdvice) phData.customAdvice=[];
   phData.customAdvice.push({ailmentId:ailId,products:_caSelectedProducts.map(p=>p.n),text,createdAt:Date.now()});
-  localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  persistPharmacyData(phData);
   _caSelectedProducts=[];
   showToast('✅ Conseil enregistré','var(--ok)');
   renderPro();
@@ -5601,7 +5715,7 @@ function deleteCustomAdvice(idx){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   if(!phData.customAdvice) return;
   phData.customAdvice.splice(idx,1);
-  localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));
+  persistPharmacyData(phData);
   renderPro();
 }
 
@@ -5717,6 +5831,7 @@ function showPharmaPricingPanel(){
 
 function renderPro(){
   const all=Object.values(ORDERS).sort((a,b)=>b.createdAt-a.createdAt);
+  const aTraiter=all.filter(o=>o.status==='nouvelle');
   const enCours=all.filter(o=>['prete','en_livraison'].includes(o.status));
   const closes=all.filter(o=>['livree','refusee'].includes(o.status));
   const card=o=>`
@@ -5767,13 +5882,69 @@ function renderPro(){
 
 /* ---- LIVREUR ---- */
 let mapLiv=null;
-function takeOrder(id){ setStatus(id,'en_livraison'); const o=ORDERS[id]; if(o){o.driver=true;saveOrder(o);} }
+// Commandes disponibles (non prises en charge) — colonnes limitées, cf. loadDriverOrders()
+let DRIVER_AVAILABLE=[];
+
+async function takeOrder(id){
+  if(!currentUser?.id){ showToast('Connectez-vous pour accepter une course','#e11d48'); return; }
+  if(!window.LS_SB?.SB_READY){
+    // Mode démo local (Supabase non configuré) — comportement historique
+    setStatus(id,'en_livraison');
+    const o=ORDERS[id]; if(o){o.driver=true;saveOrder(o);}
+    return;
+  }
+  // Prise en charge atomique (driver_id + status en un seul UPDATE, exigé par
+  // la policy RLS orders_driver_claim) — si un autre livreur a été plus rapide,
+  // sbClaimOrder renvoie une erreur "no rows" et on rafraîchit la liste.
+  const {order,error}=await window.LS_SB.sbClaimOrder(id,currentUser.id);
+  if(error||!order){
+    showToast('❌ Cette commande vient d\'être prise en charge par un autre livreur','#e11d48');
+    loadDriverOrders();
+    return;
+  }
+  order.driver=true;
+  saveOrder(order);
+  DRIVER_AVAILABLE=DRIVER_AVAILABLE.filter(o=>o.id!==id);
+  pushNotification('patient',`🛵 Votre commande ${id} est prise en charge par le livreur`,{orderId:id,type:'order_status'});
+  renderNotifBell();
+  if(currentView==='livreur') renderLivreur();
+}
 function deliverOrder(id){ setStatus(id,'livree'); }
+
+/** Charge : (a) les commandes dispo (vue à colonnes limitées, polling — cf.
+ *  note ci-dessous) et (b) les commandes déjà prises en charge par CE livreur
+ *  (détail complet, via realtime driver_id=own ailleurs). */
+async function loadDriverOrders(){
+  if(!currentUser?.id || !window.LS_SB?.SB_READY) return;
+  const [available, mine]=await Promise.all([
+    window.LS_SB.sbGetAvailableOrdersForDriver(),
+    window.LS_SB.sbGetMyDriverOrders(currentUser.id)
+  ]);
+  DRIVER_AVAILABLE=available||[];
+  (mine||[]).forEach(o=>{ ORDERS[o.id]=o; });
+  persistOrders();
+  if(currentView==='livreur') renderLivreur();
+}
+let _driverPollHandle=null;
+function startDriverAvailablePolling(){
+  stopDriverAvailablePolling();
+  loadDriverOrders();
+  // Un livreur ne peut pas s'abonner en temps réel aux commandes NON prises en
+  // charge : la RLS `orders` interdit purement et simplement la lecture des
+  // lignes sans driver_id assigné, y compris via Realtime (qui applique les
+  // mêmes policies). On interroge donc le serveur régulièrement à la place —
+  // le realtime reste utilisé pour les commandes déjà prises en charge.
+  _driverPollHandle=setInterval(loadDriverOrders,15000);
+}
+function stopDriverAvailablePolling(){
+  if(_driverPollHandle){ clearInterval(_driverPollHandle); _driverPollHandle=null; }
+}
+
 function renderLivreur(){
+  const useRemote=!!(window.LS_SB?.SB_READY && currentUser?.id);
   const all=Object.values(ORDERS).sort((a,b)=>b.createdAt-a.createdAt);
-  const dispo=all.filter(o=>o.status==='prete');
-  const mes=all.filter(o=>o.status==='en_livraison');
-  const faites=all.filter(o=>o.status==='livree');
+  const mes=useRemote?all.filter(o=>o.status==='en_livraison'&&o.driverId===currentUser.id):all.filter(o=>o.status==='en_livraison');
+  const faites=useRemote?all.filter(o=>o.status==='livree'&&o.driverId===currentUser.id):all.filter(o=>o.status==='livree');
   const card=o=>`
     <div class="ocard">
       <div class="otop"><div class="oid">${esc(o.id)}<small>${esc(o.patient.name)} · ${esc(o.kind||'santé')}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
@@ -5785,13 +5956,76 @@ function renderLivreur(){
         ${o.status==='en_livraison'&&o.codeValidated?`<span style="color:var(--ok);font-weight:700">✓ Livraison confirmée par code</span>`:''}
         ${o.code?`<div style="font-size:11px;color:var(--ink-soft);margin-top:8px">Code : <b style="font-family:monospace;letter-spacing:2px">${o.code}</b>${o.codeValidated?' ✓':''}</div>`:''}      </div>
     </div>`;
-  const sec=(t,arr)=>`<div class="dash-sec-title">${t} <span class="cnt">${arr.length}</span></div>`+(arr.length?arr.map(card).join(''):'<div class="dash-empty">Aucune commande.</div>');
+  // Carte allégée pour les commandes pas encore prises en charge : la RLS
+  // n'expose ni patient ni contenu (id / pharmacy_id / status / created_at
+  // uniquement) tant qu'un livreur n'a pas accepté la course.
+  const dispoCard=o=>`
+    <div class="ocard">
+      <div class="otop"><div class="oid">Commande disponible<small>${timeAgo(new Date(o.created_at).getTime())}</small></div><span class="ostatus prete">${STATUS_LABEL.prete}</span></div>
+      <div class="oactions"><button onclick="takeOrder('${o.id}')">🛵 Accepter la course</button></div>
+    </div>`;
+  const sec=(t,arr,renderer)=>`<div class="dash-sec-title">${t} <span class="cnt">${arr.length}</span></div>`+(arr.length?arr.map(renderer||card).join(''):'<div class="dash-empty">Aucune commande.</div>');
+  const dispoSection=useRemote?sec('Disponibles',DRIVER_AVAILABLE,dispoCard):sec('Disponibles',all.filter(o=>o.status==='prete'));
   document.getElementById('livContent').innerHTML =
     renderDriverReferral()+
     `<div id="livreurFacturesSection" style="margin-bottom:20px"></div>`+
     `<div style="text-align:right;margin:0 0 18px"><button class="btn ghost" style="font-size:13px" onclick="enterRole('driverSignup')">🛵 Mon dossier livreur</button></div>`+
-    sec('Disponibles',dispo)+sec('Mes livraisons en cours',mes)+sec('Livrées',faites);
+    dispoSection+sec('Mes livraisons en cours',mes)+sec('Livrées',faites);
   renderDriverInvoicesSection('livreurFacturesSection');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BRANCHEMENT RÉEL DES COMMANDES — chargement initial + realtime (2026-07-18)
+   Remplace le fonctionnement 100% localStorage/BroadcastChannel (limité à un
+   seul navigateur) par une synchronisation réelle via Supabase, dispatché
+   selon le rôle de l'utilisateur connecté.
+═══════════════════════════════════════════════════════════════════ */
+let _ordersRealtimeChannel=null;
+function unsubscribeOrdersRealtime(){
+  if(_ordersRealtimeChannel && window.LS_SB){ window.LS_SB.sbUnsubscribeChannel(_ordersRealtimeChannel); }
+  _ordersRealtimeChannel=null;
+  stopDriverAvailablePolling();
+}
+/** Traduit un événement realtime Postgres (`postgres_changes`) en mise à jour du cache local ORDERS. */
+function applyOrderRealtimePayload(payload){
+  if(!window.LS_SB) return;
+  if(payload.eventType==='DELETE'){
+    const oldId=payload.old?.id; if(oldId){ delete ORDERS[oldId]; persistOrders(); refreshViews(); }
+    return;
+  }
+  const row=payload.new; if(!row) return;
+  const o=window.LS_SB.orderRowToJs(row);
+  ORDERS[o.id]=o; persistOrders();
+  refreshViews();
+}
+function getMyPharmacyId(){
+  if(currentUser?.pharmacyInfo?.id) return currentUser.pharmacyInfo.id;
+  try{ const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}'); if(ph.id) return ph.id; }catch(e){}
+  return null;
+}
+/** Point d'entrée unique : à appeler après connexion (afterLogin/restoreSupabaseSession)
+ *  et lors de la navigation vers un écran commandes (enterRole). */
+async function loadOrdersForCurrentRole(){
+  if(!currentUser?.id || !window.LS_SB?.SB_READY) return;
+  unsubscribeOrdersRealtime();
+  const role=currentUser.role||'patient';
+  if(role==='pharmacien'){
+    let pharmacyId=getMyPharmacyId();
+    if(!pharmacyId){ const ph=await window.LS_SB.sbGetPharmacy(currentUser.id); pharmacyId=ph?.id; }
+    if(!pharmacyId) return;
+    const orders=await window.LS_SB.sbGetOrdersForPharmacy(pharmacyId);
+    orders.forEach(o=>{ ORDERS[o.id]=o; }); persistOrders();
+    if(currentView==='pro') renderPro();
+    _ordersRealtimeChannel=window.LS_SB.sbSubscribeOrdersByColumn('pharmacy_id',pharmacyId,applyOrderRealtimePayload);
+  } else if(role==='livreur'){
+    startDriverAvailablePolling(); // gère aussi le 1er chargement + le rendu
+    _ordersRealtimeChannel=window.LS_SB.sbSubscribeOrdersByColumn('driver_id',currentUser.id,applyOrderRealtimePayload);
+  } else {
+    const orders=await window.LS_SB.sbGetPatientOrders(currentUser.id);
+    orders.forEach(o=>{ ORDERS[o.id]=o; }); persistOrders();
+    refreshViews();
+    _ordersRealtimeChannel=window.LS_SB.sbSubscribeOrdersByColumn('patient_id',currentUser.id,applyOrderRealtimePayload);
+  }
 }
 
 /* ===================================================================
@@ -7506,24 +7740,55 @@ function setMode(m){
 }
 
 /** Affiche le panneau de paiement Stripe et appelle onSuccess() si le paiement réussit */
-async function showStripePayment(amountEur, meta, onSuccess){
+/**
+ * @param {{items:{lab:string,name:string}[], deliveryMode:string, distanceKm:number|null,
+ *   donationEnabled:boolean, estimateEur:number, estimateDeliveryFeeEur:number}} cart
+ *   Panier décrit par référence produit (lab+name), PAS par prix — le montant réel
+ *   est recalculé côté serveur (voir sbCreatePaymentIntent / Edge Function
+ *   create-payment-intent, corrigé le 2026-07-22 pour ne plus jamais faire confiance
+ *   à un montant fourni par le client). `estimateEur`/`estimateDeliveryFeeEur` ne
+ *   servent qu'à l'affichage instantané (mode démo, ou pendant le calcul serveur) ;
+ *   le montant réellement facturé est celui renvoyé par l'Edge Function.
+ * @param {function({amountEur:number, deliveryFeeEur:number})} onSuccess
+ */
+async function showStripePayment(cart, meta, onSuccess){
   const stripe=getStripe();
   if(!stripe){
     // Stripe non configuré — mode démo, on passe directement
     showToast('⚠️ Mode démo — paiement simulé (Stripe non configuré)','#f59e0b');
-    onSuccess(); return;
+    onSuccess({amountEur:cart.estimateEur,deliveryFeeEur:cart.estimateDeliveryFeeEur,paymentIntentId:null}); return;
   }
-  // Créer le PaymentIntent via la Supabase Edge Function
-  let clientSecret=null;
+  // Créer le PaymentIntent via la Supabase Edge Function — le montant exact est
+  // recalculé serveur à partir de `cart.items` (voir commentaire ci-dessus).
+  let clientSecret=null, paymentIntentId=null;
+  let amountEur=cart.estimateEur, deliveryFeeEur=cart.estimateDeliveryFeeEur;
+  let intentError=null;
   try{
-    const res=await window.LS_SB?.sbCreatePaymentIntent(Math.round(amountEur*100),meta);
-    if(res?.clientSecret) clientSecret=res.clientSecret;
-  }catch(e){}
-  if(!clientSecret){
-    showToast('⚠️ Paiement en mode démo — Edge Function non déployée','#f59e0b');
-    onSuccess(); return;
+    const res=await window.LS_SB?.sbCreatePaymentIntent(cart,meta);
+    if(res?.clientSecret){
+      clientSecret=res.clientSecret;
+      paymentIntentId=res.paymentIntentId||null;
+      if(typeof res.amountEur==='number') amountEur=res.amountEur;
+      if(typeof res.deliveryFeeEur==='number') deliveryFeeEur=res.deliveryFeeEur;
+    } else intentError=res?.error||'unknown_error';
+  }catch(e){
+    intentError=e?.message||'invoke_failed';
   }
-  // Créer l'overlay de paiement
+  if(!clientSecret){
+    if(intentError==='supabase_not_configured'){
+      // Cas attendu en dev/démo local sans Supabase configuré : on laisse passer sans facturer.
+      console.warn('Paiement Stripe non tenté — Supabase non configuré (mode démo).');
+      showToast('⚠️ Mode démo — paiement simulé (Supabase non configuré)','#f59e0b');
+      onSuccess({amountEur,deliveryFeeEur,paymentIntentId:null}); return;
+    }
+    // Toute autre erreur (Edge Function en panne, réseau, Stripe mal configuré côté serveur,
+    // article introuvable dans le catalogue serveur, etc.) est une vraie panne de paiement :
+    // on NE DOIT PAS laisser passer la commande sans paiement.
+    console.error('Échec de création du PaymentIntent Stripe :', intentError);
+    showToast('❌ Le paiement n\'a pas pu être initialisé. Veuillez réessayer dans un instant.','#ef4444');
+    return;
+  }
+  // Créer l'overlay de paiement — `amountEur` est désormais le montant confirmé serveur.
   document.getElementById('stripePayOverlay')?.remove();
   const ov=document.createElement('div');
   ov.id='stripePayOverlay';
@@ -7548,7 +7813,12 @@ async function showStripePayment(amountEur, meta, onSuccess){
   const elements=stripe.elements({clientSecret,locale:'fr'});
   const pe=elements.create('payment',{layout:'tabs'});
   pe.mount('#stripe-payment-element');
-  window._stripeState={elements,onSuccess};
+  // NB : `paymentIntentId` capturé ici (retour de create-payment-intent) sert de
+  // repli ; celui renvoyé par stripe.confirmPayment() ci-dessous (même PaymentIntent,
+  // preuve directe de la confirmation qui vient d'avoir lieu) est prioritaire.
+  window._stripeState={elements,onSuccess:function(confirmedPaymentIntent){
+    onSuccess({amountEur,deliveryFeeEur,paymentIntentId:confirmedPaymentIntent?.id||paymentIntentId||null});
+  }};
 }
 
 async function confirmStripePayment(){
@@ -7567,7 +7837,7 @@ async function confirmStripePayment(){
     if(btn){btn.disabled=false;btn.innerHTML='🔒 Réessayer';}
   } else {
     document.getElementById('stripePayOverlay')?.remove();
-    if(window._stripeState.onSuccess) window._stripeState.onSuccess();
+    if(window._stripeState.onSuccess) window._stripeState.onSuccess(paymentIntent);
     window._stripeState=null;
   }
 }
@@ -7580,9 +7850,25 @@ function placeOrderSante(){
     deliveryMode==='cnc_club'?`Retrait Club · ${_cncClub?.clubInfo?.nom||'Club'}${_cncClub?.clubInfo?.adresse?' · '+_cncClub.clubInfo.adresse:''}`:
     (document.getElementById('santeAddr')?.value||'').trim();
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
-  const amountEur=cartTotalFull(deliveryMode);
-  const meta={patient:document.getElementById('santeName')?.value?.trim()||currentUser?.prenom||'Patient',items:patientCart.map(p=>p.name).join(', ').slice(0,500),itemCount:patientCart.length};
-  showStripePayment(amountEur, meta, function(){
+  // Estimation client (affichage instantané uniquement) — le montant réellement
+  // facturé est recalculé côté serveur à partir de `cart.items` (voir showStripePayment).
+  const estimateEur=cartTotalFull(deliveryMode);
+  const estimateDeliveryFeeEur=getDeliveryFee(deliveryMode);
+  // NB (2026-07-22, minimisation RGPD) : on n'envoie plus les noms de produits à Stripe
+  // (metadata du PaymentIntent) — un nom de complément alimentaire peut indirectement
+  // révéler une information de santé (ex: grossesse, pathologie chronique), et cette
+  // information n'est de toute façon lue nulle part côté serveur. Seul le nombre
+  // d'articles est conservé (utile pour la lecture du dashboard Stripe).
+  const meta={patient:document.getElementById('santeName')?.value?.trim()||currentUser?.prenom||'Patient',itemCount:patientCart.length};
+  const cart={
+    items:patientCart.map(p=>({lab:p.lab,name:p.name})),
+    deliveryMode,
+    distanceKm:deliveryDistanceKm,
+    donationEnabled,
+    estimateEur,
+    estimateDeliveryFeeEur,
+  };
+  showStripePayment(cart, meta, function(paid){
     const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
     const assocObj=donationEnabled?getCurrentAssoc():null;
     const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
@@ -7593,7 +7879,8 @@ function placeOrderSante(){
     });
     createOrder({items,kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
       patient:{name:meta.patient,pos:santePos,addr,donation:donInfo,email:currentUser?.email||''},
-      trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn'),totalEur:amountEur});
+      trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn'),totalEur:paid.amountEur,deliveryFeeEur:paid.deliveryFeeEur,
+      paymentIntentId:paid.paymentIntentId||null});
   });
 }
 
@@ -7730,8 +8017,14 @@ async function dsNext(from){
       }
       if(error&&(error.includes('already registered')||error.includes('already been registered')||error.includes('User already registered'))){
         // Compte existant → tenter connexion silencieuse
-        const {error:loginErr}=await window.LS_SB.sbSignIn(email,password);
+        const {user:loginUser,error:loginErr}=await window.LS_SB.sbSignIn(email,password);
         if(loginErr){showErr1('⚠ Email déjà utilisé. Connectez-vous d\'abord puis revenez sur ce formulaire.','drEmail');return;}
+        if(loginUser) currentUser={id:loginUser.id,email:loginUser.email,prenom,nom,tel,birthdate,role:'livreur'};
+      } else if(user){
+        // Pas de listener onAuthStateChange générique pour ce flux (email/mdp,
+        // hors OAuth) : on peuple currentUser nous-mêmes pour que l'étape
+        // suivante (création de la fiche `drivers`) dispose bien de l'id.
+        currentUser={id:user.id,email:user.email,prenom,nom,tel,birthdate,role:'livreur'};
       }
     }
     dsGo(2);
@@ -7764,6 +8057,19 @@ async function dsNext(from){
       d.address={line1:document.getElementById('drAddr1').value.trim(),zip:document.getElementById('drAddrZip').value.trim(),city:document.getElementById('drAddrCity').value.trim()};
       d.referrals=d.referrals||[];
       localStorage.setItem('livraisante_driver',JSON.stringify(d));
+      // Création/mise à jour réelle de la fiche `drivers` (branchement 2026-07-21)
+      // — sans elle, aucun claim de commande n'est possible côté livreur
+      // (RLS orders_driver_claim exige une ligne drivers active=true).
+      // NB : `active` n'est volontairement pas envoyé ici — il vaut false par
+      // défaut en base et ne peut être passé à true que côté service_role
+      // (trigger prevent_driver_self_reactivation) : l'activation reste un
+      // acte de modération, pas une auto-déclaration à l'inscription.
+      if(window.LS_SB?.SB_READY && currentUser?.id){
+        window.LS_SB.sbUpsertDriver(currentUser.id,{
+          siret:d.siret, iban:d.iban, vehicle:d.vehicle,
+          ref_code:d.code, referrals:d.referrals
+        }).catch(()=>{});
+      }
     }catch(e){}
     dsGo(3);
     // Populate the auto-entrepreneur card in step 3
@@ -7849,7 +8155,7 @@ function psNext(from){
       document.getElementById('phRpps').focus();
       return;
     }
-    if(!rpps.startsWith('21')){document.getElementById('rppsMsg').className='field-msg warn';document.getElementById('rppsMsg').textContent='⚠ Pour un pharmacien, le RPPS commence généralement par 21.';}
+    if(!rpps.startsWith('10')){document.getElementById('rppsMsg').className='field-msg warn';document.getElementById('rppsMsg').textContent='⚠ Pour un pharmacien, le RPPS commence généralement par 10.';}
     else{document.getElementById('rppsMsg').className='field-msg ok';document.getElementById('rppsMsg').textContent='✓ Format RPPS pharmacien valide.';}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(factEmail)){
       document.getElementById('factEmailMsg').className='field-msg err';
@@ -7926,7 +8232,7 @@ function psNext(from){
       }catch(err){
         if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer mon dossier →';}
         console.error('Échec envoi dossier pharmacie:', err.message);
-        alert('⚠ Une erreur est survenue lors de l\'envoi de votre dossier ('+err.message+').\n\nVos informations ont été sauvegardées sur cet appareil — merci de réessayer, ou de contacter contact@livraisante.fr si le problème persiste.');
+        alert('⚠ Une erreur est survenue lors de l\'envoi de votre dossier ('+err.message+').\n\nVos informations ont été sauvegardées sur cet appareil — merci de réessayer, ou de contacter administratif@livraisante.fr si le problème persiste.');
       }
     })();
   }
@@ -8044,12 +8350,12 @@ function renderPlans(){
 // Stores the currently-applied promo for plan selection
 let _planAppliedPromo=null;
 
-function checkPlanPromoCode(){
+async function checkPlanPromoCode(){
   const code=(document.getElementById('planPromoInput')?.value||'').trim().toUpperCase();
   const resultEl=document.getElementById('planPromoResult');
   if(!code){if(resultEl) resultEl.innerHTML='';return;}
   if(!resultEl) return;
-  const result=applyPromoCode(code,'pharmacie');
+  const result=await applyPromoCode(code,'pharmacie');
   if(result.error){
     _planAppliedPromo=null;
     resultEl.innerHTML=`<span style="color:var(--err);font-weight:700">❌ ${esc(result.error)}</span>`;
@@ -8894,7 +9200,7 @@ function selectMedSub(orderId, cip13, nom){
   if(cipEl) cipEl.value=cip13;
   if(resEl) resEl.style.display='none';
 }
-function sendSubstitution(orderId){
+async function sendSubstitution(orderId){
   const o=ORDERS[orderId]; if(!o) return;
   const newProd=document.getElementById(`subProd-${orderId}`)?.value?.trim();
   const newCip=document.getElementById(`subCip-${orderId}`)?.value?.trim()||'';
@@ -8903,27 +9209,59 @@ function sendSubstitution(orderId){
   const newPrix=parseFloat(newPrixRaw);
   const origPrix=o.items.reduce((s,i)=>s+(prixOf(i.name)||0),0)*(1+MARGE_PCT);
   const savings=Math.max(0,origPrix-newPrix*(1+MARGE_PCT));
+  const prevSub=o.substitution;
   o.substitution={proposedAt:Date.now(),newProduct:newProd,newCip13:newCip,newPrice:newPrix,savings:savings.toFixed(2),status:'pending'};
+  saveOrder(o); renderPro();
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{substitution:o.substitution});
+    if(error){
+      o.substitution=prevSub; saveOrder(o); renderPro();
+      showToast('❌ Envoi de la proposition impossible : '+error,'#e11d48');
+      console.error('sendSubstitution',error);
+      return;
+    }
+  }
   // Enregistrer dans le catalogue de la pharmacie
   const ph=currentUser?.pharmacyInfo||{}; const phId=ph.id||currentUser?.id||'local';
   const origCip=o.items?.[0]?.cip13||'unknown';
   savePharmacyCatalogEntry(phId, origCip, newCip, newProd, newPrix);
-  saveOrder(o); renderPro();
 }
-function patientAcceptSub(orderId){
+async function patientAcceptSub(orderId){
   const o=ORDERS[orderId]; if(!o?.substitution) return;
+  const prevStatus=o.substitution.status;
   o.substitution.status='accepted';
   addToCagnotte(orderId,parseFloat(o.substitution.savings),o.substitution.newProduct);
   saveOrder(o); renderOrderTrack(orderId);
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{substitution:o.substitution});
+    if(error){
+      o.substitution.status=prevStatus; saveOrder(o); renderOrderTrack(orderId);
+      showToast('❌ '+error,'#e11d48'); console.error('patientAcceptSub',error);
+    }
+  }
 }
-function patientRefuseSub(orderId){
+async function patientRefuseSub(orderId){
   const o=ORDERS[orderId]; if(!o?.substitution) return;
+  const prevStatus=o.substitution.status;
   o.substitution.status='refused'; saveOrder(o); renderOrderTrack(orderId);
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{substitution:o.substitution});
+    if(error){
+      o.substitution.status=prevStatus; saveOrder(o); renderOrderTrack(orderId);
+      showToast('❌ '+error,'#e11d48'); console.error('patientRefuseSub',error);
+    }
+  }
 }
 function checkSubExpiry(o){
   if(o.substitution?.status==='pending'){
     const elapsed=Date.now()-o.substitution.proposedAt;
-    if(elapsed>3600000){o.substitution.status='expired'; saveOrder(o); return false;}
+    if(elapsed>3600000){
+      o.substitution.status='expired'; saveOrder(o);
+      if(window.LS_SB?.SB_READY){
+        window.LS_SB.sbUpdateOrderFields(o.id,{substitution:o.substitution}).catch(e=>console.error('checkSubExpiry',e));
+      }
+      return false;
+    }
     return true; // still pending
   }
   return false;
@@ -8957,7 +9295,7 @@ loadAccounts();
   currentUser = { id: session.user.id, email: session.user.email, ...profile };
   if(profile.role==='pharmacien'){
     const ph = await window.LS_SB.sbGetPharmacy(session.user.id);
-    if(ph){ localStorage.setItem('livraisante_pharmacy', JSON.stringify(ph)); activeLabs = ph.active_labs ? new Set(ph.active_labs) : new Set(PARTNER_LABS); }
+    if(ph){ localStorage.setItem('livraisante_pharmacy', JSON.stringify(window.LS_SB.pharmacyRowToJs(ph))); activeLabs = ph.active_labs ? new Set(ph.active_labs) : new Set(PARTNER_LABS); }
   }
   if(profile.role==='professionnel_sante'||profile.role==='club'){
     if(typeof renderHeader === 'function') renderHeader();
@@ -8965,6 +9303,10 @@ loadAccounts();
     return;
   }
   renderHeader();
+  // Recharge + rebranche le realtime des commandes selon le rôle restauré
+  // (pharmacien/livreur : géré aussi par enterRole si l'utilisateur y navigue ;
+  // ici on couvre le cas où la vue reste sur l'accueil après restauration).
+  if(typeof loadOrdersForCurrentRole==='function') loadOrdersForCurrentRole();
 })();
 
 /* ---- Populate clubs dropdown ---- */
@@ -8995,6 +9337,32 @@ function initDemoAccounts(){
 /* ---- Auth ---- */
 function _dbg(msg){ /* panel debug supprimé en prod */ console.debug('[LV]',msg); }
 
+// ── Correctif audit sécurité 2026-07-23 (Moyen) — hash de mot de passe salé ──
+// Ce hash ne sert QUE au fallback localStorage 100% hors-ligne (mode démo sans
+// Supabase configuré, cf. gardes `window.LS_SB?.SB_READY` autour des appels) —
+// les vrais comptes utilisateur sont authentifiés par Supabase Auth (bcrypt
+// côté serveur), jamais par ce chemin. Avant ce correctif, le hash était un
+// simple SHA-256 non salé : rapide à calculer en masse, donc vulnérable à des
+// tables arc-en-ciel / bruteforce hors-ligne si quelqu'un récupérait le
+// contenu de `localStorage` d'un appareil (ex. poste partagé). Désormais :
+// sel aléatoire par compte (16 octets, stocké à côté du hash — un sel n'a pas
+// besoin d'être secret) + PBKDF2-HMAC-SHA256 100 000 itérations (calcul lent
+// exprès, contrairement à SHA-256 brut).
+const PWD_PBKDF2_ITERATIONS=100000;
+async function hashPasswordDemo(pwd, saltHex){
+  const salt=saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial=await crypto.subtle.importKey('raw',new TextEncoder().encode(pwd),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:PWD_PBKDF2_ITERATIONS,hash:'SHA-256'},keyMaterial,256);
+  return {hash:bytesToHex(new Uint8Array(bits)), salt:bytesToHex(salt)};
+}
+function bytesToHex(bytes){ return Array.from(bytes).map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(hex){ const out=new Uint8Array(hex.length/2); for(let i=0;i<out.length;i++) out[i]=parseInt(hex.substr(i*2,2),16); return out; }
+// Compat ascendante : comptes démo créés avant ce correctif (SHA-256 non salé, pas de pwdSalt).
+async function hashPasswordDemoLegacy(pwd){
+  const raw=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
+  return bytesToHex(new Uint8Array(raw));
+}
+
 async function doLogin(){
   const email=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();
   const pwd=document.getElementById('loginPassword')?.value||'';
@@ -9020,7 +9388,7 @@ async function doLogin(){
     if(!profile||!profile.role) currentUser.role='patient';
     if(currentUser.role==='pharmacien'){
       const ph=await window.LS_SB.sbGetPharmacy(user.id);
-      if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph)); activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
+      if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(window.LS_SB.pharmacyRowToJs(ph))); activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
     }
     afterLogin();
     return;
@@ -9040,9 +9408,22 @@ async function doLogin(){
     if(errEl){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';}
     return;
   }
-  // Vérification par hash SHA-256 (mot de passe jamais stocké en clair)
-  const pwdHash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));
-  if(acc.pwdHash!==pwdHash){
+  // Vérification par hash salé (mot de passe jamais stocké en clair) — voir hashPasswordDemo()
+  let pwdOk=false;
+  if(acc.pwdSalt){
+    const {hash}=await hashPasswordDemo(pwd,acc.pwdSalt);
+    pwdOk=(acc.pwdHash===hash);
+  } else {
+    // Compte créé avant le correctif salage : vérifie l'ancien hash non salé,
+    // puis migre silencieusement vers le nouveau format pour la prochaine fois.
+    const legacyHash=await hashPasswordDemoLegacy(pwd);
+    pwdOk=(acc.pwdHash===legacyHash);
+    if(pwdOk){
+      const {hash,salt}=await hashPasswordDemo(pwd);
+      acc.pwdHash=hash; acc.pwdSalt=salt; ACCOUNTS[email]=acc; saveAccounts();
+    }
+  }
+  if(!pwdOk){
     const g=document.getElementById('loginGroup');
     if(g){g.style.animation='none';void g.offsetWidth;g.style.animation='shake .4s';}
     if(errEl){errEl.style.display='block';errEl.textContent='Email ou mot de passe incorrect.';}
@@ -9101,18 +9482,63 @@ function afterLogin(){
   }
 
   updateAccountChip(); renderHeader(); renderBottomNav();
-  if(role==='pharmacien') enterRole('pro');
-  else if(role==='livreur') enterRole('livreur');
+  if(role==='pharmacien') enterRole('pro'); // charge aussi les commandes de l'officine (cf. enterRole)
+  else if(role==='livreur') enterRole('livreur'); // charge aussi les commandes livreur (cf. enterRole)
   else if(role==='professionnel_sante') enterRole('healthPro');
   else if(role==='club') enterRole('club');
-  else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); }
+  else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); loadOrdersForCurrentRole(); }
 }
 
+// ── Correctif audit sécurité 2026-07-22 (Élevé #4) ────────────────────────────
+// Avant ce correctif, doLogout() ne supprimait que 2 clés (session + pharmacie) :
+// des données de santé/PII (commandes avec médicaments, profil santé en
+// sessionStorage, profil livreur, panier pharmacie, etc.) restaient lisibles
+// dans le navigateur après déconnexion — un risque réel sur un poste partagé
+// (borne, ordinateur familial/professionnel commun).
+// Fix : on supprime maintenant TOUTES les clés propres à l'app par balayage de
+// préfixe (`livraisante_`/`lv_`) plutôt qu'une liste figée qu'on oublierait de
+// tenir à jour, à l'exception explicite de :
+//  - `livraisante_accounts_v2` : ce n'est PAS une donnée de la session en cours
+//    mais un magasin local partagé (mode démo/hors-ligne), potentiellement
+//    utilisé par plusieurs comptes sur le même appareil — le vider entièrement
+//    détruirait les comptes d'autres utilisateurs de cet appareil. On retire
+//    seulement l'entrée du compte qui se déconnecte (ci-dessous), qui elle est
+//    bien scopée à la session en cours.
+//  - `livr_cookie_consent` : préférence de consentement cookies liée à
+//    l'appareil, pas à la session (aucune donnée personnelle dedans) — hors
+//    périmètre de ce correctif de toute façon (préfixe différent).
+function purgeAppStorageOnLogout(){
+  const KEEP_LOCALSTORAGE=new Set(['livraisante_accounts_v2']);
+  try{
+    const toRemove=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&(k.startsWith('livraisante_')||k.startsWith('lv_'))&&!KEEP_LOCALSTORAGE.has(k)) toRemove.push(k);
+    }
+    toRemove.forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
+  }catch(e){}
+  try{
+    const toRemoveS=[];
+    for(let i=0;i<sessionStorage.length;i++){
+      const k=sessionStorage.key(i);
+      if(k&&(k.startsWith('livraisante_')||k.startsWith('lv_')||k.startsWith('pendingOAuth')||k==='pendingPasswordRecovery')) toRemoveS.push(k);
+    }
+    toRemoveS.forEach(k=>{ try{sessionStorage.removeItem(k);}catch(e){} });
+  }catch(e){}
+}
 async function doLogout(){
   if(window.LS_SB?.SB_READY) await window.LS_SB.sbSignOut();
+  try{
+    if(currentUser?.email){
+      const accs=getAccounts();
+      if(accs&&Object.prototype.hasOwnProperty.call(accs,currentUser.email)){
+        delete accs[currentUser.email];
+        saveAccounts();
+      }
+    }
+  }catch(e){}
+  purgeAppStorageOnLogout();
   currentUser=null; patientProfile=null;
-  try{localStorage.removeItem('livraisante_session');}catch(e){}
-  localStorage.removeItem('livraisante_pharmacy');
   updateAccountChip(); renderHeader(); renderBottomNav(); showHome();
 }
 function clearLoginErr(){const e=document.getElementById('loginErr'); if(e) e.style.display='none';}
@@ -9324,29 +9750,44 @@ async function completeRegistration(){
     const licenseNum=roleData?.sportLicense||null;
     const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role,tel,sport_license:licenseNum});
     if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}cancelVerification();return;}
+    // Délai avant l'écriture des données liées au rôle : laisse le trigger
+    // handle_new_user créer la ligne `profiles` côté Supabase avant qu'on
+    // essaie d'y référencer user.id depuis health_professionals/clubs.
+    const _regDelay=(ms)=>new Promise(r=>setTimeout(r,ms));
     if(role==='professionnel_sante'){
-      setTimeout(async()=>{
-        await window.LS_SB.sbUpsertHealthPro(user.id,{profession:roleData.profession,rpps:roleData.rpps,club_id:roleData.clubId||null,partner_clubs:roleData.partnerClubs});
-      },1500);
+      await _regDelay(1500);
+      const {error:proErr}=await window.LS_SB.sbUpsertHealthPro(user.id,{profession:roleData.profession,rpps:roleData.rpps,club_id:roleData.clubId||null,partner_clubs:roleData.partnerClubs});
+      if(proErr){
+        console.error('Échec enregistrement profil professionnel de santé :', proErr);
+        showToast('⚠️ Compte créé, mais votre profil professionnel n\'a pas pu être enregistré. Complétez-le depuis votre espace.','#f59e0b');
+      }
     }
     if(role==='pharmacien'){
       const {rpps,rppsStatus}=roleData;
       if(rpps&&window.LS_SB?.getSB){
         const sb=window.LS_SB.getSB();
-        if(sb) setTimeout(async()=>{
-          await sb.from('profiles').update({rpps,rpps_verified:rppsStatus==='verified',rpps_status:rppsStatus}).eq('id',user.id);
-        },1500);
+        if(sb){
+          await _regDelay(1500);
+          const {error:rppsErr}=await sb.from('profiles').update({rpps,rpps_verified:rppsStatus==='verified',rpps_status:rppsStatus}).eq('id',user.id);
+          if(rppsErr){
+            console.error('Échec enregistrement RPPS pharmacien :', rppsErr.message||rppsErr);
+            showToast('⚠️ Compte créé, mais votre numéro RPPS n\'a pas pu être enregistré. Vous pourrez le renseigner depuis votre espace.','#f59e0b');
+          }
+        }
       }
     }
     if(role==='club'){
       const rd=roleData;
-      setTimeout(async()=>{
-        await window.LS_SB.sbUpsertClub(user.id,{
-          nom:rd.clubNom,adresse:rd.clubAdresse,zip:rd.clubZip,ville:rd.clubVille,
-          federation:rd.clubFed,sport:rd.clubSport,fed_id:rd.fedId,
-          contact_role:rd.contactRole,click_collect:rd.cnc,
-        });
-      },1500);
+      await _regDelay(1500);
+      const {error:clubErr}=await window.LS_SB.sbUpsertClub(user.id,{
+        nom:rd.clubNom,adresse:rd.clubAdresse,zip:rd.clubZip,ville:rd.clubVille,
+        federation:rd.clubFed,sport:rd.clubSport,fed_id:rd.fedId,
+        contact_role:rd.contactRole,click_collect:rd.cnc,
+      });
+      if(clubErr){
+        console.error('Échec enregistrement profil club :', clubErr);
+        showToast('⚠️ Compte créé, mais les informations du club n\'ont pas pu être enregistrées. Complétez-les depuis votre espace.','#f59e0b');
+      }
     }
     pendingReg=null;
     showToast('✅ Compte créé ! Vérifiez votre email pour confirmer.','var(--ok)');
@@ -9355,10 +9796,9 @@ async function completeRegistration(){
   }
 
   // ── Fallback localStorage (mode démo hors-ligne uniquement) ───
-  // Le mot de passe n'est jamais stocké en clair — on conserve un hash SHA-256.
-  const _pwdHashRaw=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
-  const _pwdHash=Array.from(new Uint8Array(_pwdHashRaw)).map(x=>x.toString(16).padStart(2,'0')).join('');
-  const acc={id:'u_'+Date.now(),prenom,nom,email,pwdHash:_pwdHash,role,orders:[],cagnotte:{total:0,history:[]},
+  // Le mot de passe n'est jamais stocké en clair — hash salé, voir hashPasswordDemo().
+  const {hash:_pwdHash,salt:_pwdSalt}=await hashPasswordDemo(pwd);
+  const acc={id:'u_'+Date.now(),prenom,nom,email,pwdHash:_pwdHash,pwdSalt:_pwdSalt,role,orders:[],cagnotte:{total:0,history:[]},
     consentTs:Date.now(),consentCGU:true,consentSante:true,consentMarketing};
   if(tel) acc.tel=tel;
   if(role==='patient'||role==='patient_licencie'){
@@ -9441,7 +9881,20 @@ function searchProClubs(q){
   const all=[...new Set([...ALL_CLUBS,...regClubs])];
   const filtered=all.filter(c=>c.toLowerCase().includes(q.toLowerCase())).slice(0,8);
   if(!filtered.length){if(res)res.style.display='none';return;}
-  res.innerHTML=filtered.map(c=>`<div onclick="addProClub('${c.replace(/'/g,"\\'")}',this)" style="padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f0" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">${esc(c)}</div>`).join('');
+  // ── Correctif audit sécurité 2026-07-22 (Critique #1, variante) ────────────
+  // `regClubs` provient de noms de club auto-déclarés (self-service, texte libre).
+  // Même correctif que filterClubs() : construction DOM sûre au lieu d'un
+  // onclick="...('${...}')" interpolé (voir commentaire détaillé plus haut).
+  res.innerHTML='';
+  filtered.forEach(c=>{
+    const div=document.createElement('div');
+    div.style.cssText='padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid #f0f0f0';
+    div.textContent=c;
+    div.addEventListener('mouseover',()=>{div.style.background='#f5f5f5';});
+    div.addEventListener('mouseout',()=>{div.style.background='';});
+    div.addEventListener('click',()=>addProClub(c,div));
+    res.appendChild(div);
+  });
   res.style.display='block';
 }
 function addProClub(nom,el){
@@ -9459,9 +9912,20 @@ function removeProClub(id){
 }
 function renderProClubChips(){
   const el=document.getElementById('regProClubSelected');if(!el)return;
-  el.innerHTML=regProSelectedClubs.map(c=>`<div style="display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700">
-    ${esc(c.nom)}<button onclick="removeProClub('${esc(c.id)}')" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1">×</button>
-  </div>`).join('');
+  // ── Correctif audit sécurité 2026-07-22 (Critique #1, variante) : DOM sûr,
+  // pas d'onclick interpolé (c.id dérive de c.nom, texte libre auto-déclaré). ──
+  el.innerHTML='';
+  regProSelectedClubs.forEach(c=>{
+    const chip=document.createElement('div');
+    chip.style.cssText='display:flex;align-items:center;gap:5px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700';
+    chip.appendChild(document.createTextNode(c.nom||''));
+    const rm=document.createElement('button');
+    rm.style.cssText='background:none;border:none;cursor:pointer;color:#666;font-size:14px;padding:0;margin-left:2px;line-height:1';
+    rm.textContent='×';
+    rm.addEventListener('click',()=>removeProClub(c.id));
+    chip.appendChild(rm);
+    el.appendChild(chip);
+  });
 }
 
 async function lookupCitiesFromZip(zip, cityId, dropdownId){
@@ -10083,7 +10547,7 @@ async function requestClubLiaison(){
         user_id:currentUser.id, club_nom:clubNom,
         license_num:licenseNum||null, status:'pending',
         patient_email:currentUser.email, patient_nom:`${currentUser.prenom||''} ${currentUser.nom||''}`.trim()||null
-      }).then(()=>{}).catch(()=>{}); // best-effort, table may not exist yet
+      }).then(()=>{}).catch(()=>{}); // best-effort (table réelle depuis migration 20260722000000)
     }
     currentUser.healthProfile.clubRequest={nom:clubNom,licenseNum:licenseNum||null,date:new Date().toISOString(),status:'pending'};
     currentUser.healthProfile.clubLiaisonPending=true;
@@ -10220,12 +10684,21 @@ function saveStats(){try{localStorage.setItem(STATS_KEY,JSON.stringify(STATS));}
 function logConsultation(ailIds){
   STATS.consultations++; (ailIds||[]).forEach(id=>{STATS.byAilment[id]=(STATS.byAilment[id]||{c:0,o:0}); STATS.byAilment[id].c++;});
   saveStats();
+  // Miroir serveur (table app_events) — permet à l'admin de voir ces stats
+  // agrégées tous utilisateurs confondus, pas seulement dans ce navigateur.
+  // Best-effort : ne bloque jamais le parcours patient si ça échoue.
+  if(window.LS_SB?.SB_READY&&currentUser?.id){
+    window.LS_SB.sbLogEvent(currentUser.id,'consultation',{ailments:ailIds||[]});
+  }
 }
 function logOrder(){STATS.orders++; saveStats();}
 function logAbandon(reason){
   if(!reason) return;
   STATS.abandoned++; STATS.abandonReasons[reason]=(STATS.abandonReasons[reason]||0)+1;
   saveStats();
+  if(window.LS_SB?.SB_READY&&currentUser?.id){
+    window.LS_SB.sbLogEvent(currentUser.id,'abandon',{reason});
+  }
 }
 
 /* Raison d'abandon → label lisible */
@@ -10272,7 +10745,7 @@ function trialWidget(){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   const planId=phData.plan||'free'; if(planId!=='free') return '';
   const signupTs=phData.signupTs||Date.now();
-  try{if(!phData.signupTs){phData.signupTs=Date.now();localStorage.setItem('livraisante_pharmacy',JSON.stringify(phData));}}catch(e){}
+  try{if(!phData.signupTs){phData.signupTs=Date.now();persistPharmacyData(phData);}}catch(e){}
   const daysLeft=Math.max(0,30-Math.floor((Date.now()-signupTs)/86400000));
   const ordersThisMonth=Object.values(ORDERS).filter(o=>o.status!=='refusee'&&Date.now()-o.createdAt<2592000000).length;
   return `<div class="trial-strip">
@@ -10468,7 +10941,7 @@ function onGeoSuccess(orderId,pos){
     showManualCheckIn(orderId);
     return;
   }
-  const phName=phGPS.nom||'la pharmacie';
+  const phName=esc(phGPS.nom||'la pharmacie');
   const dist=Math.round(haversine(lat,lon,phGPS.lat,phGPS.lon));
   if(dist<=CHECKIN_RADIUS_OK){
     confirmCheckIn(orderId,dist,lat,lon);
@@ -10498,14 +10971,25 @@ function showManualCheckIn(orderId){
     <button onclick="confirmCheckIn('${orderId}',0)" style="font-family:inherit;font-weight:800;font-size:14px;background:#16A34A;color:white;border:none;padding:11px 24px;border-radius:11px;cursor:pointer;margin-top:14px;width:100%">✓ Le pharmacien a validé mon code</button>
   </div>`;
 }
-function confirmCheckIn(orderId,dist,lat,lon){
+async function confirmCheckIn(orderId,dist,lat,lon){
   const o=ORDERS[orderId]; if(!o) return;
   const now=new Date();
+  const prevArrival=o.arrival;
   o.arrival={checkedIn:true,ts:Date.now(),timeLabel:now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),dist:dist||0,lat:lat||null,lon:lon||null};
   saveOrder(o);
-  if(bc) bc.postMessage({type:'patient_arrived',orderId,order:o});
   const section=document.getElementById(`checkin-section-${orderId}`);
   if(section) section.innerHTML=`<div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${o.arrival.timeLabel}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${dist>0?`Vous êtes à <b>${dist}m</b> de l'officine.`:'Présence validée par le pharmacien.'} L'équipe vous prend en charge.</div>`;
+  // Doit être écrit côté serveur pour que la pharmacie (autre appareil) soit alertée en temps réel
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{arrival:o.arrival});
+    if(error){
+      o.arrival=prevArrival; saveOrder(o);
+      showToast('❌ Signalement de présence impossible : '+error,'#e11d48');
+      console.error('confirmCheckIn',error);
+      return;
+    }
+  }
+  if(bc) bc.postMessage({type:'patient_arrived',orderId,order:o});
   showArrivalToast(o);
   if(currentView==='pro') renderPro();
 }
@@ -10548,7 +11032,18 @@ function renderArrivalNotifications(){
   if(!arrivals.length) return '';
   return `<div style="margin-bottom:18px"><div class="dash-sec-title" style="color:#16A34A;margin-top:0;display:flex;align-items:center;gap:8px"><div class="green-dot"></div>Patients présents en officine <span class="cnt" style="background:#16A34A">${arrivals.length}</span></div>${arrivals.map(o=>`<div class="arrival-notif"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><div style="font-weight:800;font-size:15px;color:#1c6b2b">${esc(o.patient?.name||'Patient')} — Commande ${esc(o.id)}</div><div style="font-size:12.5px;color:#2d6b3d;margin-top:3px">⏰ ${esc(o.arrival.timeLabel)} · ${esc((o.patient?.addr||'').replace('Click & Collect · Créneau ','Créneau '))}</div><div style="font-size:12px;color:#2d6b3d;margin-top:3px">${(o.items||[]).map(i=>esc(i.name||i.ev||'')).slice(0,2).join(', ')}</div></div><button onclick="markServed('${o.id}')" style="font-family:inherit;font-weight:800;font-size:12px;background:#16A34A;color:white;border:none;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap">✓ Remis</button></div></div>`).join('')}</div>`;
 }
-function markServed(orderId){const o=ORDERS[orderId];if(!o)return;o.arrival.served=true;o.status='livree';saveOrder(o);renderPro();}
+async function markServed(orderId){
+  const o=ORDERS[orderId]; if(!o) return;
+  const prevArrival=o.arrival, prevStatus=o.status;
+  o.arrival.served=true; o.status='livree'; saveOrder(o); renderPro();
+  if(window.LS_SB?.SB_READY){
+    const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{arrival:o.arrival,status:'livree'});
+    if(error){
+      o.arrival=prevArrival; o.status=prevStatus; saveOrder(o); renderPro();
+      showToast('❌ '+error,'#e11d48'); console.error('markServed',error);
+    }
+  }
+}
 
 /* BroadcastChannel : écoute les arrivées patients */
 if(bc){const _bc=bc.onmessage;bc.onmessage=e=>{if(e.data?.type==='patient_arrived'){ORDERS[e.data.orderId]=e.data.order;showArrivalToast(e.data.order);if(currentView==='pro')renderPro();}else{if(_bc)_bc(e);else refreshViews();}};}
@@ -10637,13 +11132,13 @@ async function loadAdminStats(){
       sb.from('profiles').select('*',{count:'exact',head:true}).eq('role','livreur'),
       sb.from('clubs').select('*',{count:'exact',head:true}),
       sb.from('health_professionals').select('*',{count:'exact',head:true}),
-      sb.from('orders').select('total_price,status').limit(1000)
+      sb.from('orders').select('pricing,status').limit(1000)
     ]);
     stats.pharmacies=ph||0; stats.clients=cl||0; stats.livreurs=li||0;
     stats.clubs=cb||0; stats.healthPros=hp||0;
     if(ords){
       stats.orders=ords.length;
-      stats.revenue=ords.reduce((s,o)=>s+(parseFloat(o.total_price)||0),0);
+      stats.revenue=ords.reduce((s,o)=>s+(parseFloat(o.pricing?.totalEur)||0),0);
       stats.pending=ords.filter(o=>o.status==='en_attente'||o.status==='validee').length;
     }
   }catch(e){console.warn('admin stats',e);}
@@ -10680,7 +11175,9 @@ function renderAdminDashboard(){
   <div class="chips" style="margin-bottom:20px;flex-wrap:wrap">
     <button class="chip sel" onclick="adminTab(this,'tabPromos')">🎟 Codes promo</button>
     <button class="chip" onclick="adminTab(this,'tabMessages')">📣 Messages</button>
+    <button class="chip" onclick="adminTab(this,'tabCandidatures')">📋 Candidatures pharmacie</button>
     <button class="chip" onclick="adminTab(this,'tabClubs')">🏋️ Clubs</button>
+    <button class="chip" onclick="adminTab(this,'tabLivreurs')">🛵 Livreurs</button>
     <button class="chip" onclick="adminTab(this,'tabFactures')">🧾 Factures</button>
     <button class="chip" onclick="adminTab(this,'tabCagnottes')">🎁 Cagnottes</button>
     <button class="chip" onclick="adminTab(this,'tabExport')">📥 Export</button>
@@ -10706,10 +11203,25 @@ function renderAdminDashboard(){
     <div id="adminMsgHistory" style="margin-top:20px"></div>
   </div>
 
+  <!-- TAB: CANDIDATURES PHARMACIE -->
+  <div id="tabCandidatures" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:6px">📋 Candidatures pharmacie en attente</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:14px">Dossiers envoyés via le formulaire « Devenir pharmacie partenaire ». Valider un dossier ici est la seule action requise pour tenir la promesse « un conseiller vous contactera dans les 24h » faite au candidat.</div>
+    <div id="adminPharmacyAppsList"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
+  </div>
+
   <!-- TAB: CLUBS -->
   <div id="tabClubs" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">📨 Demandes de liaison en attente</div>
+    <div id="adminClubJoinRequestsList" style="margin-bottom:26px"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
     <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🏋️ Clubs inscrits</div>
     <div id="adminClubsList"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
+  </div>
+
+  <!-- TAB: LIVREURS -->
+  <div id="tabLivreurs" class="admin-tab" style="display:none">
+    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🛵 Livreurs</div>
+    <div id="adminDriversList"><div style="color:var(--ink-soft);font-size:14px">Chargement…</div></div>
   </div>
 
   <!-- TAB: FACTURES ADMIN -->
@@ -10744,7 +11256,7 @@ function renderAdminDashboard(){
     set('sv-pending',s.pending);
   });
 
-  try{ if(typeof renderPromoCodes==='function') renderPromoCodes(); }catch(e){console.warn('renderPromoCodes',e);}
+  try{ if(typeof refreshPromoCodesUI==='function') refreshPromoCodesUI().catch(e=>console.warn('refreshPromoCodesUI',e)); }catch(e){console.warn('refreshPromoCodesUI',e);}
   try{ renderAdminMsgHistory(); }catch(e){console.warn('renderAdminMsgHistory',e);}
 }
 
@@ -10754,10 +11266,13 @@ function adminTab(btn,tabId){
   const tab=document.getElementById(tabId);
   if(tab) tab.style.display='block';
   btn.classList.add('sel');
-  if(tabId==='tabClubs') loadAdminClubs();
+  if(tabId==='tabCandidatures') loadAdminPharmacyApps();
+  if(tabId==='tabClubs'){ loadAdminClubs(); loadAdminClubJoinRequests(); }
   if(tabId==='tabFactures') loadAdminFactures();
   if(tabId==='tabCagnottes') renderAdminCagnottes();
   if(tabId==='tabMessages') renderAdminMsgHistory();
+  if(tabId==='tabPromos'&&typeof refreshPromoCodesUI==='function') refreshPromoCodesUI().catch(e=>console.warn('refreshPromoCodesUI',e));
+  if(tabId==='tabLivreurs'&&typeof loadAdminDrivers==='function') loadAdminDrivers();
 }
 
 async function loadAdminClubs(){
@@ -10778,6 +11293,108 @@ async function loadAdminClubs(){
     </div>`).join('');
 }
 
+async function loadAdminClubJoinRequests(){
+  const el=document.getElementById('adminClubJoinRequestsList');
+  if(!el) return;
+  const sb=window.LS_SB?.getSB();
+  if(!sb){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Supabase non disponible.</div>';return;}
+  const {data,error}=await sb.from('club_join_requests').select('*').eq('status','pending').order('created_at',{ascending:false}).limit(100);
+  if(error){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Erreur de chargement.</div>';return;}
+  if(!data?.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucune demande en attente.</div>';return;}
+  el.innerHTML=data.map(r=>`
+    <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:800;font-size:15px">${esc(r.club_nom||'—')}</div>
+        <div style="font-size:13px;color:var(--ink-soft)">${esc(r.patient_nom||'')} · ${esc(r.patient_email||'')}</div>
+        ${r.license_num?`<div style="font-size:12px;color:var(--ink-soft)">Licence : ${esc(r.license_num)}</div>`:''}
+        <div style="font-size:12px;color:var(--ink-soft)">${new Date(r.created_at).toLocaleDateString('fr-FR')}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="font-size:12px;padding:8px 14px" onclick="resolveClubJoinRequest('${r.id}','approved')">✅ Approuver</button>
+        <button class="btn" style="font-size:12px;padding:8px 14px" onclick="resolveClubJoinRequest('${r.id}','rejected')">❌ Rejeter</button>
+      </div>
+    </div>`).join('');
+}
+
+async function resolveClubJoinRequest(id,status){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return;
+  const {error}=await sb.from('club_join_requests').update({status,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){ showToast('Erreur : '+error.message,'var(--err)'); return; }
+  showToast(status==='approved'?'Demande approuvée.':'Demande rejetée.','var(--ok)');
+  loadAdminClubJoinRequests();
+}
+
+async function loadAdminPharmacyApps(){
+  const el=document.getElementById('adminPharmacyAppsList');
+  if(!el) return;
+  const sb=window.LS_SB?.getSB();
+  if(!sb){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Supabase non disponible.</div>';return;}
+  const {data,error}=await sb.from('pharmacy_applications').select('*').eq('status','en_attente').order('created_at',{ascending:false}).limit(100);
+  if(error){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Erreur de chargement : '+esc(error.message)+'</div>';return;}
+  if(!data?.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucune candidature en attente.</div>';return;}
+  el.innerHTML=data.map(a=>`
+    <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <div style="font-weight:800;font-size:15px">${esc(a.nom||'—')}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">Reçue le ${a.created_at?new Date(a.created_at).toLocaleDateString('fr-FR'):'—'}</div>
+      </div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">📍 ${esc(a.adresse||[a.rue,a.cp,a.ville].filter(Boolean).join(' ')||'—')}</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">🧑‍⚕️ Titulaire : ${esc(a.titulaire_prenom||'')} ${esc(a.titulaire_nom||'')} · RPPS ${esc(a.titulaire_rpps||'—')}</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">✉️ ${esc(a.email||'—')} ${a.tel?'· ☎ '+esc(a.tel):''} ${a.email_facturation?'· Facturation : '+esc(a.email_facturation):''}</div>
+      ${(a.finess||a.siret)?`<div style="font-size:12px;color:var(--ink-soft);margin-bottom:4px">${a.finess?'FINESS '+esc(a.finess):''} ${a.siret?'· SIRET '+esc(a.siret):''}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn" style="font-size:12px;padding:8px 14px" onclick="resolvePharmacyApplication('${a.id}','validee')">✅ Valider</button>
+        <button class="btn" style="font-size:12px;padding:8px 14px" onclick="resolvePharmacyApplication('${a.id}','rejetee')">❌ Rejeter</button>
+        ${a.email?`<a class="btn" style="font-size:12px;padding:8px 14px;text-decoration:none" href="mailto:${esc(a.email)}">✉️ Contacter</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function resolvePharmacyApplication(id,status){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return;
+  const {error}=await sb.from('pharmacy_applications').update({status}).eq('id',id);
+  if(error){ showToast('Erreur : '+error.message,'var(--err)'); return; }
+  showToast(status==='validee'?'Candidature validée.':'Candidature rejetée.','var(--ok)');
+  loadAdminPharmacyApps();
+}
+
+async function loadAdminDrivers(){
+  const el=document.getElementById('adminDriversList');
+  if(!el) return;
+  const sb=window.LS_SB?.getSB();
+  if(!sb){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Supabase non disponible.</div>';return;}
+  const {data,error}=await sb.from('drivers').select('*, profiles(prenom,nom,email)').order('created_at',{ascending:false}).limit(200);
+  if(error){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Erreur de chargement.</div>';return;}
+  if(!data?.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucun livreur inscrit.</div>';return;}
+  el.innerHTML=data.map(d=>{
+    const pr=d.profiles||{};
+    const displayName=[pr.prenom,pr.nom].filter(Boolean).join(' ')||pr.email||d.user_id||'—';
+    return `
+    <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:800;font-size:15px">${esc(displayName)}</div>
+        <div style="font-size:13px;color:var(--ink-soft)">${esc(pr.email||'')} ${d.vehicle?'· '+esc(d.vehicle):''}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">Inscrit le ${d.created_at?new Date(d.created_at).toLocaleDateString('fr-FR'):'—'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;background:${d.active?'var(--ok-bg,#e6f9ee)':'var(--err-bg,#fdeaea)'};color:${d.active?'var(--ok)':'var(--err)'}">${d.active?'Actif':'Inactif'}</span>
+        <button class="btn" style="font-size:12px;padding:8px 14px" onclick="toggleDriverActive('${d.id}',${!d.active})">${d.active?'Désactiver':'Activer'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleDriverActive(id,active){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return;
+  const {error}=await sb.from('drivers').update({active}).eq('id',id);
+  if(error){ showToast('Erreur : '+error.message,'var(--err)'); return; }
+  showToast(active?'Livreur activé.':'Livreur désactivé.','var(--ok)');
+  loadAdminDrivers();
+}
+
 function renderAdminMsgHistory(){
   const el=document.getElementById('adminMsgHistory');
   if(!el) return;
@@ -10793,22 +11410,22 @@ async function loadPharmacyInvoices(){
   if(!sb) return [];
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   if(!phData.id) return [];
-  const {data}=await sb.from('orders').select('id,status,total_price,delivery_fee,created_at').eq('pharmacy_id',phData.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
+  const {data}=await sb.from('orders').select('id,status,pricing,created_at').eq('pharmacy_id',phData.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
   return groupByMonth(data||[]);
 }
 async function loadDriverInvoices(){
   const sb=window.LS_SB?.getSB();
   if(!sb) return [];
   if(!currentUser?.id) return [];
-  const {data}=await sb.from('orders').select('id,status,delivery_fee,created_at').eq('driver_id',currentUser.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
+  const {data}=await sb.from('orders').select('id,status,pricing,created_at').eq('driver_id',currentUser.id).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(500);
   return groupByMonth(data||[]);
 }
 async function loadAllInvoicesAdmin(){
   const sb=window.LS_SB?.getSB();
   if(!sb) return {pharmacies:[],drivers:[]};
   const [{data:phOrds},{data:drOrds}]=await Promise.all([
-    sb.from('orders').select('id,status,pharmacy_id,total_price,delivery_fee,created_at').in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000),
-    sb.from('orders').select('id,status,driver_id,delivery_fee,created_at').not('driver_id','is',null).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000)
+    sb.from('orders').select('id,status,pharmacy_id,pricing,created_at').in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000),
+    sb.from('orders').select('id,status,driver_id,pricing,created_at').not('driver_id','is',null).in('status',['livree','livrée']).order('created_at',{ascending:false}).limit(2000)
   ]);
   const byPharma={};
   (phOrds||[]).forEach(o=>{
@@ -10834,8 +11451,8 @@ function groupByMonth(orders){
     const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     if(!map[key])map[key]={key,label:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),orders:[],totalCA:0,totalDelivery:0,count:0};
     map[key].orders.push(o);
-    map[key].totalCA+=parseFloat(o.total_price||0);
-    map[key].totalDelivery+=parseFloat(o.delivery_fee||0);
+    map[key].totalCA+=parseFloat(o.pricing?.totalEur||0);
+    map[key].totalDelivery+=parseFloat(o.pricing?.deliveryFeeEur||0);
     map[key].count++;
   });
   return Object.values(map).sort((a,b)=>b.key.localeCompare(a.key));
@@ -10876,7 +11493,7 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
   const _eLabel=esc(entityLabel);
   const _eType=esc(entityType);
   const _eNum=esc(num);
-  const platformCommission=m.orders.reduce((s,o)=>s+(parseFloat(o.delivery_fee||0)*0.20),0);
+  const platformCommission=m.orders.reduce((s,o)=>s+(parseFloat(o.pricing?.deliveryFeeEur||0)*0.20),0);
   const clubContrib=platformCommission*0.50;
   const win=window.open('','_blank','width=860,height=750');
   if(!win){alert('Autorisez les popups pour générer le PDF.');return;}
@@ -10935,10 +11552,10 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
   <h2>Détail des commandes</h2>
   <table><thead><tr><th>#</th><th>Réf commande</th><th>Date</th><th>CA (€)</th><th>Livraison (€)</th><th>Commission (€)</th></tr></thead>
   <tbody>${m.orders.map((o,i)=>{
-    const fee=parseFloat(o.delivery_fee||0);
+    const fee=parseFloat(o.pricing?.deliveryFeeEur||0);
     const comm=(fee*0.20).toFixed(2);
     const d=o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'—';
-    return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${esc((o.id||'—').slice(0,16))}</td><td>${d}</td><td>${parseFloat(o.total_price||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
+    return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${esc((o.id||'—').slice(0,16))}</td><td>${d}</td><td>${parseFloat(o.pricing?.totalEur||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
   }).join('')}</tbody>
   <tfoot><tr><td colspan="3" style="font-weight:700">TOTAL</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td><td>${platformCommission.toFixed(2)} €</td></tr></tfoot></table>
   ${clubContrib>0?`<div class="b2b2c"><div class="ttl">🏆 Reversement clubs (modèle B2B2C)</div><div style="font-size:12px;color:#15803d">50% de la commission plateforme reversés aux clubs de leurs membres licenciés : <b>${clubContrib.toFixed(2)} €</b> estimés ce mois.</div></div>`:''}
@@ -11091,8 +11708,8 @@ async function loadAdminFactures(){
     label:_adminFacturesMonth?new Date(_adminFacturesMonth+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'—',
     orders:allOrdersMonth,
     count:allOrdersMonth.length,
-    totalCA:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.total_price||0),0),
-    totalDelivery:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.delivery_fee||0),0)
+    totalCA:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.pricing?.totalEur||0),0),
+    totalDelivery:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.pricing?.deliveryFeeEur||0),0)
   };
 
   let html=`
@@ -11144,7 +11761,15 @@ async function exportOrdersCSV(){
   const {data}=await sb.from('orders').select('*').order('created_at',{ascending:false}).limit(2000);
   if(!data?.length){alert('Aucune livraison.');return;}
   const cols=['id','pharmacy_id','patient_email','status','total_price','delivery_fee','created_at'];
-  const rows=[cols.join(';'),...data.map(o=>cols.map(c=>JSON.stringify(o[c]??'')).join(';'))];
+  // total_price/delivery_fee ne sont pas des colonnes de `orders` (tout passe par le
+  // JSONB `pricing`) — on les dérive ici pour garder le même en-tête CSV côté export.
+  const rowOf=(o,c)=>{
+    if(c==='total_price') return o.pricing?.totalEur??'';
+    if(c==='delivery_fee') return o.pricing?.deliveryFeeEur??'';
+    if(c==='patient_email') return o.payment?.email??'';
+    return o[c]??'';
+  };
+  const rows=[cols.join(';'),...data.map(o=>cols.map(c=>JSON.stringify(rowOf(o,c))).join(';'))];
   const blob=new Blob([rows.join('\n')],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='livraisons.csv'; a.click();
 }
@@ -11186,62 +11811,56 @@ function exportAdminCSV(){
 }
 
 /* ===================================================================
-   CODES PROMO — GESTION ADMIN
+   CODES PROMO — GESTION ADMIN (table Supabase `promo_codes`, migration
+   20260722000000_blocking_and_important_fixes.sql). Remplace l'ancien
+   système 100% localStorage (clé LS_PROMO_CODES) : les codes sont
+   désormais gérés directement en base (RLS admin), partagés avec
+   admin.html, et consommés côté client via la fonction SECURITY DEFINER
+   redeem_promo_code() — jamais de lecture directe de la table par un
+   compte non-admin (évite d'exposer la liste des codes et les compteurs
+   d'utilisation).
 =================================================================== */
-const PROMO_CODES_KEY='LS_PROMO_CODES';
-
-function getPromoCodes(){
-  try{ return JSON.parse(localStorage.getItem(PROMO_CODES_KEY)||'[]'); }catch(e){ return []; }
-}
-function savePromoCodes(codes){
-  try{ localStorage.setItem(PROMO_CODES_KEY,JSON.stringify(codes)); }catch(e){}
+let _promoCodesCache=[];
+async function loadPromoCodesAdmin(){
+  const sb=window.LS_SB?.getSB();
+  if(!sb) return [];
+  const {data,error}=await sb.from('promo_codes').select('*').order('created_at',{ascending:false});
+  if(error){ console.warn('promo_codes',error); return []; }
+  _promoCodesCache=data||[];
+  return _promoCodesCache;
 }
 function generatePromoCode(length=8){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const _rb=new Uint8Array(length); crypto.getRandomValues(_rb);
   return Array.from(_rb,b=>chars[b%chars.length]).join('');
 }
-function createPromoCode(options){
-  const codes=getPromoCodes();
-  const newCode={
-    code:(options.code||generatePromoCode()).toUpperCase().replace(/\s/g,''),
-    type:options.type||'percent',
-    value:parseFloat(options.value)||10,
-    maxUses:parseInt(options.maxUses)||100,
-    usedCount:0,
-    target:options.target||'all',
-    expiresAt:options.expiresAt||'',
-    createdAt:new Date().toISOString(),
-    active:true
+async function createPromoCode(options){
+  const sb=window.LS_SB?.getSB();
+  if(!sb){ showToast('Supabase indisponible.','var(--err)'); return null; }
+  const code=(options.code||generatePromoCode()).toUpperCase().replace(/\s/g,'');
+  const row={
+    code, type:options.type||'percent', value:parseFloat(options.value)||10,
+    max_uses:parseInt(options.maxUses)||0, target:options.target||'all',
+    expires_at:options.expiresAt||null, active:true, created_by:currentUser?.id||null
   };
-  if(codes.some(c=>c.code===newCode.code)){
-    showToast('Ce code existe déjà. Choisissez un autre code.','var(--err)');
+  const {data,error}=await sb.from('promo_codes').insert(row).select().single();
+  if(error){
+    showToast(error.code==='23505'?'Ce code existe déjà. Choisissez un autre code.':('Erreur : '+error.message),'var(--err)');
     return null;
   }
-  codes.push(newCode);
-  savePromoCodes(codes);
-  return newCode;
+  return data;
 }
-function togglePromoCode(code,active){
-  const codes=getPromoCodes();
-  const idx=codes.findIndex(c=>c.code===code);
-  if(idx>-1){ codes[idx].active=active; savePromoCodes(codes); }
+async function togglePromoCode(code,active){
+  const sb=window.LS_SB?.getSB(); if(!sb) return;
+  await sb.from('promo_codes').update({active}).eq('code',code);
 }
-function deletePromoCode(code){
-  const codes=getPromoCodes().filter(c=>c.code!==code);
-  savePromoCodes(codes);
+async function deletePromoCode(code){
+  const sb=window.LS_SB?.getSB(); if(!sb) return;
+  await sb.from('promo_codes').delete().eq('code',code);
 }
-function applyPromoCode(code,role){
-  const codes=getPromoCodes();
-  const promo=codes.find(c=>c.code===code.toUpperCase()&&c.active);
-  if(!promo) return {error:'Code invalide ou expiré'};
-  if(promo.maxUses>0&&promo.usedCount>=promo.maxUses) return {error:'Code épuisé'};
-  if(promo.expiresAt&&new Date(promo.expiresAt)<new Date()) return {error:'Code expiré'};
-  if(promo.target!=='all'&&promo.target!==role) return {error:'Code non applicable'};
-  const idx=codes.findIndex(c=>c.code===promo.code);
-  codes[idx].usedCount++;
-  savePromoCodes(codes);
-  return {promo};
+async function applyPromoCode(code,role){
+  if(!window.LS_SB?.SB_READY) return {error:'Codes promo indisponibles hors-ligne.'};
+  return await window.LS_SB.sbRedeemPromoCode(code,role);
 }
 function copyPromoCode(code){
   navigator.clipboard?.writeText(code).then(()=>showToast('Code copié !','var(--ok)')).catch(()=>{
@@ -11253,7 +11872,7 @@ function refreshPromoCodeInput(){
   const inp=document.getElementById('promoCodeInput');
   if(inp) inp.value=generatePromoCode();
 }
-function submitCreatePromoCode(){
+async function submitCreatePromoCode(){
   const code=(document.getElementById('promoCodeInput')?.value||'').trim();
   const type=document.querySelector('.chips[data-group="promoType"] .chip.sel')?.dataset.v||'percent';
   const value=document.getElementById('promoValueInput')?.value||'10';
@@ -11262,34 +11881,36 @@ function submitCreatePromoCode(){
   const expiresAt=document.getElementById('promoExpiresInput')?.value||'';
   if(!code){showToast('Entrez un code promo.','var(--err)');return;}
   if(!value||isNaN(parseFloat(value))){showToast('Entrez une valeur numérique.','var(--err)');return;}
-  const result=createPromoCode({code,type,value,maxUses,target,expiresAt});
+  const result=await createPromoCode({code,type,value,maxUses,target,expiresAt});
   if(result){
     showToast(`Code ${result.code} créé !`,'var(--ok)');
-    renderPromoCodes();
+    await refreshPromoCodesUI();
     refreshPromoCodeInput();
     const vi=document.getElementById('promoValueInput'); if(vi) vi.value='10';
     const mi=document.getElementById('promoMaxUsesInput'); if(mi) mi.value='100';
     const ei=document.getElementById('promoExpiresInput'); if(ei) ei.value='';
   }
 }
-function renderPromoCodes(){
-  const container=document.getElementById('adminDashboardContent');
+async function refreshPromoCodesUI(){
+  await loadPromoCodesAdmin();
+  renderPromoCodes(_promoCodesCache);
+}
+function renderPromoCodes(codes){
+  const container=document.getElementById('adminPromoSection');
   if(!container) return;
-  const existing=document.getElementById('adminPromoSection');
-  if(existing) existing.remove();
-  const codes=getPromoCodes();
+  codes=codes||_promoCodesCache||[];
 
   function promoStatusBadge(p){
-    if(p.maxUses>0&&p.usedCount>=p.maxUses) return '<span style="font-size:11px;font-weight:700;background:#fee2e2;color:var(--err);border-radius:30px;padding:3px 9px">Épuisé</span>';
-    if(p.expiresAt&&new Date(p.expiresAt)<new Date()) return '<span style="font-size:11px;font-weight:700;background:#f3f4f6;color:var(--ink-soft);border-radius:30px;padding:3px 9px">Expiré</span>';
+    if(p.max_uses>0&&p.used_count>=p.max_uses) return '<span style="font-size:11px;font-weight:700;background:#fee2e2;color:var(--err);border-radius:30px;padding:3px 9px">Épuisé</span>';
+    if(p.expires_at&&new Date(p.expires_at)<new Date()) return '<span style="font-size:11px;font-weight:700;background:#f3f4f6;color:var(--ink-soft);border-radius:30px;padding:3px 9px">Expiré</span>';
     if(!p.active) return '<span style="font-size:11px;font-weight:700;background:#f3f4f6;color:var(--ink-soft);border-radius:30px;padding:3px 9px">Inactif</span>';
     return '<span style="font-size:11px;font-weight:700;background:#dcfce7;color:var(--ok);border-radius:30px;padding:3px 9px">Actif</span>';
   }
   function promoProgressBar(p){
-    if(p.maxUses<=0) return '<div style="font-size:11px;color:var(--ink-soft)">Illimité</div>';
-    const pct=Math.round((p.usedCount/p.maxUses)*100);
+    if(p.max_uses<=0) return '<div style="font-size:11px;color:var(--ink-soft)">Illimité</div>';
+    const pct=Math.round((p.used_count/p.max_uses)*100);
     const barColor=pct>80?'var(--err)':pct>50?'var(--warn)':'var(--ok)';
-    return `<div style="font-size:11px;color:var(--ink-soft);margin-bottom:3px">${p.usedCount}/${p.maxUses}</div>
+    return `<div style="font-size:11px;color:var(--ink-soft);margin-bottom:3px">${p.used_count}/${p.max_uses}</div>
       <div style="background:var(--paper-2);border-radius:30px;height:5px;overflow:hidden;width:80px">
         <div style="height:100%;width:${pct}%;background:${barColor};border-radius:30px;transition:.3s"></div>
       </div>`;
@@ -11305,18 +11926,16 @@ function renderPromoCodes(){
     <td style="padding:10px 10px">${p.type==='percent'?p.value+'%':p.value+'€'}</td>
     <td style="padding:10px 10px">${promoProgressBar(p)}</td>
     <td style="padding:10px 10px">${esc(targetLabel(p.target))}</td>
-    <td style="padding:10px 10px">${p.expiresAt?esc(new Date(p.expiresAt).toLocaleDateString('fr-FR')):'—'}</td>
+    <td style="padding:10px 10px">${p.expires_at?esc(new Date(p.expires_at).toLocaleDateString('fr-FR')):'—'}</td>
     <td style="padding:10px 10px">${promoStatusBadge(p)}</td>
     <td style="padding:10px 10px;white-space:nowrap">
-      <button onclick="togglePromoCode('${esc(p.code)}',${!p.active});renderPromoCodes()" title="${p.active?'Désactiver':'Activer'}" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--paper-2);cursor:pointer;margin-right:4px">${p.active?'⏸ Désact.':'▶ Activer'}</button>
-      <button onclick="if(confirm('Supprimer ce code ?')){deletePromoCode('${esc(p.code)}');renderPromoCodes();}" title="Supprimer" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid #fee2e2;background:#fee2e2;color:var(--err);cursor:pointer">🗑</button>
+      <button onclick="togglePromoCode('${esc(p.code)}',${!p.active}).then(refreshPromoCodesUI)" title="${p.active?'Désactiver':'Activer'}" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid var(--line-strong);background:var(--paper-2);cursor:pointer;margin-right:4px">${p.active?'⏸ Désact.':'▶ Activer'}</button>
+      <button onclick="if(confirm('Supprimer ce code ?')){deletePromoCode('${esc(p.code)}').then(refreshPromoCodesUI);}" title="Supprimer" style="font-family:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;border:1.5px solid #fee2e2;background:#fee2e2;color:var(--err);cursor:pointer">🗑</button>
     </td>
   </tr>`).join('')
   :`<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--ink-soft)">Aucun code promo créé.</td></tr>`;
 
-  const section=document.createElement('div');
-  section.id='adminPromoSection';
-  section.innerHTML=`
+  container.innerHTML=`
   <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px">🏷️ Codes Promo <span style="font-size:12px;background:var(--ink);color:var(--paper);border-radius:30px;padding:2px 9px">${codes.length}</span></div>
   <div style="background:var(--card);border:1.5px solid var(--line-strong);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:13px;font-weight:700;margin-bottom:12px">Créer un code promo</div>
@@ -11378,7 +11997,6 @@ function renderPromoCodes(){
       <tbody>${codesRows}</tbody>
     </table>
   </div>`;
-  container.appendChild(section);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -12221,13 +12839,38 @@ function filterClubs(query){
   const q=query.toLowerCase().trim();
   if(!q){results.style.display='none';return;}
   const matches=_clubsList.filter(c=>(c.nom||'').toLowerCase().includes(q)||(c.ville||'').toLowerCase().includes(q));
-  if(!matches.length){results.innerHTML='<div style="padding:12px 14px;font-size:14px;color:var(--ink-soft)">Aucun club trouvé</div>';results.style.display='block';return;}
-  results.innerHTML=matches.slice(0,10).map(c=>`
-    <button onclick="selectClub('${esc(c.id)}','${esc(c.nom)}','${esc(c.ville||'')}','${esc(c.sport||'')}',this)"
-      style="width:100%;text-align:left;padding:12px 14px;border:none;background:transparent;cursor:pointer;border-bottom:1px solid var(--line);font-family:inherit">
-      <div style="font-weight:700;font-size:14px">${esc(c.nom)}</div>
-      <div style="font-size:12px;color:var(--ink-soft)">${[c.ville,c.sport,c.federation].filter(Boolean).map(esc).join(' · ')}</div>
-    </button>`).join('');
+  results.innerHTML='';
+  if(!matches.length){
+    const empty=document.createElement('div');
+    empty.style.cssText='padding:12px 14px;font-size:14px;color:var(--ink-soft)';
+    empty.textContent='Aucun club trouvé';
+    results.appendChild(empty);
+    results.style.display='block';
+    return;
+  }
+  // ── Correctif audit sécurité 2026-07-22 (Critique #1) ──────────────────────
+  // `c.nom`/`c.ville` sont du texte libre auto-déclaré par n'importe quel compte
+  // "club" (self-service). Les injecter dans un attribut `onclick="...('${...}')"`
+  // n'est PAS sécurisé même avec `esc()` : le navigateur décode les entités HTML
+  // de l'attribut AVANT de compiler le handler inline comme du JS, ce qui permet
+  // à une simple quote encodée de rouvrir la chaîne JS et d'exécuter du code
+  // arbitraire (XSS stocké visible par tout utilisateur cherchant un club, ex.
+  // à l'inscription "sportif licencié"). Fix : construction DOM sûre, jamais de
+  // JS interpolé dans un attribut — les données passent par des propriétés JS
+  // (dataset/closure), jamais par du texte HTML/JS reparsé.
+  matches.slice(0,10).forEach(c=>{
+    const btn=document.createElement('button');
+    btn.style.cssText='width:100%;text-align:left;padding:12px 14px;border:none;background:transparent;cursor:pointer;border-bottom:1px solid var(--line);font-family:inherit';
+    const nameDiv=document.createElement('div');
+    nameDiv.style.cssText='font-weight:700;font-size:14px';
+    nameDiv.textContent=c.nom||'';
+    const subDiv=document.createElement('div');
+    subDiv.style.cssText='font-size:12px;color:var(--ink-soft)';
+    subDiv.textContent=[c.ville,c.sport,c.federation].filter(Boolean).join(' · ');
+    btn.appendChild(nameDiv); btn.appendChild(subDiv);
+    btn.addEventListener('click',()=>selectClub(c.id,c.nom,c.ville||'',c.sport||'',btn));
+    results.appendChild(btn);
+  });
   results.style.display='block';
 }
 
@@ -12298,7 +12941,7 @@ async function doGoogleLogin(){
             if(!currentUser.role) currentUser.role='patient';
             if(currentUser.role==='pharmacien'){
               const ph=await window.LS_SB.sbGetPharmacy(session.user.id);
-              if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
+              if(ph){localStorage.setItem('livraisante_pharmacy',JSON.stringify(window.LS_SB.pharmacyRowToJs(ph)));activeLabs=ph.active_labs?new Set(ph.active_labs):new Set(PARTNER_LABS);}
             }
           }
           // Nouvel utilisateur Google → demander le rôle
