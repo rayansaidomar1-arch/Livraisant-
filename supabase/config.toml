@@ -1,0 +1,9 @@
+project_id = "gsmrgafclxkuqzzhtapi"
+
+# Stripe s'authentifie par la signature HMAC de l'en-tête `stripe-signature`,
+# vérifiée dans le code, et n'envoie aucun jeton Supabase. Laisser verify_jwt
+# à sa valeur par défaut (true) fait rejeter tous les événements par la
+# passerelle avec un 401, avant même que la fonction s'exécute — c'était le
+# cas jusqu'au 2026-08-18, et le webhook n'a donc jamais rien traité.
+[functions.stripe-webhook]
+verify_jwt = false
