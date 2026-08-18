@@ -101,6 +101,42 @@ async function hasVerifiedMfaFactor(userId) {
   return rows.length > 0;
 }
 
+/**
+ * Club du patient, uniquement si son adhésion est validée par le club.
+ *
+ * On ne se fie jamais au statut auto-déclaré du patient : seule une ligne
+ * `club_members.validated = true` ouvre droit à la cagnotte.
+ */
+async function getValidatedClubId(userId) {
+  const { rows } = await pool.query(
+    'SELECT club_id FROM club_members WHERE user_id = $1 AND validated = true LIMIT 1',
+    [userId]
+  );
+  return rows[0]?.club_id || null;
+}
+
+/**
+ * Crédite la cagnotte d'un club pour une commande payée.
+ *
+ * `club_cagnotte_entries.order_id` est un `text` sans clé étrangère : la
+ * commande peut donc vivre dans la base HDS (Clever Cloud) alors que la
+ * cagnotte reste sur Supabase avec les clubs.
+ *
+ * L'insertion est idempotente grâce à la contrainte UNIQUE sur `order_id` :
+ * un rejeu de webhook Stripe ne peut pas créditer deux fois le même club.
+ * Retourne true si la ligne a bien été créée, false si elle existait déjà.
+ */
+async function insertCagnotteEntry({ clubId, orderId, patientId, amountEur }) {
+  const { rows } = await pool.query(
+    `INSERT INTO club_cagnotte_entries (club_id, order_id, patient_id, amount_eur)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (order_id) DO NOTHING
+     RETURNING id`,
+    [clubId, orderId, patientId, amountEur]
+  );
+  return rows.length > 0;
+}
+
 module.exports = {
   pool,
   getProfile,
@@ -108,4 +144,6 @@ module.exports = {
   getPushSubscriptions,
   deletePushSubscription,
   hasVerifiedMfaFactor,
+  getValidatedClubId,
+  insertCagnotteEntry,
 };

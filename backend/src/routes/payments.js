@@ -7,10 +7,22 @@ const { requireAuth } = require('../lib/auth');
 const { sendPushToUser } = require('../lib/push');
 const { sendEmail } = require('../lib/email');
 const { broadcast } = require('../lib/realtime');
-const { getProfile } = require('../lib/supabaseDb'); // profiles reste sur Supabase (architecture hybride)
+// profiles, clubs et cagnotte restent sur Supabase (architecture hybride)
+const { getProfile, getValidatedClubId, insertCagnotteEntry } = require('../lib/supabaseDb');
 
 const router = express.Router();
 const webhookRouter = express.Router();
+
+// Cagnotte club : 10 % de commission Livraisanté, dont 50 % reversés au club
+// du patient adhérent. Reprise à l'identique de l'Edge Function `confirm-order`.
+//
+// ⚠️ Ne PAS remplacer par MARGE_PCT de lib/pricing.js : cette constante vaut
+// aussi 0.10 mais s'applique à une base différente (`base * (1 + MARGE_PCT)`,
+// donc la marge s'ajoute au prix), alors que la commission ci-dessous se
+// calcule sur le total réellement débité. Les confondre modifierait en silence
+// les sommes dues aux clubs.
+const PLATFORM_FEE_RATE = 0.10;
+const CLUB_SHARE_RATE = 0.50;
 
 // Instanciation paresseuse : le SDK Stripe lève une exception dès le
 // constructeur si la clé est absente, ce qui ferait planter tout le
@@ -119,6 +131,37 @@ webhookRouter.post('/', async (req, res) => {
               break;
             }
             const updated = await prisma.order.findUnique({ where: { id: orderId } });
+
+            // ── Cagnotte club (best-effort, non bloquant) ──
+            // Créditée ICI et non à la création de la commande : seul un
+            // paiement réellement encaissé ouvre droit à la contribution. Le
+            // montant est dérivé de `pi.amount` (ce que Stripe a débité), jamais
+            // d'une valeur transmise par le client.
+            //
+            // Le garde d'idempotence plus haut (`if (!count) break`) empêche déjà
+            // un rejeu d'arriver jusqu'ici ; la contrainte UNIQUE sur `order_id`
+            // constitue la seconde barrière côté base.
+            //
+            // Volontairement ATTENDU, contrairement au push et à l'email qui
+            // suivent : Stripe ne rejoue pas un webhook déjà acquitté par un 200.
+            // Répondre avant la fin de l'écriture exposerait à perdre
+            // définitivement une contribution due à un club si l'instance était
+            // recyclée entre les deux. Une lecture indexée et une insertion,
+            // c'est négligeable devant le délai d'attente de Stripe.
+            if (order.patientId) {
+              await (async () => {
+                const clubId = await getValidatedClubId(order.patientId);
+                if (!clubId) return;
+                const amountEur = Math.round((pi.amount / 100) * PLATFORM_FEE_RATE * CLUB_SHARE_RATE * 100) / 100;
+                // La colonne impose amount_eur > 0 : une commande à 0,05 €
+                // arrondirait à 0 et ferait échouer l'insertion.
+                if (amountEur <= 0) return;
+                const credited = await insertCagnotteEntry({
+                  clubId, orderId, patientId: order.patientId, amountEur,
+                });
+                if (!credited) console.log(`Cagnotte: commande ${orderId} déjà créditée — ignorée`);
+              })().catch((err) => console.error('Cagnotte club échouée (non bloquant):', err.message));
+            }
 
             if (order.patientId) {
               sendPushToUser(order.patientId, {
