@@ -17,8 +17,18 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+
+// Le site est servi à la fois sur l'apex et sur www, sans redirection de l'un
+// vers l'autre : une origine unique bloquerait en CORS la moitié des visiteurs.
+// FRONTEND_ORIGIN accepte donc une liste séparée par des virgules (une seule
+// valeur reste valable).
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'https://livraisante.fr')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'https://livraisante.fr',
+  origin: allowedOrigins,
   credentials: true,
 }));
 
