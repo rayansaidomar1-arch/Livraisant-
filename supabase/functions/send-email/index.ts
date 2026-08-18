@@ -41,14 +41,26 @@ function sanitizeForSubject(v: unknown, maxLen = 120): string {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Même helper que send-push/index.ts — comparaison à temps constant pour la clé service_role.
+function timingSafeEqual(a: string, b: string): boolean {
+  const aBuf = new TextEncoder().encode(a);
+  const bBuf = new TextEncoder().encode(b);
+  const len = Math.max(aBuf.length, bBuf.length, 32);
+  let diff = aBuf.length ^ bBuf.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (i < aBuf.length ? aBuf[i] : 0) ^ (i < bBuf.length ? bBuf[i] : 0);
+  }
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
     const { type, to, order: rawOrder } = await req.json();
-    // type: 'preparation' | 'validation' | 'candidature_pharmacie'
+    // type: 'preparation' | 'validation' | 'candidature_pharmacie' | 'signup_verification'
     // to: 'patient@email.fr' (ignoré pour 'candidature_pharmacie', destinataire fixé côté serveur)
-    // order: { id, patient_nom, medicaments, montant, adresse, pharmacy_nom, date }
+    // order: { id, patient_nom, medicaments, montant, adresse, pharmacy_nom, date } (ou { code } pour 'signup_verification')
 
     // ── Correctif (2026-07-16) — ce endpoint permettait à n'importe qui (y compris
     // anonyme) de faire relayer un email arbitraire par le domaine Livraisanté vers
@@ -72,6 +84,26 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
       }
       authedUserId = user.id;
+      if (!to || !EMAIL_RE.test(to)) {
+        return new Response(JSON.stringify({ error: 'Adresse destinataire invalide' }), { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ── Correctif audit 2026-08-05 (Critique #3) ──────────────────────────
+    // 'signup_verification' envoie aussi vers une adresse `to` fournie par l'appelant
+    // (pas de compte/JWT possible avant inscription) — donc, comme 'preparation'/
+    // 'validation', un relai arbitraire serait possible si n'importe qui pouvait
+    // l'invoquer. On restreint donc ce type au SERVICE_ROLE_KEY uniquement : il n'est
+    // jamais appelé depuis le navigateur, seulement serveur-à-serveur par l'Edge
+    // Function `signup-verification` (qui porte elle-même le rate-limiting par IP et
+    // par email cible — voir supabase/functions/signup-verification/index.ts).
+    if (type === 'signup_verification') {
+      const authHeader = req.headers.get('Authorization') || '';
+      const serviceKey = Deno.env.get('SERVICE_ROLE_KEY') || '';
+      const isServiceRole = !!serviceKey && timingSafeEqual(authHeader, `Bearer ${serviceKey}`);
+      if (!isServiceRole) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      }
       if (!to || !EMAIL_RE.test(to)) {
         return new Response(JSON.stringify({ error: 'Adresse destinataire invalide' }), { status: 400, headers: corsHeaders });
       }
@@ -109,6 +141,7 @@ Deno.serve(async (req) => {
       pharmacy_nom: escapeHtml(rawOrder.pharmacy_nom),
       medicaments: escapeHtml(rawOrder.medicaments),
       adresse: escapeHtml(rawOrder.adresse),
+      code: escapeHtml(rawOrder.code),
     } : rawOrder;
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
@@ -127,6 +160,10 @@ Deno.serve(async (req) => {
       const refId = sanitizeForSubject(order.id?.slice(0, 8)?.toUpperCase(), 20);
       subject = `✅ Commande validée — Facture #${refId} — Livraisanté`;
       html = emailValidation(order);
+      recipients = [to];
+    } else if (type === 'signup_verification') {
+      subject = `${order.code} — Votre code de vérification Livraisanté`;
+      html = emailSignupVerification(order);
       recipients = [to];
     } else if (type === 'candidature_pharmacie') {
       // Notification interne — destinataire fixé côté serveur (pas de valeur `to` fournie
@@ -184,6 +221,31 @@ function emailPreparation(o: any): string {
   </div>
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
     Référence commande : <strong>${o.id?.slice(0, 8).toUpperCase() || '—'}</strong> · ${date}<br>
+    © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
+  </div>
+</div>`;
+}
+
+// ── Template : Code de vérification d'inscription ────────────────────
+function emailSignupVerification(o: any): string {
+  return `
+<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:#0D0E09;padding:28px 32px;text-align:center">
+    <span style="font-size:28px;font-weight:900;color:#C2F23E;letter-spacing:-.5px">Livraisanté</span>
+  </div>
+  <div style="padding:36px 32px;text-align:center">
+    <h2 style="font-size:19px;font-weight:800;margin:0 0 8px;color:#0D0E09">Confirmez votre adresse email</h2>
+    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 24px">
+      Utilisez le code ci-dessous pour finaliser votre inscription sur Livraisanté.
+    </p>
+    <div style="background:#f8f8f8;border-radius:12px;padding:22px 20px;margin-bottom:20px">
+      <span style="font-size:34px;font-weight:900;letter-spacing:.3em;color:#0D0E09">${o.code || '------'}</span>
+    </div>
+    <p style="font-size:13px;color:#888;line-height:1.6;margin:0">
+      Ce code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+    </p>
+  </div>
+  <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
     © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
   </div>
 </div>`;

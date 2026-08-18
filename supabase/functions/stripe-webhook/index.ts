@@ -5,6 +5,29 @@
 //   STRIPE_WEBHOOK_SECRET  — whsec_... (set after creating webhook in Stripe dashboard)
 //   SUPABASE_URL           — auto-injected by Supabase
 //   SERVICE_ROLE_KEY — set via Supabase dashboard (SUPABASE_ prefix is reserved)
+//
+// ── Correctif audit 2026-08-05 (Critique #1) ─────────────────────────────────
+// Ce webhook cherchait la commande via `pi.metadata.orderId` / `charge.metadata.orderId`
+// — un champ que ni `create-payment-intent` ni le client ne renseignent jamais (l'id de
+// commande n'existe pas encore quand le PaymentIntent est créé). Les 3 handlers étaient
+// donc du code mort : aucune commande n'était jamais retrouvée. Le handler `succeeded`
+// forçait en plus `status:'validee'` directement — ce qui, s'il avait un jour fonctionné,
+// aurait court-circuité la validation manuelle du pharmacien (cf. renderPro()/setStatus()
+// dans index.html, qui n'affiche "Valider la demande" que pour `status==='nouvelle'`).
+//
+// Désormais :
+// - la création de la commande + la notification patient (push/email) se font de façon
+//   SYNCHRONE dans `confirm-order`, juste après vérification du paiement — c'est le
+//   chemin fiable, garanti de s'exécuter dans la requête du client ;
+// - ce webhook redevient ce qu'un webhook Stripe doit être : un filet de secours
+//   asynchrone, qui retrouve la commande par `payment->>paymentIntentId` (même clé
+//   d'idempotence que `confirm-order`) et NE TOUCHE JAMAIS à `status` (réservé au
+//   workflow pharmacien), sauf pour `charge.refunded` où l'annulation est légitimement
+//   pilotée par Stripe seul ;
+// - si aucune commande n'est trouvée pour un paiement réussi, c'est une course bénigne
+//   dans la majorité des cas (le webhook peut arriver avant que `confirm-order` ait fini
+//   d'écrire la commande) : on se contente de logger, la commande sera de toute façon
+//   rattrapée par `resumePendingOrderConfirmation()` côté client si besoin.
 
 import Stripe from 'npm:stripe@14.21.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -43,77 +66,76 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Retrouve une commande par PaymentIntent id — même clé d'idempotence que
+    // `confirm-order` (`payment->>paymentIntentId`), plutôt que le champ
+    // `metadata.orderId` jamais renseigné.
+    async function findOrderByPaymentIntent(paymentIntentId: string) {
+      const { data } = await supabase
+        .from('orders').select('id, status, patient_id, payment')
+        .eq('payment->>paymentIntentId', paymentIntentId)
+        .maybeSingle();
+      return data;
+    }
+
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const orderId = pi.metadata?.orderId;
-        if (orderId) {
-          const { data: order } = await supabase
-            .from('orders')
-            .select('patient_id, medicaments, adresse_livraison, pharmacy_id, profiles(prenom, nom, email), pharmacies(nom)')
-            .eq('id', orderId).single();
-          await supabase
-            .from('orders')
-            .update({ payment: { status: 'paid', payment_intent_id: pi.id, amount: pi.amount }, status: 'validee', updated_at: new Date().toISOString() })
-            .eq('id', orderId);
-          // Notification push au patient
-          if (order?.patient_id) {
-            await supabase.functions.invoke('send-push', {
-              body: { user_id: order.patient_id, title: '✅ Commande validée', body: `Votre paiement de ${pi.amount / 100}€ a été accepté. Votre commande est en préparation.`, url: '/#commandes' }
-            });
-          }
-          // Email de validation avec facture
-          const patientEmail = (order as any)?.profiles?.email;
-          if (patientEmail) {
-            await supabase.functions.invoke('send-email', {
-              body: {
-                type: 'validation',
-                to: patientEmail,
-                order: {
-                  id: orderId,
-                  patient_nom: `${(order as any)?.profiles?.prenom || ''} ${(order as any)?.profiles?.nom || ''}`.trim(),
-                  pharmacy_nom: (order as any)?.pharmacies?.nom || '',
-                  medicaments: (order as any)?.medicaments || '',
-                  adresse: (order as any)?.adresse_livraison || '',
-                  montant: pi.amount / 100,
-                }
-              }
-            });
-          }
-          console.log(`✅ Order marked as paid — ${pi.amount / 100}€`);
+        const order = await findOrderByPaymentIntent(pi.id);
+        if (!order) {
+          // Bénin dans la majorité des cas : `confirm-order` n'a pas encore écrit la
+          // commande au moment où ce webhook arrive (course bénigne). Elle sera de
+          // toute façon créée par `confirm-order`, ou rattrapée côté client par
+          // `resumePendingOrderConfirmation()` si ce dernier a échoué.
+          console.log(`payment_intent.succeeded (${pi.id}) : aucune commande trouvée pour l'instant`);
+          break;
         }
+        // Réconciliation uniquement — ne touche jamais à `status` (workflow pharmacien,
+        // déclenché manuellement via setStatus()). Enrichit seulement `payment`.
+        await supabase
+          .from('orders')
+          .update({ payment: { ...(order.payment || {}), status: 'paid', payment_intent_id: pi.id, amount: pi.amount }, updated_at: new Date().toISOString() })
+          .eq('id', order.id);
+        console.log(`✅ Order ${order.id} reconciled as paid — ${pi.amount / 100}€`);
         break;
       }
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const orderId = pi.metadata?.orderId;
-        if (orderId) {
+        const order = await findOrderByPaymentIntent(pi.id);
+        if (order) {
           await supabase
             .from('orders')
-            .update({ payment: { status: 'failed', payment_intent_id: pi.id, error: pi.last_payment_error?.message }, updated_at: new Date().toISOString() })
-            .eq('id', orderId);
-          console.log(`❌ Payment failed`);
+            .update({ payment: { ...(order.payment || {}), status: 'failed', payment_intent_id: pi.id, error: pi.last_payment_error?.message }, updated_at: new Date().toISOString() })
+            .eq('id', order.id);
+          console.log(`❌ Payment failed for order ${order.id}`);
+        } else {
+          // Cas normal : `confirm-order` refuse de créer une commande tant que le
+          // paiement n'a pas réussi, donc aucune commande n'existe encore ici.
+          console.log(`payment_intent.payment_failed (${pi.id}) : pas de commande associée (attendu)`);
         }
         break;
       }
 
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge;
-        const orderId = charge.metadata?.orderId;
-        if (orderId) {
-          const { data: order } = await supabase.from('orders').select('patient_id').eq('id', orderId).single();
+        const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+        const order = paymentIntentId ? await findOrderByPaymentIntent(paymentIntentId) : null;
+        if (order) {
           await supabase
             .from('orders')
-            .update({ payment: { status: 'refunded', charge_id: charge.id }, status: 'annulee', updated_at: new Date().toISOString() })
-            .eq('id', orderId);
-          // Notification push au patient
-          if (order?.patient_id) {
+            .update({ payment: { ...(order.payment || {}), status: 'refunded', charge_id: charge.id }, status: 'annulee', updated_at: new Date().toISOString() })
+            .eq('id', order.id);
+          // Notification push au patient — cas légitimement piloté par Stripe seul
+          // (un remboursement peut être déclenché depuis le dashboard Stripe, sans
+          // aucune action côté client à ce moment-là).
+          if (order.patient_id) {
             await supabase.functions.invoke('send-push', {
               body: { user_id: order.patient_id, title: '↩️ Remboursement effectué', body: 'Votre commande a été annulée et remboursée.', url: '/#commandes' }
             });
           }
-          console.log(`↩️ Order refunded`);
+          console.log(`↩️ Order ${order.id} refunded`);
+        } else {
+          console.error(`charge.refunded (${charge.id}) : aucune commande trouvée pour paymentIntent=${paymentIntentId}`);
         }
         break;
       }

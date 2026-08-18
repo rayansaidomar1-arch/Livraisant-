@@ -33,6 +33,20 @@ const corsHeaders={
 // est bornée (0–500km) et ne peut faire varier le tarif que dans la fourchette
 // documentée de DELIVERY_TIERS (3,00€ à 9,90€, écart max 6,90€) — sans commune
 // mesure avec la faille précédente (montant total totalement arbitraire).
+//
+// ── Correctif audit 2026-08-05 (Important #4) ────────────────────────────
+// La tarification pharmacien (mode éco/standard/premium + ajustements ±% par
+// catégorie, cf. renderPharmaPricingPanel() dans index.html) était purement
+// cosmétique : enregistrée uniquement dans le localStorage du navigateur du
+// pharmacien (`lv_pharma_pricing`), jamais synchronisée, et ce calcul serveur
+// l'ignorait totalement — chaque produit était toujours facturé à son
+// `products.prix` de référence, quel que soit le réglage affiché au
+// pharmacien. Désormais, ce réglage est stocké dans `pharmacies.extra_settings
+// .pricing` (voir pharmacyJsToRow/pharmacyRowToJs dans js/supabase-client.js)
+// et réellement appliqué ici : le multiplicateur du mode choisi, ou l'override
+// par catégorie s'il existe, est appliqué au prix catalogue de chaque article
+// avant de calculer le sous-total.
+const PRICING_MODES: Record<string, number> = { eco:0.85, std:1.00, prem:1.15 };
 const MARGE_PCT=0.10;         // marge Livraisanté sur les produits (cf. MARGE_PCT index.html)
 const COMMISSION_PCT=0.10;    // frais de fonctionnement (cf. platformCommission index.html)
 const FRAIS_LIVRAISON_FALLBACK=3.90; // cf. FRAIS_LIVRAISON index.html (distance inconnue)
@@ -62,13 +76,16 @@ function donationAmountEur(rawTotal: number): number{
 Deno.serve(async (req)=>{
   if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
   try{
-    const {items,deliveryMode,distanceKm,donationEnabled,currency='eur',metadata={}}=await req.json();
+    const {items,deliveryMode,distanceKm,donationEnabled,currency='eur',metadata={},pharmacyId}=await req.json();
 
     if(!Array.isArray(items)||items.length===0||items.length>MAX_ITEMS){
       return new Response(JSON.stringify({error:'Panier invalide'}),{status:400,headers:corsHeaders});
     }
     if(!['livraison','cnc','cnc_club'].includes(deliveryMode)){
       return new Response(JSON.stringify({error:'Mode de livraison invalide'}),{status:400,headers:corsHeaders});
+    }
+    if(!pharmacyId||typeof pharmacyId!=='string'){
+      return new Response(JSON.stringify({error:'pharmacyId manquant'}),{status:400,headers:corsHeaders});
     }
 
     const supabaseUrl=Deno.env.get('SUPABASE_URL')!;
@@ -103,8 +120,23 @@ Deno.serve(async (req)=>{
       }
     }catch(_e){ /* fail-open volontaire, voir commentaire ci-dessus */ }
 
+    // Tarification pharmacien (mode + overrides par catégorie) — cf. commentaire
+    // Important #4 en tête de fichier. Défaut neutre (mode standard, aucun
+    // override) si la pharmacie n'a jamais configuré de tarification.
+    const {data:pharmacyRow}=await supabase
+      .from('pharmacies').select('extra_settings').eq('id',pharmacyId).maybeSingle();
+    const pricingCfg=pharmacyRow?.extra_settings?.pricing||{};
+    const pricingMode=PRICING_MODES[pricingCfg.mode]!==undefined?pricingCfg.mode:'std';
+    const overrides=(pricingCfg.overrides&&typeof pricingCfg.overrides==='object')?pricingCfg.overrides:{};
+    function priceMultiplier(category: string|null): number{
+      const raw=(category&&overrides[category]!==undefined)?Number(overrides[category]):PRICING_MODES[pricingMode];
+      if(!isFinite(raw)) return PRICING_MODES[pricingMode];
+      return Math.max(0.50,Math.min(2.00,raw)); // même borne que adjustOverride() côté client
+    }
+
     // Recalcul exact du sous-total à partir du catalogue serveur (`products`) —
-    // jamais depuis un prix fourni par le client.
+    // jamais depuis un prix fourni par le client — puis application du
+    // positionnement tarifaire choisi par la pharmacie.
     let base=0;
     for(const it of items){
       const lab=String(it?.lab||'').trim();
@@ -113,12 +145,12 @@ Deno.serve(async (req)=>{
         return new Response(JSON.stringify({error:'Article invalide'}),{status:400,headers:corsHeaders});
       }
       const {data:prod,error:prodErr}=await supabase
-        .from('products').select('prix,active')
+        .from('products').select('prix,active,category')
         .eq('lab',lab).eq('name',name).maybeSingle();
       if(prodErr||!prod||prod.active===false){
         return new Response(JSON.stringify({error:`Produit introuvable : ${name} (${lab})`}),{status:400,headers:corsHeaders});
       }
-      base+=Number(prod.prix);
+      base+=Number(prod.prix)*priceMultiplier(prod.category);
     }
 
     const subtotal=base*(1+MARGE_PCT);

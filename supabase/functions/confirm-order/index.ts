@@ -30,6 +30,33 @@
 // Les commandes GRATUITES (kind='sportif', inscriptions à un événement club)
 // ne passent pas par cette fonction : elles restent insérées directement par
 // le patient via `sbInsertOrderFull`, avec `pricing.totalEur` toujours NULL.
+//
+// ── Correctif audit 2026-08-05 (Important #7) ───────────────────────────
+// La cagnotte club (10% de commission Livraisanté, dont 50% reversés au
+// club du patient adhérent) était créditée côté client, dans le
+// localStorage du PATIENT (`livraisante_cagnotte_${clubId}`) — jamais vue
+// par le club ni par l'admin sur un autre appareil, et créditée AVANT même
+// la confirmation réelle du paiement, sur un total non vérifié envoyé par
+// le client. Comme pour `pricing.totalEur` plus haut, on ne fait plus
+// confiance à rien venant du client : la contribution est désormais
+// calculée ICI à partir de `totalEur` (dérivé du PaymentIntent Stripe
+// réellement débité), et seulement si le patient appartient à un club où
+// son adhésion est validée (`club_members.validated=true` — jamais son
+// propre statut auto-déclaré). Best-effort, non bloquant : un club qui n'a
+// pas encore d'entrée `clubs` valide ou une erreur d'insertion ne doit
+// jamais faire échouer la commande déjà payée.
+const PLATFORM_FEE_RATE=0.10;
+const CLUB_SHARE_RATE=0.50;
+//
+// ── Correctif audit 2026-08-05 (Critique #1) ────────────────────────────────
+// `stripe-webhook` était censé notifier le patient (push + email facture) une
+// fois le paiement confirmé, mais recherchait la commande via `pi.metadata.orderId`
+// — un champ jamais renseigné (code mort, voir stripe-webhook/index.ts). Aucune
+// notification ne partait donc jamais. Comme cette fonction est le seul chemin
+// SYNCHRONE et fiable de création de commande payante (garanti de s'exécuter dans
+// la requête du client, contrairement à un webhook asynchrone), la notification
+// est désormais envoyée ICI, juste après l'insertion — et seulement lors de la
+// création initiale (jamais sur le replay idempotent d'un paiement déjà traité).
 import Stripe from 'npm:stripe@14.21.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -131,12 +158,81 @@ Deno.serve(async (req)=>{
     };
     const {data,error}=await supabaseAdmin.from('orders').insert(row).select().single();
     if(error){
-      return new Response(JSON.stringify({error:error.message}),{status:500,headers:corsHeaders});
+      // ── Correctif audit sécurité/perf 2026-08-05 ─────────────────────────
+      // Le message d'erreur Postgres/PostgREST brut (contrainte violée, colonne
+      // inconnue, détail RLS...) était renvoyé tel quel au client. Un appelant
+      // pouvait s'en servir pour sonder le schéma de la base (noms de colonnes,
+      // contraintes, structure des policies). Le détail part maintenant
+      // uniquement dans les logs serveur ; le client ne reçoit qu'un message
+      // générique.
+      console.error('confirm-order insert error',error);
+      return new Response(JSON.stringify({error:"Impossible d'enregistrer la commande. Réessayez dans un instant."}),{status:500,headers:corsHeaders});
     }
+
+    // ── Cagnotte club + notifications (best-effort) — voir notes en tête de
+    // fichier. Les trois effets de bord ci-dessous sont indépendants les uns
+    // des autres (aucun ne dépend du résultat d'un autre) : on les lance donc
+    // en parallèle plutôt que séquentiellement (correctif audit performances
+    // 2026-08-05 — l'ancien code attendait la cagnotte, PUIS le push, PUIS
+    // l'email l'un après l'autre, ajoutant inutilement leurs latences bout à
+    // bout avant de répondre au client déjà débité). Chacun a son propre
+    // try/catch : l'échec d'un canal ne doit jamais empêcher les autres, et
+    // aucun des trois ne doit jamais faire échouer la réponse — la commande
+    // est déjà créée et payée à ce stade.
+    const cagnottePromise=(async()=>{
+      try{
+        const {data:membership}=await supabaseAdmin
+          .from('club_members').select('club_id')
+          .eq('user_id',userId).eq('validated',true)
+          .maybeSingle();
+        if(membership?.club_id){
+          const amountEur=Math.round(totalEur*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
+          if(amountEur>0){
+            await supabaseAdmin.from('club_cagnotte_entries').insert({
+              club_id: membership.club_id,
+              order_id: id,
+              patient_id: userId,
+              amount_eur: amountEur,
+            });
+          }
+        }
+      }catch(cagnotteErr){
+        console.error('confirm-order cagnotte club (non bloquant)',cagnotteErr);
+      }
+    })();
+
+    const pushPromise=supabaseAdmin.functions.invoke('send-push',{
+      body:{ user_id:userId, title:'✅ Commande validée', body:`Votre paiement de ${totalEur}€ a été accepté. Votre commande est en préparation.`, url:'/#commandes' }
+    }).catch(pushErr=>console.error('confirm-order push (non bloquant)',pushErr));
+
+    const emailPromise=(async()=>{
+      if(!patient?.email) return;
+      try{
+        const {data:pharmacy}=await supabaseAdmin.from('pharmacies').select('nom').eq('id',pharmacyId).maybeSingle();
+        const medicaments=Array.isArray(items)?items.map((it:any)=>it?.name).filter(Boolean).join(', '):'';
+        // `send-email` exige un JWT utilisateur valide pour type='validation' (pas
+        // un appel service_role — voir send-email/index.ts) : on relaie le JWT du
+        // patient déjà vérifié plus haut, plutôt que la clé service_role de ce client.
+        await supabaseAdmin.functions.invoke('send-email',{
+          headers: authHeader ? { Authorization: authHeader } : undefined,
+          body:{
+            type:'validation',
+            to:patient.email,
+            order:{ id, patient_nom:patient?.name||'', pharmacy_nom:pharmacy?.nom||'', medicaments, adresse:patient?.addr||'', montant:totalEur }
+          }
+        });
+      }catch(emailErr){
+        console.error('confirm-order email (non bloquant)',emailErr);
+      }
+    })();
+
+    await Promise.allSettled([cagnottePromise, pushPromise, emailPromise]);
+
     return new Response(JSON.stringify({order:data}),{
       headers:{...corsHeaders,'Content-Type':'application/json'}
     });
   }catch(err){
-    return new Response(JSON.stringify({error:err.message}),{status:500,headers:corsHeaders});
+    console.error('confirm-order unhandled error',err);
+    return new Response(JSON.stringify({error:'Une erreur est survenue lors de la confirmation de la commande.'}),{status:500,headers:corsHeaders});
   }
 });
