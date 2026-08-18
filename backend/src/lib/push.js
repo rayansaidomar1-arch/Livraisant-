@@ -6,6 +6,8 @@ const { getPushSubscriptions, deletePushSubscription } = require('./supabaseDb')
 
 const subtle = globalThis.crypto.subtle;
 
+const PUSH_TIMEOUT_MS = 5000;
+
 function b64urlEncode(bytes) {
   return Buffer.from(bytes).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
@@ -99,6 +101,10 @@ async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande'
       const salt64 = b64urlEncode(salt);
       const spk64 = b64urlEncode(serverPublicKey);
 
+      // Sans délai maximal, un service de push injoignable (FCM, Mozilla…)
+      // laisse ce `fetch` pendu : la boucle est séquentielle, donc les
+      // notifications suivantes ne partent jamais et la requête HTTP appelante
+      // reste bloquée avec elle.
       const res = await fetch(sub.endpoint, {
         method: 'POST',
         headers: {
@@ -107,6 +113,7 @@ async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande'
           'Crypto-Key': `dh=${spk64};${vapidHeaders['Authorization'].split(',')[1]}`,
         },
         body: encrypted,
+        signal: AbortSignal.timeout(PUSH_TIMEOUT_MS),
       });
 
       if (res.status === 410 || res.status === 404) {

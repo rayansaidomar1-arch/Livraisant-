@@ -17,7 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
-const { getProfile } = require('./supabaseDb');
+const { getProfile, hasVerifiedMfaFactor } = require('./supabaseDb');
 
 const client = jwksClient({
   jwksUri: process.env.SUPABASE_JWKS_URL,
@@ -50,7 +50,9 @@ async function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Non authentifié' });
   try {
     const decoded = await verifyToken(token);
-    req.user = { id: decoded.sub, email: decoded.email };
+    // `aal` : niveau d'assurance de la session (aal1 = mot de passe seul,
+    // aal2 = second facteur présenté). Exploité par requireAal2 ci-dessous.
+    req.user = { id: decoded.sub, email: decoded.email, aal: decoded.aal || 'aal1' };
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Token invalide ou expiré' });
@@ -64,7 +66,9 @@ async function optionalAuth(req, res, next) {
   if (!token) return next();
   try {
     const decoded = await verifyToken(token);
-    req.user = { id: decoded.sub, email: decoded.email };
+    // `aal` : niveau d'assurance de la session (aal1 = mot de passe seul,
+    // aal2 = second facteur présenté). Exploité par requireAal2 ci-dessous.
+    req.user = { id: decoded.sub, email: decoded.email, aal: decoded.aal || 'aal1' };
   } catch (_) { /* ignore */ }
   next();
 }
@@ -97,4 +101,46 @@ function requireRole(...roles) {
   ];
 }
 
-module.exports = { requireAuth, optionalAuth, attachProfile, requireRole, verifyToken };
+/**
+ * Middleware : exige le second facteur sur les routes de données de santé.
+ *
+ * La 2FA étant optionnelle (choix produit : pas de friction à l'inscription),
+ * exiger `aal2` de tout le monde couperait l'accès des patients qui ne l'ont
+ * pas activée. On n'exige donc le second facteur qu'aux comptes qui en ont
+ * réellement un : dès qu'un patient active la 2FA, son dossier de santé
+ * devient inaccessible sans le code — y compris depuis un token volé émis
+ * avant l'élévation.
+ *
+ * Le code `mfa_required` permet au front de déclencher l'écran d'élévation
+ * (mfaPromptStepUp) plutôt que d'afficher une erreur générique.
+ * En cas d'indisponibilité de la base Supabase on échoue en fermé : sur des
+ * données de santé, mieux vaut refuser que servir sans vérification.
+ */
+async function requireAal2(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Non authentifié' });
+  try {
+    if (!(await needsMfaStepUp(req.user))) return next();
+  } catch (err) {
+    console.error('requireAal2 — lecture auth.mfa_factors impossible', err);
+    return res.status(503).json({ error: 'Vérification de sécurité indisponible. Réessayez dans un instant.' });
+  }
+  return res.status(403).json({
+    error: 'Double authentification requise pour accéder à vos données de santé.',
+    code: 'mfa_required',
+  });
+}
+
+/**
+ * Prédicat sous-jacent à requireAal2, utilisable par les routes qui doivent
+ * dégrader plutôt que refuser (ex. /auth/me, qui doit rester joignable pour
+ * afficher l'identité même sans second facteur, mais sans le dossier santé).
+ */
+async function needsMfaStepUp(user) {
+  if (user.aal === 'aal2') return false;
+  return hasVerifiedMfaFactor(user.id);
+}
+
+module.exports = {
+  requireAuth, optionalAuth, attachProfile, requireRole,
+  requireAal2, needsMfaStepUp, verifyToken,
+};

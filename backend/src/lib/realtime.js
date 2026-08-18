@@ -51,10 +51,44 @@ async function isAuthorizedForTopic(ws, topic) {
   return false;
 }
 
+function unsubscribe(ws, topic) {
+  const set = subscriptions.get(topic);
+  if (!set) return;
+  set.delete(ws);
+  // Sans cette suppression, `subscriptions` conserve une entrée par topic
+  // rencontré depuis le démarrage — soit une clé par patient et par pharmacie,
+  // jamais libérée.
+  if (!set.size) subscriptions.delete(topic);
+}
+
+// Un client mobile qui perd le réseau ne ferme pas proprement sa socket : sans
+// ping périodique, le serveur garde la connexion (et son abonnement) pour
+// toujours et lui diffuse dans le vide.
+const HEARTBEAT_MS = 30000;
+
 function attach(server) {
   wss = new WebSocketServer({ server, path: '/realtime' });
 
+  // `ws` émet 'error' sur la socket (ECONNRESET…). Un 'error' sans écouteur
+  // sur un EventEmitter est relancé en exception non capturée : une simple
+  // coupure réseau client suffisait à tuer le process.
+  wss.on('error', (err) => console.error('WebSocketServer error:', err.message));
+
+  const heartbeat = setInterval(() => {
+    for (const ws of wss.clients) {
+      if (ws.isAlive === false) { ws.terminate(); continue; }
+      ws.isAlive = false;
+      try { ws.ping(); } catch (_) { /* socket déjà morte */ }
+    }
+  }, HEARTBEAT_MS);
+  heartbeat.unref?.();
+  wss.on('close', () => clearInterval(heartbeat));
+
   wss.on('connection', async (ws, req) => {
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
+    ws.on('error', (err) => console.error('WebSocket client error:', err.message));
+
     const url = new URL(req.url, 'http://localhost');
     const token = url.searchParams.get('token');
     let user = null;
@@ -74,15 +108,14 @@ function attach(server) {
         subscriptions.get(msg.topic).add(ws);
         ws.topics.add(msg.topic);
       } else if (msg.action === 'unsubscribe' && typeof msg.topic === 'string') {
-        subscriptions.get(msg.topic)?.delete(ws);
+        unsubscribe(ws, msg.topic);
         ws.topics.delete(msg.topic);
       }
     });
 
     ws.on('close', () => {
-      for (const topic of ws.topics) {
-        subscriptions.get(topic)?.delete(ws);
-      }
+      for (const topic of ws.topics) unsubscribe(ws, topic);
+      ws.topics.clear();
     });
   });
 

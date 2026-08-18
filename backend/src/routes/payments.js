@@ -1,5 +1,6 @@
 // Routes paiement — remplace create-payment-intent + stripe-webhook (Edge Functions Deno)
 const express = require('express');
+const { z } = require('zod');
 const Stripe = require('stripe');
 const prisma = require('../lib/prisma');
 const { requireAuth } = require('../lib/auth');
@@ -25,34 +26,44 @@ function getStripe() {
 }
 
 // ── POST /payments/create-intent ── (équivalent create-payment-intent) ──
-router.post('/create-intent', requireAuth, async (req, res) => {
-  try {
-    const { orderId, amount, currency = 'eur', metadata = {} } = req.body || {};
-    let finalAmount;
+//
+// Le corps ne contient QUE l'identifiant de commande. Auparavant il portait
+// aussi `amount` et `metadata` : comme le webhook se fie à `metadata.orderId`
+// pour décider quelle commande valider, un client pouvait envoyer un montant
+// libre (branche sans `orderId`, qui court-circuitait le contrôle de
+// propriété) accompagné de `metadata:{orderId:"<commande d'autrui>"}` et faire
+// valider n'importe quelle commande pour 0,50 €. La `metadata` est désormais
+// intégralement construite ici.
+const createIntentSchema = z.object({ orderId: z.string().uuid() });
 
-    if (orderId) {
-      const order = await prisma.order.findUnique({ where: { id: orderId } });
-      if (!order) return res.status(403).json({ error: 'Order not found' });
-      // Le montant est calculé côté serveur depuis la commande — le client ne peut pas le falsifier
-      if (order.patientId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
-      finalAmount = Math.round(Number(order.totalPrice || 0) * 100);
-    } else {
-      if (!amount || amount < 50) return res.status(400).json({ error: 'Montant minimum 0.50€' });
-      finalAmount = Math.round(amount);
+router.post('/create-intent', requireAuth, async (req, res, next) => {
+  const parsed = createIntentSchema.safeParse(req.body || {});
+  if (!parsed.success) return res.status(400).json({ error: 'Commande invalide' });
+
+  try {
+    const order = await prisma.order.findUnique({ where: { id: parsed.data.orderId } });
+    // Même réponse qu'une commande inexistante : distinguer les deux cas
+    // permettrait d'énumérer les commandes des autres patients.
+    if (!order || order.patientId !== req.user.id) {
+      return res.status(404).json({ error: 'Commande introuvable' });
+    }
+    if (order.status !== 'en_attente') {
+      return res.status(409).json({ error: 'Cette commande n\'est plus en attente de paiement' });
     }
 
-    if (finalAmount < 50) return res.status(400).json({ error: 'Montant minimum 0.50€' });
+    const finalAmount = Math.round(Number(order.totalPrice || 0) * 100);
+    if (finalAmount < 50) return res.status(400).json({ error: 'Montant minimum 0,50 €' });
 
     const paymentIntent = await getStripe().paymentIntents.create({
       amount: finalAmount,
-      currency,
+      currency: 'eur',
       automatic_payment_methods: { enabled: true },
-      metadata: { ...metadata, ...(orderId ? { orderId } : {}), platform: 'livraisante' },
-    });
+      metadata: { orderId: order.id, patientId: order.patientId, platform: 'livraisante' },
+    }, { idempotencyKey: `intent_${order.id}_${finalAmount}` });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    res.json({ clientSecret: paymentIntent.client_secret, amountEur: finalAmount / 100 });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
@@ -86,10 +97,28 @@ webhookRouter.post('/', async (req, res) => {
         if (orderId) {
           const order = await prisma.order.findUnique({ where: { id: orderId }, include: { pharmacy: true } });
           if (order) {
-            const updated = await prisma.order.update({
-              where: { id: orderId },
+            // Le montant réellement débité doit correspondre à la commande.
+            // Sans ce contrôle, un PaymentIntent créé par un autre chemin (ou
+            // pour un autre montant) validerait quand même la commande.
+            const attendu = Math.round(Number(order.totalPrice || 0) * 100);
+            if (pi.amount !== attendu) {
+              console.error(`Webhook: montant incohérent pour ${orderId} — payé ${pi.amount}, attendu ${attendu}`);
+              break;
+            }
+
+            // Idempotence : Stripe rejoue ses webhooks. Sans cette garde, un
+            // rejeu réécrirait status='validee' sur une commande déjà passée
+            // en 'prete'/'en_livraison' (régression de statut) et renverrait
+            // une seconde facture au patient.
+            const { count } = await prisma.order.updateMany({
+              where: { id: orderId, status: 'en_attente' },
               data: { status: 'validee' },
             });
+            if (!count) {
+              console.log(`Webhook: commande ${orderId} déjà traitée (statut ${order.status}) — rejeu ignoré`);
+              break;
+            }
+            const updated = await prisma.order.findUnique({ where: { id: orderId } });
 
             if (order.patientId) {
               sendPushToUser(order.patientId, {
@@ -145,7 +174,13 @@ webhookRouter.post('/', async (req, res) => {
         if (orderId) {
           const order = await prisma.order.findUnique({ where: { id: orderId } });
           if (order) {
-            const updated = await prisma.order.update({ where: { id: orderId }, data: { status: 'refusee' } });
+            // Idempotent : un rejeu ne doit pas renotifier le patient.
+            const { count } = await prisma.order.updateMany({
+              where: { id: orderId, status: { not: 'refusee' } },
+              data: { status: 'refusee' },
+            });
+            if (!count) break;
+            const updated = await prisma.order.findUnique({ where: { id: orderId } });
             sendPushToUser(order.patientId, {
               title: '↩️ Remboursement effectué',
               body: 'Votre commande a été annulée et remboursée.',
@@ -163,8 +198,8 @@ webhookRouter.post('/', async (req, res) => {
 
     res.json({ received: true });
   } catch (err) {
-    console.error('Webhook error:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('Webhook error:', err);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 

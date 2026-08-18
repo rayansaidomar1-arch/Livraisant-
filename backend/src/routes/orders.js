@@ -10,32 +10,63 @@ const { z } = require('zod');
 const prisma = require('../lib/prisma');
 const { requireAuth, attachProfile } = require('../lib/auth');
 const { isActiveDriver, getProfile } = require('../lib/supabaseDb');
+const { priceCart } = require('../lib/pricing');
 const { sendPushToUser } = require('../lib/push');
 const { sendEmail } = require('../lib/email');
 const { broadcast } = require('../lib/realtime');
 
 const router = express.Router();
 
+// `orders:driver` est un topic GLOBAL : tout livreur actif abonné reçoit chaque
+// message. Y diffuser la commande entière contredisait la restriction de
+// colonnes appliquée juste en dessous à la liste REST `available` — les
+// médicaments et l'adresse du patient partaient à tous les livreurs, y compris
+// ceux qui n'ont pas pris la course en charge. On n'y publie donc que le même
+// sous-ensemble ; le détail complet reste accessible via GET /orders (`mine`),
+// qui filtre sur driverId.
+function driverSafeOrder(order) {
+  if (!order) return null;
+  return {
+    id: order.id,
+    pharmacyId: order.pharmacyId,
+    driverId: order.driverId,
+    status: order.status,
+    createdAt: order.createdAt,
+  };
+}
+
+// Une liste non bornée finit par renvoyer l'historique complet d'une pharmacie
+// en une seule réponse : mémoire du process et bande passante mobile explosent
+// à mesure que le volume grandit. Le client peut demander moins, jamais plus.
+const PAGE_DEFAUT = 100;
+const PAGE_MAX = 200;
+function pageSize(req) {
+  const n = Number.parseInt(req.query.limit, 10);
+  if (!Number.isFinite(n) || n <= 0) return PAGE_DEFAUT;
+  return Math.min(n, PAGE_MAX);
+}
+
 // ── GET /orders ── (scope selon le rôle Supabase, jamais celui du JWT) ──
 router.get('/', requireAuth, attachProfile, async (req, res, next) => {
   try {
     const { id: userId, role } = req.user;
+    const take = pageSize(req);
 
     if (role === 'patient' || role === 'patient_licencie') {
-      const orders = await prisma.order.findMany({ where: { patientId: userId }, orderBy: { createdAt: 'desc' } });
+      const orders = await prisma.order.findMany({ where: { patientId: userId }, orderBy: { createdAt: 'desc' }, take });
       return res.json(orders);
     }
 
     if (role === 'pharmacien') {
       const pharmacy = await prisma.pharmacy.findUnique({ where: { userId } });
       if (!pharmacy) return res.json([]);
-      const orders = await prisma.order.findMany({ where: { pharmacyId: pharmacy.id }, orderBy: { createdAt: 'desc' } });
+      const orders = await prisma.order.findMany({ where: { pharmacyId: pharmacy.id }, orderBy: { createdAt: 'desc' }, take });
       return res.json(orders);
     }
 
     if (role === 'livreur') {
       // Ses propres commandes prises en charge (détail complet).
-      const mine = await prisma.order.findMany({ where: { driverId: userId }, orderBy: { createdAt: 'desc' } });
+      const mine = await prisma.order.findMany({ where: { driverId: userId }, orderBy: { createdAt: 'desc' }, take });
       // Commandes disponibles (non prises en charge) — colonnes limitées,
       // miroir de la vue orders_driver_available : pas de médicaments/adresse
       // tant que la commande n'est pas explicitement prise en charge.
@@ -43,6 +74,7 @@ router.get('/', requireAuth, attachProfile, async (req, res, next) => {
         where: { driverId: null, status: { in: ['validee', 'prete'] } },
         select: { id: true, pharmacyId: true, status: true, createdAt: true },
         orderBy: { createdAt: 'asc' },
+        take,
       });
       return res.json({ mine, available });
     }
@@ -53,14 +85,28 @@ router.get('/', requireAuth, attachProfile, async (req, res, next) => {
   }
 });
 
+// `totalPrice` / `deliveryFee` ne figurent volontairement PAS dans ce schéma :
+// ils sont recalculés par lib/pricing.js. Les accepter du client revenait à
+// laisser le payeur fixer son propre prix (même faille que celle fermée côté
+// Supabase par la migration 20260722030000, qui interdit à un patient
+// d'insérer une commande avec un `pricing.totalEur` non nul).
 const createOrderSchema = z.object({
   pharmacyId: z.string().uuid().optional(),
-  items: z.any().optional(),
-  kind: z.string().optional(),
-  trackId: z.string().optional(),
-  totalPrice: z.number().nonnegative().optional(),
-  deliveryFee: z.number().nonnegative().optional(),
-  patientSnapshot: z.any().optional(),
+  items: z.array(z.object({
+    lab: z.string().min(1),
+    name: z.string().min(1),
+    qty: z.number().int().positive().max(20).optional(),
+  })).max(50).optional(),
+  kind: z.string().max(40).optional(),
+  trackId: z.string().max(64).optional(),
+  deliveryMode: z.enum(['livraison', 'cnc', 'cnc_club']).optional(),
+  distanceKm: z.number().nonnegative().max(500).nullable().optional(),
+  patientSnapshot: z.object({
+    nom: z.string().max(120).optional(),
+    prenom: z.string().max(120).optional(),
+    adresse: z.string().max(300).optional(),
+    telephone: z.string().max(30).optional(),
+  }).optional(),
 });
 
 // ── POST /orders ── (équivalent sbInsertOrder — réservé aux patients) ──
@@ -70,17 +116,30 @@ router.post('/', requireAuth, attachProfile, async (req, res, next) => {
   }
   const parsed = createOrderSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+  const { items, kind, deliveryMode = 'livraison', distanceKm = null } = parsed.data;
 
   try {
+    // Les commandes gratuites (inscription à un événement club) n'ont pas de
+    // panier : elles restent sans montant, comme côté Supabase.
+    let pricing = { total: null, deliveryFee: null };
+    if (kind !== 'sportif') {
+      try {
+        pricing = await priceCart({ items, deliveryMode, distanceKm });
+      } catch (err) {
+        if (err.code) return res.status(400).json({ error: err.message, code: err.code });
+        throw err;
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         patientId: req.user.id,
         pharmacyId: parsed.data.pharmacyId,
-        items: parsed.data.items,
-        kind: parsed.data.kind,
+        items,
+        kind,
         trackId: parsed.data.trackId,
-        totalPrice: parsed.data.totalPrice,
-        deliveryFee: parsed.data.deliveryFee,
+        totalPrice: pricing.total,
+        deliveryFee: pricing.deliveryFee,
         patientSnapshot: parsed.data.patientSnapshot,
       },
     });
@@ -108,7 +167,7 @@ router.post('/:id/claim', requireAuth, attachProfile, async (req, res, next) => 
     if (!count) return res.status(409).json({ error: 'Commande indisponible ou déjà prise en charge' });
 
     const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-    broadcast('orders:driver', 'update', order);
+    broadcast('orders:driver', 'update', driverSafeOrder(order));
     res.json(order);
   } catch (err) {
     next(err);
@@ -176,7 +235,7 @@ router.patch('/:id/status', requireAuth, attachProfile, async (req, res, next) =
 
     if (order.pharmacyId) broadcast(`orders:pharmacy:${order.pharmacyId}`, 'update', updated);
     broadcast(`orders:patient:${updated.patientId}`, 'update', updated);
-    if (role === 'livreur') broadcast('orders:driver', 'update', updated);
+    if (role === 'livreur') broadcast('orders:driver', 'update', driverSafeOrder(updated));
 
     res.json(updated);
   } catch (err) {

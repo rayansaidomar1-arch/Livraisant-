@@ -3,7 +3,7 @@
 <head>
 <script>/* Apex → www redirect — must be first */if(location.hostname==='livraisante.fr')location.replace('https://www.livraisante.fr'+location.pathname+location.search+location.hash);</script>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://annuaire.sante.fr https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Livraisanté — Santé du quotidien, livré</title>
@@ -697,7 +697,6 @@
   .sport-grid{display:flex;flex-wrap:wrap;gap:7px;max-height:260px;overflow-y:auto;padding:2px}
   .sport-btn{font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border:1.5px solid var(--line-strong);border-radius:30px;background:var(--card);cursor:pointer;color:var(--ink);transition:.13s}
   .sport-btn:hover{border-color:var(--ink)} .sport-btn.sel{background:var(--sport);color:#fff;border-color:var(--sport)}
-  .sport-btn .fed{font-size:10px;opacity:.7;display:block}
   .kine-list{margin-top:10px}
   .kine-card{background:var(--card);border:1.5px solid var(--line-strong);border-radius:13px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .kine-card .kn{font-weight:700;font-size:15px}
@@ -1148,7 +1147,6 @@
       <label class="form-label">Ton sport <span class="opt">(commence à taper pour filtrer)</span></label>
       <input type="text" id="sportSearch" placeholder="Ex. Football, Rugby, Natation…" oninput="filterSports(this.value)" autocomplete="off">
       <div id="sportGrid" class="sport-grid" style="margin-top:10px"></div>
-      <div id="sportSelected" style="display:none;margin-top:10px" class="help-box"></div>
     </div>
 
     <div class="triad" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
@@ -1479,15 +1477,15 @@
     <!-- Code de parrainage (généré après validation) -->
     <div class="ref-hero">
       <span class="eyebrow">Ton code de parrainage</span>
-      <h3>Gagne 50 € par livreur recruté 🎁</h3>
-      <p style="font-size:14px;color:rgba(255,255,255,.75)">Partage ce code à tes contacts. Pour chaque livreur inscrit et actif via ton code, tu reçois 50 € directement sur ton IBAN.</p>
+      <h3>Gagne un bonus par livreur recruté 🎁</h3>
+      <p style="font-size:14px;color:rgba(255,255,255,.75)">Partage ce code à tes contacts. Pour chaque livreur inscrit et activé via ton code, tu reçois un bonus de parrainage, versé par l'équipe après vérification.</p>
       <div class="ref-code"><div class="code" id="myRefCode">—</div><button onclick="copyRefCode()">📋 Copier</button><button id="waShareBtn">💬 WhatsApp</button></div>
     </div>
 
     <!-- Entrer le code de parrainage d'un collègue -->
     <div style="background:#f8f9fa;border:1.5px solid var(--line-strong);border-radius:14px;padding:16px;margin-bottom:16px">
       <div style="font-weight:800;font-size:14px;margin-bottom:4px">🤝 A-t-on parrainé ton inscription ?</div>
-      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Saisis ici le code du livreur qui t'a recommandé — il recevra 50 € à ton activation.</div>
+      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Saisis ici le code du livreur qui t'a recommandé — son bonus sera versé par l'équipe une fois ton compte activé.</div>
       <div class="input-row" style="flex-wrap:nowrap">
         <input type="text" id="drRefCode" placeholder="LIV-A3F7K2" style="text-transform:uppercase;flex:1;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px">
         <button class="btn ghost" style="padding:11px 14px;font-size:13px;white-space:nowrap" onclick="validateRefCode()">Valider</button>
@@ -2121,7 +2119,8 @@ const W={
 const DURPTS={lt1:3,'13':6,'36':10,gt6:15};
 const ANCPTS={recent:4,mid:2,old:0};
 
-function analyse(){
+async function analyse(){
+  if(!(await canRevealSportProtocol('sportBilan'))) return;
   state.profile={nom:document.getElementById('nom').value.trim(),age:document.getElementById('age').value,
     poste:getChip('poste'),niveau:getChip('niveau'),matchs:getChip('matchs')};
   state.hygiene={sommeilH:getChip('sommeilH'),sommeilQ:getChip('sommeilQ'),hydra:getChip('hydra'),
@@ -2358,10 +2357,25 @@ function persistPharmacyData(ph){
   },800);
 }
 
-/* ── TARIFICATION PHARMACIE ── */
-const PHARMACY_PRICE_KEY='lv_pharma_pricing';
-function getPharmaPricing(){try{return JSON.parse(localStorage.getItem(PHARMACY_PRICE_KEY)||'{}');}catch(e){return {};}}
-function savePharmaPricing(d){try{localStorage.setItem(PHARMACY_PRICE_KEY,JSON.stringify(d));}catch(e){}}
+/* ── TARIFICATION PHARMACIE ──────────────────────────────────────────────
+   Correctif audit 2026-08-05 (Important #4) : ce réglage était auparavant
+   enregistré uniquement dans un localStorage dédié (`lv_pharma_pricing`),
+   jamais synchronisé — sans effet sur le montant réellement facturé au
+   patient (toujours le prix catalogue brut, cf. create-payment-intent).
+   Il fait désormais partie du même objet `phData` (localStorage
+   `livraisante_pharmacy`) que les autres réglages officine, synchronisé vers
+   Supabase (`pharmacies.extra_settings.pricing`) via persistPharmacyData() —
+   c'est cette valeur Supabase que l'Edge Function `create-payment-intent`
+   applique réellement au moment du paiement. */
+function getPharmaPricing(){
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  return phData.pricing||{mode:'std',overrides:{}};
+}
+function savePharmaPricing(d){
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  phData.pricing=d;
+  persistPharmacyData(phData);
+}
 // Multiplicateurs sur le prix de référence catalogue (= avg TTC officine)
 const PRICING_MODES={
   eco:   {label:'Économique',desc:'Prix bas — ~−15 % vs moyenne officine',mult:0.85,icon:'💚'},
@@ -3750,7 +3764,78 @@ function quickAilment(id){
    ESPACE SPORT — Licencié & Partenaire sportif
 ═══════════════════════════════════════════════════════════ */
 let sportTab='licencie'; // 'licencie' | 'partenaire' | 'conseils'
-let sportWiz={step:0,data:{}}; // wizard state for licencié tab
+let sportWiz={step:0,data:{},_clubLoading:false,_pros:null,_prosLoading:false,_bookingProId:null,_openSlots:null,_openSlotsLoading:false}; // wizard state for licencié tab
+
+// ── Correctif audit 2026-08-05 (Important #5) ───────────────────────────────
+// Les étapes 0 et 6 du bilan sport-santé (choix de club, liste des pros de
+// santé, réservation de RDV) utilisaient un système entièrement fictif : club
+// choisi dans une liste de comptes `club` du localStorage (aucun rapport avec
+// une vraie adhésion), pros de santé filtrés localement de la même façon, et
+// bookSportRdv() qui se contentait d'un showToast() sans rien enregistrer ni
+// notifier personne — tout en affichant un faux message "vous recevrez une
+// confirmation par email". Le bilan est désormais connecté aux vraies tables
+// Supabase : le club provient de club_members (via getPatientClub(), déjà
+// utilisée ailleurs), la liste des pros de sbGetProsForMember(), et la
+// réservation crée une vraie ligne dans `appointments` (RLS appt_patient_insert
+// déjà en place) avec une vraie notification in-app au professionnel.
+async function loadWizClubIfNeeded(){
+  if(!currentUser?.id||sportWiz.data.clubId||sportWiz._clubLoading) return;
+  sportWiz._clubLoading=true;
+  const club=await getPatientClub();
+  sportWiz._clubLoading=false;
+  if(club){ sportWiz.data.clubId=club.id; sportWiz.data.clubNom=club.nom; }
+  if(sportWiz.step===0) renderSportApp();
+}
+function renderWizClubStatus(){
+  if(sportWiz.data.clubId){
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#EFF6FF;border:1.5px solid #1F6FEB40;border-radius:10px">
+      <span style="font-size:16px">🏟️</span>
+      <span style="font-weight:700;font-size:13.5px;color:#1F6FEB">${esc(sportWiz.data.clubNom||'Club lié')}</span>
+    </div>`;
+  }
+  if(sportWiz._clubLoading){
+    return `<div style="font-size:12.5px;color:var(--ink-soft)">Chargement de votre club…</div>`;
+  }
+  return `<div style="font-size:12.5px;color:var(--ink-soft)">Aucun club licencié validé sur votre compte pour l'instant. La prise de RDV avec un professionnel de santé nécessite d'être licencié dans un club partenaire de Livraisanté.</div>`;
+}
+async function loadWizProsIfNeeded(){
+  const clubId=sportWiz.data.clubId;
+  if(!clubId||sportWiz._pros!==null||sportWiz._prosLoading) return;
+  sportWiz._prosLoading=true;
+  const pros=await (window.LS_SB?.sbGetProsForMember(clubId)||Promise.resolve([]));
+  sportWiz._prosLoading=false;
+  sportWiz._pros=pros||[];
+  if(sportWiz.step===6) renderSportApp();
+}
+async function loadWizOpenSlotsIfNeeded(){
+  const clubId=sportWiz.data.clubId;
+  if(!clubId||sportWiz._openSlots!==null||sportWiz._openSlotsLoading) return;
+  sportWiz._openSlotsLoading=true;
+  const slots=await (window.LS_SB?.sbGetOpenSlotsForClub(clubId)||Promise.resolve([]));
+  sportWiz._openSlotsLoading=false;
+  sportWiz._openSlots=slots||[];
+  if(sportWiz.step===6) renderSportApp();
+}
+async function claimOpenSlot(slotId,btn){
+  if(!currentUser?.id||!window.LS_SB?.SB_READY){showToast('Connexion requise','var(--warn)');return;}
+  if(btn){btn.disabled=true;btn.textContent='Réservation…';}
+  const {error}=await window.LS_SB.sbClaimAppointmentSlot(slotId,currentUser.id);
+  if(error){
+    if(btn){btn.disabled=false;btn.textContent='Réserver ce créneau →';}
+    showToast(error==='slot_already_taken'?'⚠ Ce créneau vient d\'être réservé par quelqu\'un d\'autre':'Erreur : '+error,'var(--err)');
+    sportWiz._openSlots=null;
+    loadWizOpenSlotsIfNeeded();
+    return;
+  }
+  showToast('✅ Créneau réservé — vous serez notifié dès sa confirmation','var(--ok)');
+  sportWiz._openSlots=null;
+  renderSportApp();
+  loadWizOpenSlotsIfNeeded();
+}
+function toggleWizBooking(proId){
+  sportWiz._bookingProId=sportWiz._bookingProId===proId?null:proId;
+  renderSportApp();
+}
 
 function renderSportApp(){
   const el=document.getElementById('sportifContent'); if(!el) return;
@@ -3780,13 +3865,14 @@ function renderLicencieTab(){
 
   if(n===0){
     // ── ÉTAPE 0 : IDENTIFICATION ──
+    if(currentUser) loadWizClubIfNeeded();
     content=`<div style="background:linear-gradient(135deg,#1F6FEB15,#1F6FEB08);border:1.5px solid #1F6FEB30;border-radius:16px;padding:18px;margin-bottom:18px">
       <div style="font-weight:800;font-size:18px;margin-bottom:4px;color:#1F6FEB">🏃 Espace Sport & Santé</div>
       <div style="font-size:13px;color:var(--ink-soft)">Bilan personnalisé · Protocoles prévention · Compléments légaux AMA</div>
     </div>
     ${!currentUser?`<div style="background:var(--lime);border-radius:14px;padding:18px;margin-bottom:16px;text-align:center">
-      <div style="font-weight:800;font-size:16px;margin-bottom:6px">Connectez-vous pour démarrer</div>
-      <div style="font-size:13px;margin-bottom:12px;opacity:.8">Votre bilan sport-santé sera sauvegardé sur votre profil</div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:6px">Le bilan est ouvert à tous</div>
+      <div style="font-size:13px;margin-bottom:12px;opacity:.8">Répondez librement au questionnaire. Un compte licencié sera demandé au moment d'afficher votre protocole.</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button onclick="enterRole('loginScreen')" style="font-family:inherit;font-weight:800;font-size:14px;padding:11px 22px;background:var(--ink);color:#fff;border:none;border-radius:10px;cursor:pointer">Se connecter →</button>
         <button onclick="enterRole('registerScreen')" style="font-family:inherit;font-weight:700;font-size:13px;padding:11px 18px;background:white;color:var(--ink);border:2px solid var(--ink);border-radius:10px;cursor:pointer">Créer un compte</button>
@@ -3806,14 +3892,12 @@ function renderLicencieTab(){
       ${['Football','Rugby','Natation','Athlétisme','Judo','Tennis','Cyclisme','Basket','Handball','Volley','Ski','Boxe','Running','Fitness','Escalade','Yoga'].map(s=>`<option value="${s}" ${sportWiz.data.sport===s?'selected':''}>${s}</option>`).join('')}
     </select>
   </div>
-  <div id="wizClubSection" style="${sportWiz.data.sport?'':'display:none'}">
-    <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">Club <span style="font-weight:400">(optionnel — pour accéder aux pros de santé du club)</span></div>
-    <select id="wizClubSelect" onchange="sportWiz.data.clubId=this.value;sportWiz.data.clubNom=this.options[this.selectedIndex]?.text" style="width:100%;padding:10px 14px;border:2px solid var(--line-strong);border-radius:10px;font-family:inherit;font-size:14px;background:white">
-      <option value="">-- Aucun club --</option>
-    </select>
-  </div>
+  ${currentUser?`<div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">Votre club</div>
+    ${renderWizClubStatus()}
+  </div>`:''}
 </div>
-    <button onclick="if(!currentUser){showBilanGate();}else if(!isClubLicencie()){showBilanGate('notvalidated');}else{setSportWizStep(1);}" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
+    <button onclick="handleStartSportWizClick()" style="width:100%;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;background:#1F6FEB;color:white;border:none;border-radius:14px;cursor:pointer;box-shadow:2px 2px 0 #1F6FEB80">Démarrer mon bilan sport-santé →</button>`;
   }
 
   else if(n===1){
@@ -3993,32 +4077,66 @@ function renderLicencieTab(){
     // ── ÉTAPE 6 : RENDEZ-VOUS ──
     const clubId=sportWiz.data.clubId||'';
     const clubNom=sportWiz.data.clubNom||'';
-    // Find health pros who listed this club as partner
-    const pros=clubId?getClubHealthPros(clubId):[];
+    if(clubId) loadWizProsIfNeeded();
+    if(clubId) loadWizOpenSlotsIfNeeded();
+    const prosLoaded=sportWiz._pros!==null;
+    const pros=sportWiz._pros||[];
+    const openSlots=sportWiz._openSlots||[];
     content=`<div style="font-weight:800;font-size:17px;margin-bottom:4px">📅 Rendez-vous avec un professionnel de santé</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">${clubNom?'Professionnels de santé partenaires de <b>'+clubNom+'</b>':'Sélectionnez un club à l\'étape précédente pour accéder aux professionnels de santé'}</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">${clubNom?'Professionnels de santé partenaires de <b>'+esc(clubNom)+'</b>':'La prise de RDV nécessite d\'être licencié dans un club partenaire'}</div>
     ${!clubId?`<div style="background:#fffbe6;border:1.5px solid #fde68a;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
       <div style="font-size:22px;margin-bottom:6px">⚽</div>
-      <div style="font-weight:800;font-size:14px;margin-bottom:4px">Aucun club sélectionné</div>
-      <div style="font-size:13px;color:var(--ink-soft)">Retournez à l'étape Identité pour sélectionner votre club et accéder aux professionnels de santé partenaires.</div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px">Aucun club licencié</div>
+      <div style="font-size:13px;color:var(--ink-soft)">La prise de RDV avec un professionnel de santé est réservée aux licenciés validés par un club partenaire de Livraisanté.</div>
       <button onclick="setSportWizStep(0)" style="font-family:inherit;font-weight:700;font-size:13px;margin-top:12px;padding:9px 18px;background:var(--ink);color:white;border:none;border-radius:10px;cursor:pointer">← Retour identité</button>
     </div>`
+    :!prosLoaded?`<div style="background:#f8f8f7;border:1.5px solid #e5e5e5;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;font-size:13px;color:var(--ink-soft)">Chargement des professionnels de santé du club…</div>`
     :pros.length===0?`<div style="background:#f8f8f7;border:1.5px solid #e5e5e5;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">
       <div style="font-size:22px;margin-bottom:6px">🩺</div>
       <div style="font-weight:800;font-size:14px;margin-bottom:4px">Aucun professionnel de santé disponible</div>
-      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px">Ce club n'a pas encore de professionnel de santé partenaire enregistré sur Livraisanté.</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px">Ce club n'a pas encore de professionnel de santé partenaire validé sur Livraisanté.</div>
       <a href="mailto:sport@livraisante.fr" style="display:inline-block;font-family:inherit;font-weight:700;font-size:13px;padding:9px 18px;background:#1F6FEB;color:white;border-radius:10px;text-decoration:none">Contacter Livraisanté →</a>
     </div>`
     :`<div class="card" style="margin-bottom:14px">
       <div style="font-weight:700;font-size:14px;margin-bottom:12px">🩺 Professionnels de santé du club</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${pros.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--grey);border-radius:12px;gap:10px">
-          <div>
-            <div style="font-weight:800;font-size:14px">${p.prenom||''} ${p.nom||''}</div>
-            <div style="font-size:12px;color:var(--ink-soft)">${p.profession||p.healthProInfo?.profession||'Professionnel de santé'}</div>
+        ${pros.map(p=>{
+          const proId=p.id;
+          const nom=((p.profiles?.prenom||'')+' '+(p.profiles?.nom||'')).trim()||'Professionnel de santé';
+          const isOpen=sportWiz._bookingProId===proId;
+          const proSlots=openSlots.filter(s=>s.pro_id===proId);
+          const slotsHtml=proSlots.length?`<div style="margin-top:10px;padding-top:10px;border-top:1.5px solid #e5e5e5;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink-soft)">🗓️ Créneaux proposés par ce professionnel</div>
+            ${proSlots.map(s=>{
+              const dt=new Date(s.scheduled_at);
+              const dStr=dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+              const tStr=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+              return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:white;border:1.5px solid #e5e5e5;border-radius:9px">
+                <div style="font-size:12.5px"><b>${dStr} à ${tStr}</b>${s.motif?' · '+esc(s.motif):''}</div>
+                <button onclick="claimOpenSlot('${s.id}',this)" style="font-family:inherit;font-size:11.5px;font-weight:700;padding:7px 11px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer;flex:0 0 auto;white-space:nowrap">Réserver ce créneau →</button>
+              </div>`;
+            }).join('')}
+          </div>`:'';
+          return `<div style="padding:12px 14px;background:var(--grey);border-radius:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <div>
+              <div style="font-weight:800;font-size:14px">${esc(nom)}</div>
+              <div style="font-size:12px;color:var(--ink-soft)">${esc(p.profession||'Professionnel de santé')}</div>
+            </div>
+            <button onclick="toggleWizBooking('${proId}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;background:${isOpen?'var(--ink)':'#1F6FEB'};color:white;border:none;border-radius:10px;cursor:pointer;flex:0 0 auto">${isOpen?'Annuler':'Réserver →'}</button>
           </div>
-          <button onclick="bookSportRdv('${(p.prenom||'')+' '+(p.nom||'')}')" style="font-family:inherit;font-size:12px;font-weight:700;padding:9px 14px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer;flex:0 0 auto">Réserver →</button>
-        </div>`).join('')}
+          ${slotsHtml}
+          ${isOpen?`<div style="margin-top:12px;padding-top:12px;border-top:1.5px solid #e5e5e5">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div><div style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:4px">Date</div><input type="date" id="wizRdvDate_${proId}" style="width:100%;padding:9px 10px;border:1.5px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+              <div><div style="font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:4px">Heure</div><input type="time" id="wizRdvTime_${proId}" style="width:100%;padding:9px 10px;border:1.5px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box"></div>
+            </div>
+            <input type="text" id="wizRdvMotif_${proId}" placeholder="Motif (optionnel)" style="width:100%;padding:9px 10px;border:1.5px solid var(--line-strong);border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:10px">
+            <div id="wizRdvMsg_${proId}" style="font-size:12px;font-weight:700;margin-bottom:8px"></div>
+            <button onclick="bookSportRdv('${proId}',this)" style="width:100%;font-family:inherit;font-weight:800;font-size:13px;padding:10px;background:#1F6FEB;color:white;border:none;border-radius:10px;cursor:pointer">Confirmer la demande de RDV</button>
+          </div>`:''}
+          </div>`;
+        }).join('')}
       </div>
     </div>`}
     <div style="background:#f8f8f7;border-radius:12px;padding:14px;margin-bottom:16px;font-size:12.5px;color:var(--ink-soft)">
@@ -4033,6 +4151,9 @@ function renderLicencieTab(){
   return stepsIcons?stepBar+content:content;
 }
 
+function handleStartSportWizClick(){
+  setSportWizStep(1);
+}
 function setSportWizStep(s){
   sportWiz.step=s;
   if(!_noRoutePush&&currentSport){
@@ -4074,7 +4195,10 @@ function toggleWizObjectif(val,btn){
   btn.classList.toggle('sel',idx<0);
 }
 
-function generateSportProtocol(){ setSportWizStep(5); }
+async function generateSportProtocol(){
+  if(!(await canRevealSportProtocol('sportWiz'))) return;
+  setSportWizStep(5);
+}
 
 function buildSportProtocol(d){
   const sections=[];
@@ -4183,35 +4307,35 @@ function downloadSportProtocolPDF(){
 
 function onWizSportChange(sport){
   sportWiz.data.sport=sport;
-  sportWiz.data.clubId='';sportWiz.data.clubNom='';
-  const section=document.getElementById('wizClubSection');
-  const sel=document.getElementById('wizClubSelect');
-  if(!sport||!section||!sel){if(section)section.style.display='none';return;}
-  section.style.display='block';
-  // Build club list from registered club accounts + static list for the sport
-  const clubs=getClubsForSport(sport);
-  sel.innerHTML=`<option value="">-- Aucun club --</option>`+clubs.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}</option>`).join('');
 }
 
-function getClubsForSport(sport){
-  const accs=getAccounts();
-  return Object.values(accs)
-    .filter(a=>a.role==='club')
-    .map(a=>({id:a.id||a.email, nom:a.clubInfo?.nom||a.email, sport:a.clubInfo?.federation||''}));
-}
-
-function getClubHealthPros(clubId){
-  if(!clubId) return [];
-  const accs=getAccounts();
-  return Object.values(accs).filter(a=>{
-    if(a.role!=='professionnel_sante') return false;
-    const clubs=a.partnerClubs||[];
-    return clubs.some(c=>(c.id||c)===clubId);
+async function bookSportRdv(proId,btn){
+  const dateEl=document.getElementById('wizRdvDate_'+proId);
+  const timeEl=document.getElementById('wizRdvTime_'+proId);
+  const motifEl=document.getElementById('wizRdvMotif_'+proId);
+  const msgEl=document.getElementById('wizRdvMsg_'+proId);
+  const date=dateEl?.value, time=timeEl?.value;
+  if(!date||!time){ if(msgEl){msgEl.style.color='var(--err)';msgEl.textContent='Veuillez choisir une date et une heure.';} return; }
+  if(!currentUser?.id||!window.LS_SB?.SB_READY){ if(msgEl){msgEl.style.color='var(--err)';msgEl.textContent='Connexion requise.';} return; }
+  const scheduled_at=new Date(date+'T'+time).toISOString();
+  if(btn){btn.disabled=true;btn.textContent='Envoi…';}
+  const {error}=await window.LS_SB.sbInsertAppointment({
+    patient_id: currentUser.id,
+    pro_id: proId,
+    club_id: sportWiz.data.clubId,
+    scheduled_at,
+    motif: motifEl?.value||'',
+    status:'pending',
   });
-}
-
-function bookSportRdv(proNom){
-  showToast(`✅ Demande de RDV envoyée à ${proNom} — vous recevrez une confirmation par email`,'var(--ok)');
+  if(error){
+    if(msgEl){msgEl.style.color='var(--err)';msgEl.textContent='Erreur : '+error;}
+    if(btn){btn.disabled=false;btn.textContent='Confirmer la demande de RDV';}
+    return;
+  }
+  showToast('✅ Demande de RDV envoyée — vous serez notifié dès sa confirmation','var(--ok)');
+  pushNotification('professionnel_sante',`🏃 Nouvelle demande de RDV sport-santé de ${esc(currentUser.prenom||currentUser.email||'un patient')}`,{type:'appointment_request',proId});
+  sportWiz._bookingProId=null;
+  renderSportApp();
 }
 
 function saveSportLicense(){
@@ -5075,44 +5199,61 @@ function subscribePlan(){ /* désactivé */ }
 function renderPatientReferral(){ return ''; }
 
 /* ══════════════════════════════════════════════════════════
-   PARRAINAGE LIVREUR — 50€ parrain / 50€ parrainé, max 2
+   PARRAINAGE LIVREUR — 15€ parrain / 15€ filleul, max 5
+   (correctif audit 2026-08-05, Important #7) : ce widget lisait autrefois
+   `acc.driverReferrals`/`acc.driverRefCode` dans le localStorage démo —
+   un champ jamais alimenté ailleurs dans le code (toujours 0€/0 filleul,
+   quoi qu'il arrive réellement), et générait de surcroît un second code
+   `DRV-XXXXXXXX` totalement déconnecté du vrai code (`ref_code`, format
+   `LIV-XXXXXX`) stocké dans `drivers` et déjà affiché dans le profil
+   livreur (renderProfile). Un livreur pouvait donc voir DEUX codes de
+   parrainage différents selon l'écran, aucun des deux ne reflétant de
+   vraies statistiques. On affiche désormais un placeholder synchrone,
+   patché juste après par les vraies données Supabase (sbGetDriver +
+   RPC my_driver_referral_stats) — même code, mêmes chiffres, partout.
 ══════════════════════════════════════════════════════════ */
 function renderDriverReferral(){
   if(!currentUser) return '';
-  const acc=getAccounts()[currentUser.email];
-  const referrals=acc?.driverReferrals||[];
-  const used=referrals.length;
-  const remaining=DRIVER_REFERRAL.maxReferrals-used;
-  const earned=referrals.filter(r=>r.validated).length*DRIVER_REFERRAL.parrainBonus;
-  const _rba=new Uint8Array(8); crypto.getRandomValues(_rba);
-  const refCode=acc?.driverRefCode||('DRV-'+Array.from(_rba,b=>b.toString(16).padStart(2,'0')).join('').toUpperCase().slice(0,8));
-  // Sauvegarde le code si nouveau
-  if(!acc?.driverRefCode && acc){ acc.driverRefCode=refCode; const accs=getAccounts(); accs[currentUser.email]=acc; localStorage.setItem('livraisante_accounts_v2',JSON.stringify(accs)); }
-  return `<div style="background:white;border:2px solid var(--ink);border-radius:14px;padding:18px;margin-top:16px;box-shadow:3px 3px 0 var(--lime)">
+  return `<div id="driverReferralWidget" style="background:white;border:2px solid var(--ink);border-radius:14px;padding:18px;margin-top:16px;box-shadow:3px 3px 0 var(--lime)">
     <div style="font-weight:800;font-size:16px;margin-bottom:4px">🤝 Programme de parrainage livreur</div>
     <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">Recrutez des livreurs · <b>15€</b> pour vous et <b>15€</b> pour le filleul (max ${DRIVER_REFERRAL.maxReferrals} parrainages)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div style="background:var(--grey);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:var(--ok)">€${earned.toFixed(0)}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em">Gains validés</div>
+        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:var(--ink)" id="drRefUsed">…</div>
+        <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em">Filleuls activés</div>
       </div>
       <div style="background:var(--grey);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:var(--ink)">${used}/${DRIVER_REFERRAL.maxReferrals}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em">Parrainages</div>
+        <div style="font-family:'Bricolage Grotesque';font-weight:800;font-size:28px;color:var(--ink)" id="drRefTotal">…</div>
+        <div style="font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em">Filleuls inscrits</div>
       </div>
     </div>
-    ${remaining>0?`<div>
-      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:6px">Votre code de parrainage livreur</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <div style="font-family:monospace;font-weight:800;font-size:18px;letter-spacing:4px;background:var(--lime);padding:8px 16px;border-radius:8px;flex:1;text-align:center">${refCode}</div>
-        <button onclick="navigator.clipboard.writeText('${refCode}').then(()=>showToast('Code copié !','var(--ok)'))" style="font-family:inherit;font-weight:700;font-size:12px;padding:8px 14px;border:1.5px solid var(--ink);border-radius:8px;background:white;cursor:pointer">📋</button>
-      </div>
-      <div style="background:#fffbe6;border:1px solid #D97706;border-radius:10px;padding:10px 14px;font-size:12.5px">
-        <b>Conditions :</b> Le filleul doit effectuer ses <b>3 premières livraisons</b> pour débloquer les primes des deux parties. Maximum <b>5 parrainages</b> par livreur.
-      </div>
-    </div>`:
-    `<div style="background:#d7f0db;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;color:var(--ok)">✓ Vous avez atteint le maximum de ${DRIVER_REFERRAL.maxReferrals} parrainages livreur.</div>`}
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:6px">Votre code de parrainage</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div style="font-family:monospace;font-weight:800;font-size:18px;letter-spacing:4px;background:var(--lime);padding:8px 16px;border-radius:8px;flex:1;text-align:center" id="drRefCode">…</div>
+      <button onclick="const c=document.getElementById('drRefCode').textContent; if(c&&c!=='…') navigator.clipboard.writeText(c).then(()=>showToast('Code copié !','var(--ok)'))" style="font-family:inherit;font-weight:700;font-size:12px;padding:8px 14px;border:1.5px solid var(--ink);border-radius:8px;background:white;cursor:pointer">📋</button>
+    </div>
+    <div style="background:#fffbe6;border:1px solid #D97706;border-radius:10px;padding:10px 14px;font-size:12.5px">
+      <b>Conditions :</b> le filleul doit effectuer ses <b>3 premières livraisons</b> pour débloquer les primes des deux parties. Le bonus est versé manuellement par l'équipe après vérification — maximum <b>${DRIVER_REFERRAL.maxReferrals} parrainages</b> par livreur.
+    </div>
   </div>`;
+}
+
+/** Patch asynchrone du widget de parrainage livreur avec les vraies données
+ *  Supabase (à appeler juste après avoir injecté renderDriverReferral() dans
+ *  le DOM) — voir note au-dessus de renderDriverReferral(). */
+function patchDriverReferralWidget(){
+  if(!currentUser?.id||!window.LS_SB?.SB_READY) return;
+  window.LS_SB.sbGetDriver(currentUser.id).then(d=>{
+    const el=document.getElementById('drRefCode'); if(el) el.textContent=d?.ref_code||'—';
+  }).catch(()=>{});
+  window.LS_SB.sbGetMyDriverReferralStats().then(s=>{
+    const setTxt=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+    setTxt('drRefUsed', s?.totalActive??0);
+    setTxt('drRefTotal', s?.totalReferred??0);
+  }).catch(()=>{
+    const setTxt=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+    setTxt('drRefUsed',0); setTxt('drRefTotal',0);
+  });
 }
 
 /* Toast utilitaire */
@@ -5191,6 +5332,53 @@ async function validateOrderCode(orderId){
   }
 }
 
+// ── Filet de sécurité paiement (audit 2026-08-05, Critique #1) ──────────────
+// Le paiement Stripe est débité AVANT l'écriture de la commande (sbConfirmOrder).
+// Si cette écriture échoue (coupure réseau, fermeture d'onglet...), il ne faut
+// jamais laisser l'utilisateur relancer placeOrderSante() depuis le début : cela
+// créerait un NOUVEAU PaymentIntent et double-débiterait le patient. On persiste
+// donc la charge utile AVANT l'appel réseau (survit à un crash pendant la
+// requête), et `resumePendingOrderConfirmation()` la rejoue à la prochaine
+// connexion. `confirm-order` étant idempotent sur `paymentIntentId`, rejouer cet
+// appel ne crée jamais de doublon.
+const PENDING_ORDER_CONFIRM_KEY='livraisante_pending_order_confirm';
+function savePendingOrderConfirmation(payload){
+  try{ localStorage.setItem(PENDING_ORDER_CONFIRM_KEY, JSON.stringify({...payload, ts:Date.now()})); }catch(e){}
+}
+function clearPendingOrderConfirmation(paymentIntentId){
+  try{
+    const raw=localStorage.getItem(PENDING_ORDER_CONFIRM_KEY);
+    if(!raw) return;
+    const pending=JSON.parse(raw);
+    if(pending?.paymentIntentId===paymentIntentId) localStorage.removeItem(PENDING_ORDER_CONFIRM_KEY);
+  }catch(e){}
+}
+/** Rejoue une confirmation de commande restée en attente (paiement débité mais
+ *  commande jamais écrite) — à appeler après restauration de session / connexion.
+ *  `confirm-order` est idempotent sur paymentIntentId : aucun risque de doublon. */
+let _resumingPendingOrderConfirmation=false;
+async function resumePendingOrderConfirmation(){
+  if(_resumingPendingOrderConfirmation) return;
+  if(!window.LS_SB?.SB_READY || !currentUser?.id) return;
+  let pending;
+  try{ pending=JSON.parse(localStorage.getItem(PENDING_ORDER_CONFIRM_KEY)||'null'); }catch(e){ pending=null; }
+  if(!pending?.paymentIntentId) return;
+  _resumingPendingOrderConfirmation=true;
+  try{
+    const {order,error}=await window.LS_SB.sbConfirmOrder(pending);
+    if(error){
+      console.error('resumePendingOrderConfirmation',error);
+      return; // on retentera à la prochaine connexion/rechargement
+    }
+    clearPendingOrderConfirmation(pending.paymentIntentId);
+    saveOrder(order);
+    logOrder();
+    showToast('✅ Votre commande du '+new Date(pending.ts).toLocaleDateString('fr-FR')+' a bien été enregistrée.','var(--ok)');
+  }finally{
+    _resumingPendingOrderConfirmation=false;
+  }
+}
+
 async function createOrder({items, patient, trackId, btn, kind, totalEur, deliveryFeeEur, paymentIntentId}){
   const track=document.getElementById(trackId);
   if(!items.length){ track.innerHTML='<div class="track-card">Coche au moins un produit à commander.</div>'; return; }
@@ -5227,10 +5415,18 @@ async function createOrder({items, patient, trackId, btn, kind, totalEur, delive
   // passer par l'insert direct historique, inchangé.
   let order, error;
   if(paymentIntentId){
-    ({order,error}=await window.LS_SB.sbConfirmOrder({
-      paymentIntentId, id, code, kind:kindVal, deliveryMode:deliveryModeDb,
-      pharmacyId, patient, items
-    }));
+    // ── Correctif audit 2026-08-05 (Critique #1) — voir savePendingOrderConfirmation
+    // ci-dessus : le paiement est déjà débité ici, donc on persiste AVANT l'appel,
+    // on retente une fois en cas d'échec transitoire, puis on laisse la trace en
+    // localStorage pour resumePendingOrderConfirmation() plutôt que d'inviter au
+    // "réessayez" (qui relancerait un nouveau paiement via placeOrderSante()).
+    const confirmPayload={ paymentIntentId, id, code, kind:kindVal, deliveryMode:deliveryModeDb, pharmacyId, patient, items };
+    savePendingOrderConfirmation(confirmPayload);
+    ({order,error}=await window.LS_SB.sbConfirmOrder(confirmPayload));
+    if(error){
+      await new Promise(r=>setTimeout(r,2000));
+      ({order,error}=await window.LS_SB.sbConfirmOrder(confirmPayload));
+    }
   } else {
     ({order,error}=await window.LS_SB.sbInsertOrderFull({
       id, code, kind:kindVal, deliveryMode:deliveryModeDb,
@@ -5239,11 +5435,21 @@ async function createOrder({items, patient, trackId, btn, kind, totalEur, delive
   }
   if(btn) btn.disabled=false;
   if(error){
-    track.innerHTML='<div class="track-card">❌ Impossible d\'enregistrer la commande. Réessayez.</div>';
-    showToast('❌ '+error,'#e11d48');
-    console.error('createOrder',error);
+    if(paymentIntentId){
+      // Le paiement a bien été débité : ne jamais inviter à "réessayer" (un nouveau
+      // clic relancerait un nouveau paiement). La commande sera finalisée
+      // automatiquement via resumePendingOrderConfirmation() à la prochaine ouverture.
+      track.innerHTML='<div class="track-card">✅ Paiement bien reçu. Finalisation de votre commande en cours — elle apparaîtra ici automatiquement. Si rien ne s\'affiche d\'ici quelques minutes, contactez-nous : votre paiement est en sécurité.</div>';
+      showToast('✅ Paiement reçu — finalisation en cours…','var(--ok)');
+      console.error('createOrder confirm-order (paiement débité, commande en attente)',error);
+    } else {
+      track.innerHTML='<div class="track-card">❌ Impossible d\'enregistrer la commande. Réessayez.</div>';
+      showToast('❌ '+error,'#e11d48');
+      console.error('createOrder',error);
+    }
     return;
   }
+  if(paymentIntentId) clearPendingOrderConfirmation(paymentIntentId);
   currentPatientOrderId=order.id; currentTrackId=trackId;
   saveOrder(order);
   logOrder();
@@ -5559,45 +5765,30 @@ function saveBusyPattern(){
   phData.busyPattern=bp; persistPharmacyData(phData);
   showToast('✅ Affluence enregistrée','var(--ok)'); renderPro();
 }
-async function syncGoogleHours(){
+// Correctif audit 2026-08-05 (Important #7) : cette fonction tentait un
+// appel direct à l'API Google Places avec une clé toujours vide
+// (`const API_KEY=''`, jamais configurable nulle part dans l'app malgré le
+// message qui promettait de le faire "dans vos paramètres") — l'appel
+// échouait donc systématiquement à 100%. Par ailleurs, appeler l'API Google
+// Places directement depuis le navigateur exposerait la clé API à
+// n'importe qui (onglet réseau), ce qui nécessiterait a minima un relais
+// serveur avant d'être activé. En l'absence de ce relais, on se contente
+// d'enregistrer le Place ID renseigné (donnée réelle, utile pour une
+// future intégration) et de guider honnêtement vers la saisie manuelle,
+// sans prétendre à une synchronisation automatique qui n'existe pas.
+function syncGoogleHours(){
   const input=document.getElementById('googlePlaceInput');
   const msg=document.getElementById('googleSyncMsg');
   if(!input||!msg) return;
   let raw=input.value.trim();
   if(!raw){msg.innerHTML='<span style="color:var(--err)">⚠ Saisissez un Place ID ou une URL Google Maps</span>';return;}
-  // Extract place_id from URL if given
   let placeId=raw;
   const m=raw.match(/place_id[=:]([^&\s/]+)/i)||raw.match(/!1s([^!]+)/i);
   if(m) placeId=decodeURIComponent(m[1]);
-  msg.innerHTML='<span style="color:var(--ink-soft)">⏳ Synchronisation en cours...</span>';
-  try{
-    // Google Places API — requires an API key; fallback to manual if CORS/key error
-    const API_KEY=''; // Pharmacist can add their key in settings
-    if(!API_KEY) throw new Error('no_key');
-    const url=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours,name&key=${API_KEY}`;
-    const res=await fetch(url);
-    const data=await res.json();
-    if(data.status!=='OK') throw new Error(data.status||'api_error');
-    const oh=data.result?.opening_hours;
-    const DAYS_EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    // Reorder to Mon-Sun
-    const periods=(oh?.weekday_text||[]).map((t,i)=>({day:t.split(':')[0],hours:t.split(':').slice(1).join(':').trim(),open:!t.toLowerCase().includes('fermé')&&!t.toLowerCase().includes('closed')}));
-    let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
-    phData.googleHours=periods; phData.googlePlaceId=placeId;
-    persistPharmacyData(phData);
-    msg.innerHTML='<span style="color:var(--ok)">✅ Horaires synchronisés depuis Google</span>';
-    renderPro();
-  }catch(e){
-    if(e.message==='no_key'){
-      // Guide the user
-      let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e2){}
-      phData.googlePlaceId=placeId;
-      persistPharmacyData(phData);
-      msg.innerHTML=`<span style="color:var(--warn)">⚠ Place ID enregistré. Pour synchroniser automatiquement les horaires, configurez une clé API Google Places dans vos paramètres ou <a href="https://business.google.com" target="_blank" style="color:#1F6FEB;font-weight:700">saisissez vos horaires manuellement ci-dessous</a>.</span>`;
-    } else {
-      msg.innerHTML=`<span style="color:var(--err)">✗ Erreur de synchronisation (${esc(e.message)}). Vérifiez votre Place ID.</span>`;
-    }
-  }
+  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
+  phData.googlePlaceId=placeId;
+  persistPharmacyData(phData);
+  msg.innerHTML='<span style="color:var(--warn)">⚠ La synchronisation automatique des horaires Google n\'est pas encore disponible. Votre Place ID a été enregistré — merci de saisir vos horaires manuellement ci-dessous en attendant.</span>';
 }
 
 function renderCustomAdvicePanel(){
@@ -5926,6 +6117,17 @@ async function loadDriverOrders(){
   if(currentView==='livreur') renderLivreur();
 }
 let _driverPollHandle=null;
+// ── Correctif audit performances 2026-08-05 ────────────────────────────
+// Le polling tournait toutes les 15s même onglet en arrière-plan (tab masqué,
+// app minimisée) : ~4 requêtes/min gaspillées par livreur connecté, en pure
+// perte puisque personne ne regarde l'écran à ce moment. On coupe le poll
+// quand l'onglet est masqué et on relance immédiatement (+ un cycle) au
+// retour au premier plan, pour ne pas rater de commande disponible pendant
+// que le livreur regardait ailleurs.
+function _driverPollTick(){
+  if(document.hidden) return; // silencieux : pas d'appel réseau tant que l'onglet n'est pas visible
+  loadDriverOrders();
+}
 function startDriverAvailablePolling(){
   stopDriverAvailablePolling();
   loadDriverOrders();
@@ -5934,10 +6136,15 @@ function startDriverAvailablePolling(){
   // lignes sans driver_id assigné, y compris via Realtime (qui applique les
   // mêmes policies). On interroge donc le serveur régulièrement à la place —
   // le realtime reste utilisé pour les commandes déjà prises en charge.
-  _driverPollHandle=setInterval(loadDriverOrders,15000);
+  _driverPollHandle=setInterval(_driverPollTick,15000);
+  document.addEventListener('visibilitychange',_onDriverPollVisibilityChange);
 }
 function stopDriverAvailablePolling(){
   if(_driverPollHandle){ clearInterval(_driverPollHandle); _driverPollHandle=null; }
+  document.removeEventListener('visibilitychange',_onDriverPollVisibilityChange);
+}
+function _onDriverPollVisibilityChange(){
+  if(!document.hidden && _driverPollHandle) loadDriverOrders(); // rattrape l'écart au retour au premier plan
 }
 
 function renderLivreur(){
@@ -5972,6 +6179,7 @@ function renderLivreur(){
     `<div style="text-align:right;margin:0 0 18px"><button class="btn ghost" style="font-size:13px" onclick="enterRole('driverSignup')">🛵 Mon dossier livreur</button></div>`+
     dispoSection+sec('Mes livraisons en cours',mes)+sec('Livrées',faites);
   renderDriverInvoicesSection('livreurFacturesSection');
+  patchDriverReferralWidget();
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -7516,8 +7724,8 @@ function renderPathologyPage(id,allIds){
       </div>
     </details>
 
-    <!-- Produits — Accordéon par catégorie -->
-    <div id="pathProds-${id}">
+    <!-- Produits — Accordéon par catégorie (réservé aux comptes connectés) -->
+    ${currentUser?`<div id="pathProds-${id}">
       <div style="margin-bottom:12px">
         <div style="font-weight:800;font-size:16px;margin-bottom:3px">💊 Choisissez vos produits</div>
         <div style="font-size:12.5px;color:var(--ink-soft)">Touchez une catégorie pour voir tous les produits disponibles · Vos choix s'ajoutent au panier</div>
@@ -7527,13 +7735,38 @@ function renderPathologyPage(id,allIds){
     </div>
 
     <!-- Cross-sell spécifique à cet ailment -->
-    ${renderCrossSell([id])}
+    ${renderCrossSell([id])}`
+    :renderProductsLoginGate(okProds.length, col)}
+  </div>`;
+}
+
+// La consultation (symptômes, conseils, quand consulter, données probantes) est
+// ouverte à tout visiteur ; seule la liste des produits à utiliser exige un
+// compte — un conseil produit engage la responsabilité du pharmacien qui le
+// valide, il ne peut pas être délivré à un visiteur anonyme.
+function renderProductsLoginGate(count, col){
+  return `<div style="border:2px dashed ${col.border};background:${col.light};border-radius:16px;padding:22px 18px;text-align:center;margin-bottom:16px">
+    <div style="font-size:34px;margin-bottom:8px">🔒</div>
+    <div style="font-weight:800;font-size:16px;margin-bottom:6px;color:${col.text}">${count} produit${count>1?'s':''} conseillé${count>1?'s':''} pour vous</div>
+    <div style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:16px">
+      Vos réponses sont conservées. Connectez-vous pour afficher les produits adaptés à votre profil
+      et les commander — nous vous ramenons directement ici.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button onclick="setAfterLoginIntent('conseil');enterRole('registerScreen')" style="font-family:inherit;font-weight:800;font-size:15px;padding:13px;background:var(--ink);color:#fff;border:none;border-radius:12px;cursor:pointer">Créer mon compte →</button>
+      <button onclick="setAfterLoginIntent('conseil');enterRole('loginScreen')" style="font-family:inherit;font-weight:700;font-size:14px;padding:12px;background:transparent;color:var(--ink);border:2px solid var(--ink);border-radius:12px;cursor:pointer">J'ai déjà un compte</button>
+    </div>
   </div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════
    NAVIGATION ENTRE PAGES
 ═══════════════════════════════════════════════════════════ */
+// Visiteur anonyme : pas de panier à afficher, on l'amène au bloc de déblocage.
+function scrollToConseilEnd(){
+  const target=document.getElementById('cartSection')||document.getElementById('pathPageContent');
+  target?.scrollIntoView({behavior:'smooth',block:'end'});
+}
 function goToConseilPage(idx){
   _conseilIds=_conseilIds||[...selectedAilments];
   if(idx<0||idx>=_conseilIds.length) return;
@@ -7563,9 +7796,9 @@ function goToConseilPage(idx){
   if(prev) prev.disabled=(idx===0);
   if(next){
     const isLast=(idx===_conseilIds.length-1);
-    next.textContent=isLast?'🛒 Voir mon panier →':'Suivant →';
+    next.textContent=isLast?(currentUser?'🛒 Voir mon panier →':'🔒 Voir mes produits →'):'Suivant →';
     next.className='path-nav-btn'+(isLast?' end':'');
-    next.onclick=isLast?()=>document.getElementById('cartSection')?.scrollIntoView({behavior:'smooth'}):()=>goToConseilPage(idx+1);
+    next.onclick=isLast?scrollToConseilEnd:()=>goToConseilPage(idx+1);
   }
   // Progress bar color
   const col=AILMENT_COLORS[_conseilIds[idx]];
@@ -7644,15 +7877,16 @@ function showCombinedConseil(){
         <span id="pathCounter">1 / ${ids.length}</span>
       </div>
       <button class="path-nav-btn ${lastIsLast?'end':''}" id="pathNext"
-        onclick="${lastIsLast?"document.getElementById('cartSection')?.scrollIntoView({behavior:'smooth'})":"goToConseilPage(1)"}">
-        ${lastIsLast?'🛒 Voir mon panier →':'Suivant →'}
+        onclick="${lastIsLast?"scrollToConseilEnd()":"goToConseilPage(1)"}">
+        ${lastIsLast?(currentUser?'🛒 Voir mon panier →':'🔒 Voir mes produits →'):'Suivant →'}
       </button>
     </div>
 
     <div class="legal" style="border:1px solid var(--line);border-radius:12px;margin-bottom:16px"><b>Important.</b> Ces produits sont disponibles sans ordonnance mais ne remplacent pas un avis médical. Le pharmacien validera votre demande. Respectez toujours la notice.</div>
 
-    <!-- Panier global (partagé entre toutes les pages) -->
-    <div class="cart-section"><div id="cartSection"><div style="font-size:13.5px;color:var(--ink-soft);padding:14px 20px">Aucun produit sélectionné.</div></div>
+    <!-- Panier global (partagé entre toutes les pages) — masqué tant que les
+         produits ne sont pas débloqués, il n'y aurait rien à y mettre -->
+    ${!currentUser?'':`<div class="cart-section"><div id="cartSection"><div style="font-size:13.5px;color:var(--ink-soft);padding:14px 20px">Aucun produit sélectionné.</div></div>
     ${cagnotteHtml()}
     <div style="padding:16px 20px">
       <div class="delivery-mode">
@@ -7669,7 +7903,7 @@ function showCombinedConseil(){
       <div id="geoStatus"></div>
       <button id="santeOrderBtn" onclick="placeOrderSante()" style="width:100%;font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;padding:14px;border-radius:12px;border:1.5px solid var(--accent-deep);background:var(--accent);color:var(--ink);cursor:pointer;margin-top:4px">Envoyer ma demande au pharmacien</button>
       <div id="santeOrderTrack"></div>
-    </div></div>
+    </div></div>`}
     <div class="abandon-survey" id="abandonSurveyInline">
       <h4>💬 Pourquoi n'avez-vous pas commandé ?</h4>
       <div class="abandon-reasons">
@@ -7867,6 +8101,9 @@ function placeOrderSante(){
     donationEnabled,
     estimateEur,
     estimateDeliveryFeeEur,
+    // Nécessaire à create-payment-intent pour appliquer la tarification propre
+    // à cette officine (correctif audit 2026-08-05, Important #4).
+    pharmacyId:getPatientPharmacyId(),
   };
   showStripePayment(cart, meta, function(paid){
     const items=patientCart.map(p=>({name:`${p.name} (${p.lab})`,ev:'—'}));
@@ -7874,9 +8111,11 @@ function placeOrderSante(){
     const donAmt=donationEnabled?donationAmount(cartTotal(deliveryMode)):0;
     let donInfo=null;
     if(assocObj&&donAmt>0){donInfo={assoc:assocObj.name,icon:assocObj.icon,amount:donAmt.toFixed(2),clubShare:0,assocShare:donAmt.toFixed(2)};}
-    getPatientClub().then(club=>{
-      if(club?.id){const orderTotal=cartTotal(deliveryMode);addCagnotteContribution(club.id,'order-'+Date.now(),orderTotal);}
-    });
+    // NB : la cagnotte club n'est plus créditée ici. Avant, elle l'était côté
+    // client, sur un total non vérifié, AVANT même la confirmation réelle du
+    // paiement (voir git blame). Elle est désormais créditée côté serveur par
+    // `confirm-order`, uniquement après paiement Stripe confirmé, à partir du
+    // montant réellement débité (correctif audit 2026-08-05, Important #7).
     createOrder({items,kind:deliveryMode==='cnc'?'click-collect':deliveryMode==='cnc_club'?'cnc-club':'santé',
       patient:{name:meta.patient,pos:santePos,addr,donation:donInfo,email:currentUser?.email||''},
       trackId:'santeOrderTrack',btn:document.getElementById('santeOrderBtn'),totalEur:paid.amountEur,deliveryFeeEur:paid.deliveryFeeEur,
@@ -7909,12 +8148,23 @@ function checkSiret(){
   if(luhnSiret(v)){msg.className='field-msg ok';msg.textContent='✓ SIRET valide — format vérifié.';document.getElementById('drSiret').className='input-valid';}
   else{msg.className='field-msg err';msg.textContent='✗ Numéro invalide — vérifiez les 14 chiffres.';document.getElementById('drSiret').className='input-error';}
 }
-function validateRefCode(){
+async function validateRefCode(){
   const v=document.getElementById('drRefCode').value.toUpperCase().trim();
   const msg=document.getElementById('refCodeMsg');
   if(!v){msg.className='';msg.textContent='';return;} // Champ vide → aucun message (code facultatif)
-  if(/^LIV-[A-Z0-9]{6}$/.test(v)&&v!==myDriverCode){msg.className='field-msg ok';msg.textContent='✓ Code valide — le parrain sera notifié à ton activation.';}
-  else{msg.className='field-msg err';msg.textContent='✗ Code non reconnu — vérifie avec le livreur qui t\'a recommandé.';}
+  if(!/^LIV-[A-Z0-9]{6}$/.test(v)||v===myDriverCode){
+    msg.className='field-msg err';msg.textContent='✗ Code non reconnu — vérifie avec le livreur qui t\'a recommandé.';
+    return;
+  }
+  // Persistance réelle côté serveur (correctif audit 2026-08-05, Important #7)
+  // — avant ce correctif, ce code n'était jamais transmis nulle part : le
+  // message "le parrain sera notifié" ne se produisait jamais en réalité.
+  if(window.LS_SB?.SB_READY){
+    msg.className='field-msg';msg.textContent='⏳ Enregistrement…';
+    const {error}=await window.LS_SB.sbSetDriverReferredBy(v);
+    if(error){msg.className='field-msg err';msg.textContent='✗ Impossible d\'enregistrer ce code pour le moment.';return;}
+  }
+  msg.className='field-msg ok';msg.textContent='✓ Code enregistré — le bonus de ton parrain sera versé par l\'équipe après vérification de ton activation.';
 }
 
 /* ---- Génération du code parrain ---- */
@@ -8396,18 +8646,15 @@ function filterSports(q){
   if(!el)return;
   const lq=(q||'').toLowerCase();
   const filtered=FRENCH_SPORTS.filter(s=>!lq||s.n.toLowerCase().includes(lq)||s.fed.toLowerCase().includes(lq)||s.cat.toLowerCase().includes(lq));
-  el.innerHTML=filtered.map(s=>`<button class="sport-btn ${currentSport?.id===s.id?'sel':''}" onclick="selectSport('${s.id}')">${s.n}<span class="fed">${s.fed}</span></button>`).join('');
+  el.innerHTML=filtered.map(s=>`<button class="sport-btn ${currentSport?.id===s.id?'sel':''}" data-sport="${s.id}" onclick="selectSport('${s.id}')">${s.n}</button>`).join('');
 }
 function selectSport(id){
   currentSport=FRENCH_SPORTS.find(s=>s.id===id)||null;
   if(!_noRoutePush&&currentSport) _navPush('/sport/'+currentSport.id);
-  document.querySelectorAll('.sport-btn').forEach(b=>b.classList.toggle('sel',b.textContent.trim().startsWith(currentSport?.n)));
-  const sel=document.getElementById('sportSelected');
-  if(currentSport&&sel){
-    sel.style.display='block';
-    sel.innerHTML=`<b>✓ ${currentSport.n}</b> · Fédération : ${currentSport.fed} · Catégorie : ${currentSport.cat}<br><span style="font-size:12px;color:var(--ink-soft)">Prévention clé : ${currentSport.prev}</span>`;
+  document.querySelectorAll('.sport-btn').forEach(b=>b.classList.toggle('sel',b.dataset.sport===currentSport?.id));
+  if(currentSport){
     const lbl=document.getElementById('s1SportLabel');
-    if(lbl) lbl.textContent=`Sport : ${currentSport.n} (${currentSport.fed}) — profil et pratique.`;
+    if(lbl) lbl.textContent=`Sport : ${currentSport.n} — profil et pratique.`;
     // Adapt poste chips to sport context
     const posteDiv=document.getElementById('posteChips');
     if(posteDiv){
@@ -8430,25 +8677,63 @@ function selectSport(id){
     }
   }
 }
-/** Returns true if the current user is a validated club member (licencié) */
-function isClubLicencie(){
-  if(!currentUser) return false;
-  if(currentUser.role==='patient_licencie') return true;
-  if(currentUser.sportLicense||currentUser.healthProfile?.sportLicense) return true;
-  return false;
+// ── Correctif audit 2026-08-05 (Critique #2) ─────────────────────────────────
+// L'ancien isClubLicencie() ne lisait que currentUser.sportLicense/role — des
+// champs auto-déclarés à l'inscription ou modifiables dans le profil, jamais
+// vérifiés par le club ni par le serveur. N'importe quel patient pouvait donc
+// se donner accès au bilan sport-santé réservé aux membres validés. Le gate
+// s'appuie désormais sur une lecture serveur de `club_members.validated`
+// (RLS `club_members_own`, verrouillé en écriture côté patient par le trigger
+// `prevent_club_member_tampering` — seul le club peut passer `validated` à true).
+let _clubLicencieCache=null; // {userId, value, ts} — évite une requête à chaque clic
+async function checkClubLicencieServer(){
+  if(!currentUser?.id) return false;
+  const sb=window.LS_SB?.getSB();
+  if(!sb){
+    // Mode démo (Supabase non configuré, aucune donnée réelle en jeu) : on retombe
+    // sur l'ancien comportement purement local.
+    return currentUser.role==='patient_licencie'||!!(currentUser.sportLicense||currentUser.healthProfile?.sportLicense);
+  }
+  if(_clubLicencieCache && _clubLicencieCache.userId===currentUser.id && (Date.now()-_clubLicencieCache.ts)<60000){
+    return _clubLicencieCache.value;
+  }
+  let value=false;
+  try{
+    const {data}=await sb.from('club_members').select('validated').eq('user_id',currentUser.id).eq('validated',true).maybeSingle();
+    value=!!data;
+  }catch(e){ value=false; }
+  _clubLicencieCache={userId:currentUser.id, value, ts:Date.now()};
+  return value;
 }
 function startSportBilan(){
-  if(!currentUser){
-    // Show gate overlay instead of the bilan
-    showBilanGate();
-    return;
-  }
-  if(!isClubLicencie()){
-    showBilanGate('notvalidated');
-    return;
-  }
   if(!currentSport){alert('Sélectionne ton sport pour commencer le bilan.');return;}
   go(1);
+}
+
+// Le questionnaire sport est ouvert à tout visiteur ; c'est la restitution
+// (indice de risque, protocole pluridisciplinaire, compléments) qui exige un
+// compte licencié validé par le club — cf. checkClubLicencieServer(),
+// correctif audit 2026-08-05 (Critique #2).
+// Le questionnaire (sport ou consultation) se remplit sans compte, mais la
+// restitution en exige un. Sans reprise, l'utilisateur se connecterait pour
+// retomber sur l'accueil et devrait tout ressaisir : on mémorise donc ce qu'il
+// voulait voir et on le lui rend directement après connexion. Les réponses
+// elles-mêmes survivent (l'écran de connexion est un simple changement de vue,
+// pas un rechargement).
+let _afterLoginIntent=null;
+function setAfterLoginIntent(kind){ _afterLoginIntent=kind; }
+function consumeAfterLoginIntent(){
+  const k=_afterLoginIntent; _afterLoginIntent=null;
+  if(k==='sportBilan'){ enterRole('sportif'); setTimeout(()=>analyse(),60); return true; }
+  if(k==='sportWiz'){ enterRole('sportif'); sportTab='licencie'; setTimeout(()=>generateSportProtocol(),60); return true; }
+  if(k==='conseil'&&selectedAilments.size){ enterRole('sante'); setTimeout(()=>showCombinedConseil(),60); return true; }
+  return false;
+}
+
+async function canRevealSportProtocol(intent){
+  if(!currentUser){ setAfterLoginIntent(intent); showBilanGate(); return false; }
+  if(!(await checkClubLicencieServer())){ showBilanGate('notvalidated'); return false; }
+  return true;
 }
 function showBilanGate(reason){
   const ov=document.createElement('div');
@@ -8462,7 +8747,7 @@ function showBilanGate(reason){
       <div style="font-weight:800;font-size:20px;margin-bottom:6px">${isNotValidated?'Validation du club requise':'Compte licencié requis'}</div>
       <div style="font-size:14px;color:var(--ink-soft);line-height:1.5">${isNotValidated
         ?'Le bilan prévention et les protocoles personnalisés sont réservés aux membres validés par leur club partenaire Livraisanté.<br><br>Rapprochez-vous de votre club pour activer votre accès.'
-        :'Le bilan prévention & Protocoles est un service exclusif pour les sportifs licenciés de clubs partenaires Livraisanté.<br><br>Créez votre compte sportif licencié pour accéder à votre protocole personnalisé.'
+        :'Vos réponses sont conservées. Connectez-vous ou créez votre compte sportif licencié pour afficher votre protocole personnalisé — il vous sera présenté juste après.'
       }</div>
     </div>
     ${!isNotValidated?`<div style="display:flex;flex-direction:column;gap:10px">
@@ -8479,7 +8764,7 @@ function renderSportGrid(){
   const el=document.getElementById('sportGrid');
   if(!el)return;
   const cats=[...new Set(FRENCH_SPORTS.map(s=>s.cat))];
-  el.innerHTML=FRENCH_SPORTS.map(s=>`<button class="sport-btn ${currentSport?.id===s.id?'sel':''}" onclick="selectSport('${s.id}')">${s.n}<span class="fed">${s.fed}</span></button>`).join('');
+  el.innerHTML=FRENCH_SPORTS.map(s=>`<button class="sport-btn ${currentSport?.id===s.id?'sel':''}" data-sport="${s.id}" onclick="selectSport('${s.id}')">${s.n}</button>`).join('');
 }
 
 function renderKinePartners(){
@@ -9290,9 +9575,16 @@ loadAccounts();
   if(!window.LS_SB?.SB_READY) return;
   const session = await window.LS_SB.sbGetSession();
   if(!session) return;
+  // Une session persistée peut être restée en aal1 (ex. onglet rechargé pendant
+  // l'écran de saisie du code) : on réclame le second facteur avant de rendre
+  // quoi que ce soit, sinon le rechargement de page suffisait à contourner la 2FA.
+  if(!(await mfaEnforceOrAbort())) return;
   const profile = await window.LS_SB.sbGetProfile(session.user.id);
   if(!profile) return;
   currentUser = { id: session.user.id, email: session.user.email, ...profile };
+  // Rattrape une commande payée mais jamais enregistrée (voir Critique #1, audit 2026-08-05) —
+  // seuls les patients passent par confirm-order, inutile pour les autres rôles.
+  if(!profile.role || profile.role==='patient') resumePendingOrderConfirmation();
   if(profile.role==='pharmacien'){
     const ph = await window.LS_SB.sbGetPharmacy(session.user.id);
     if(ph){ localStorage.setItem('livraisante_pharmacy', JSON.stringify(window.LS_SB.pharmacyRowToJs(ph))); activeLabs = ph.active_labs ? new Set(ph.active_labs) : new Set(PARTNER_LABS); }
@@ -9384,6 +9676,13 @@ async function doLogin(){
       if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}
       return;
     }
+    // Élévation aal1 → aal2 : si le compte a une 2FA active, la session ouverte
+    // par le mot de passe n'est pas encore de confiance. On réclame le code TOTP
+    // avant toute chose ; en cas d'abandon la session est refermée.
+    if(!(await mfaStepUpIfNeeded())){
+      if(errEl){errEl.style.display='block';errEl.textContent='Connexion annulée : le code de double authentification est requis.';}
+      return;
+    }
     currentUser={id:user.id,email:user.email,...(profile||{})};
     if(!profile||!profile.role) currentUser.role='patient';
     if(currentUser.role==='pharmacien'){
@@ -9455,7 +9754,10 @@ async function doLogin(){
   afterLogin();
 }
 
-function afterLogin(){
+async function afterLogin(){
+  // Point de passage unique de tous les chemins de connexion — la 2FA est
+  // vérifiée ici, avant toute mutation d'interface.
+  if(!(await mfaEnforceOrAbort())) return;
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPassword').value='';
   const role=currentUser?.role;
@@ -9486,7 +9788,11 @@ function afterLogin(){
   else if(role==='livreur') enterRole('livreur'); // charge aussi les commandes livreur (cf. enterRole)
   else if(role==='professionnel_sante') enterRole('healthPro');
   else if(role==='club') enterRole('club');
-  else { if(currentUser.healthProfile) patientProfile=currentUser.healthProfile; enterRole('sante'); loadOrdersForCurrentRole(); }
+  else {
+    if(currentUser.healthProfile) patientProfile=currentUser.healthProfile;
+    if(!consumeAfterLoginIntent()) enterRole('sante');
+    loadOrdersForCurrentRole(); resumePendingOrderConfirmation();
+  }
 }
 
 // ── Correctif audit sécurité 2026-07-22 (Élevé #4) ────────────────────────────
@@ -9598,10 +9904,18 @@ async function doRegister(){
 
   // Extra validation for health pro
   if(role==='professionnel_sante'){
-    const rpps=(document.getElementById('regRPPS')?.value||'').trim();
+    const rpps=(document.getElementById('regRPPSPro')?.value||'').trim();
     const profession=document.getElementById('regProfession')?.value||'';
     if(!profession){if(errEl){errEl.style.display='block';errEl.textContent='Veuillez choisir votre profession.';}return;}
     if(!/^\d{11}$/.test(rpps)){if(errEl){errEl.style.display='block';errEl.textContent='Le numéro RPPS doit contenir exactement 11 chiffres.';}return;}
+    // Correctif audit 2026-08-05 (Important #6) — même exigence que pour le
+    // pharmacien : le bouton "Vérifier" doit avoir été cliqué (dataset posé
+    // par checkRPPSPro()) avant de pouvoir créer le compte.
+    const proStatus=document.getElementById('regRPPSPro')?.dataset.rppsStatus;
+    if(!proStatus){
+      if(errEl){errEl.style.display='block';errEl.textContent='⚠ Veuillez cliquer sur "Vérifier" pour valider votre numéro RPPS avant de créer votre compte.';}
+      return;
+    }
   }
   // Extra validation for pharmacien
   if(role==='pharmacien'){
@@ -9658,7 +9972,8 @@ async function doRegister(){
   }
   if(role==='professionnel_sante'){
     _roleData={
-      rpps:(document.getElementById('regRPPS')?.value||'').trim(),
+      rpps:(document.getElementById('regRPPSPro')?.value||'').trim(),
+      rppsStatus:document.getElementById('regRPPSPro')?.dataset.rppsStatus||'pending',
       profession:document.getElementById('regProfession')?.value||'',
       clubId:document.getElementById('regClubHP')?.value||null,
       partnerClubs:[...regProSelectedClubs],
@@ -9671,48 +9986,72 @@ async function doRegister(){
     };
   }
 
-  pendingReg={prenom,nom,email,pwd,role,tel,consentMarketing:_consentMarketing,roleData:_roleData,
-    emailCode:generateCode(6),phoneCode:generateCode(6)};
-  showVerificationPanel();
+  pendingReg={prenom,nom,email,pwd,role,tel,consentMarketing:_consentMarketing,roleData:_roleData};
+  await showVerificationPanel();
 }
 
-function generateCode(n){
-  const arr=new Uint32Array(1); crypto.getRandomValues(arr);
-  return String(arr[0]%Math.pow(10,n)).padStart(n,'0');
-}
 let pendingReg=null;
 
-function showVerificationPanel(){
+// ── Correctif audit 2026-08-05 (Critique #3) ────────────────────────────
+// L'ancienne « vérification en 2 étapes » générait deux codes côté client
+// (generateCode()) sans jamais les envoyer nulle part, puis comparait la
+// saisie de l'utilisateur à ces mêmes valeurs conservées en mémoire côté
+// client — trivialement lisible/contournable via les DevTools. Le code
+// email est désormais un vrai code envoyé par Resend (Edge Function
+// `signup-verification`) et vérifié côté serveur (hash SHA-256, expiration,
+// anti-brute-force). Aucun fournisseur SMS n'existe dans ce projet : l'étape
+// SMS est retirée plutôt que simulée.
+async function showVerificationPanel(){
   const formBox=document.getElementById('regFormBox');
   const panel=document.getElementById('verifyPanel');
   if(!formBox||!panel||!pendingReg) return;
+  if(!window.LS_SB?.SB_READY){
+    // Mode démo hors-ligne (Supabase non configuré) : pas d'envoi d'email possible,
+    // on finalise directement l'inscription comme avant ce correctif.
+    await completeRegistration();
+    return;
+  }
   formBox.style.display='none';
   panel.style.display='block';
-  const telDisplay=pendingReg.tel?pendingReg.tel.replace(/(\d{2})(?=\d)/g,'$1 '):'numéro renseigné';
   panel.innerHTML=`
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:40px;margin-bottom:8px">📬</div>
-      <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Vérification en 2 étapes</h2>
-      <p style="font-size:13px;color:#666;margin:0">Saisissez les codes reçus par email et par SMS<br>pour activer votre compte.</p>
+      <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Vérifiez votre email</h2>
+      <p style="font-size:13px;color:#666;margin:0">Envoi du code de vérification en cours…</p>
+    </div>
+  `;
+  const {sent,error}=await window.LS_SB.sbSendSignupVerification(pendingReg.email);
+  if(!sent){
+    panel.innerHTML=`
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:40px;margin-bottom:8px">⚠️</div>
+        <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Échec de l'envoi</h2>
+        <p style="font-size:13px;color:#666;margin:0">${esc(error||"Impossible d'envoyer le code de vérification.")}</p>
+      </div>
+      <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="showVerificationPanel()">Réessayer</button>
+      <button onclick="cancelVerification()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:#666;font-size:13px;cursor:pointer;text-decoration:underline">← Retour au formulaire</button>
+    `;
+    return;
+  }
+  panel.innerHTML=`
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:8px">📬</div>
+      <h2 style="font-size:20px;font-weight:800;margin:0 0 6px">Vérifiez votre email</h2>
+      <p style="font-size:13px;color:#666;margin:0">Saisissez le code reçu par email<br>pour activer votre compte.</p>
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 12px;margin-bottom:18px;font-size:12px;color:#166534">
-      📬 <b>Codes envoyés</b> — Vérifiez votre boîte email et vos SMS.
+      📬 <b>Code envoyé</b> — Vérifiez votre boîte email (valide 10 minutes).
     </div>
-    <div style="margin-bottom:14px">
+    <div style="margin-bottom:20px">
       <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code email <span style="color:#666;font-weight:400">(${esc(pendingReg.email)})</span></label>
       <input id="verifyEmailCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
         style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
         oninput="this.value=this.value.replace(/\D/g,'')">
     </div>
-    <div style="margin-bottom:20px">
-      <label style="font-size:13px;font-weight:700;margin-bottom:6px;display:block">Code SMS <span style="color:#666;font-weight:400">(${esc(telDisplay)})</span></label>
-      <input id="verifyPhoneCode" type="text" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
-        style="width:100%;padding:13px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;font-weight:700;text-align:center;letter-spacing:8px;box-sizing:border-box"
-        oninput="this.value=this.value.replace(/\D/g,'')">
-    </div>
     <div id="verifyErr" style="color:var(--err);font-size:13px;margin-bottom:10px;display:none"></div>
-    <button class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="confirmVerification()">Confirmer et créer mon compte →</button>
-    <button onclick="cancelVerification()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:#666;font-size:13px;cursor:pointer;text-decoration:underline">← Retour au formulaire</button>
+    <button id="verifyBtn" class="btn primary" style="width:100%;font-size:16px;padding:13px" onclick="confirmVerification()">Confirmer et créer mon compte →</button>
+    <button onclick="showVerificationPanel()" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;color:#666;font-size:13px;cursor:pointer;text-decoration:underline">Renvoyer le code</button>
+    <button onclick="cancelVerification()" style="width:100%;margin-top:2px;padding:10px;background:none;border:none;color:#666;font-size:13px;cursor:pointer;text-decoration:underline">← Retour au formulaire</button>
   `;
 }
 
@@ -9727,14 +10066,17 @@ function cancelVerification(){
 async function confirmVerification(){
   if(!pendingReg) return;
   const emailIn=(document.getElementById('verifyEmailCode')?.value||'').trim();
-  const phoneIn=(document.getElementById('verifyPhoneCode')?.value||'').trim();
   const errEl=document.getElementById('verifyErr');
-  if(emailIn!==pendingReg.emailCode){
-    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Code email incorrect. Vérifiez et réessayez.';}
+  const btn=document.getElementById('verifyBtn');
+  if(!/^[0-9]{6}$/.test(emailIn)){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Veuillez saisir les 6 chiffres du code.';}
     return;
   }
-  if(pendingReg.tel&&phoneIn!==pendingReg.phoneCode){
-    if(errEl){errEl.style.display='block';errEl.textContent='⚠ Code SMS incorrect. Vérifiez et réessayez.';}
+  if(btn){btn.disabled=true;btn.textContent='Vérification…';}
+  const {ok,error}=await window.LS_SB.sbVerifySignupCode(pendingReg.email,emailIn);
+  if(btn){btn.disabled=false;btn.textContent='Confirmer et créer mon compte →';}
+  if(!ok){
+    if(errEl){errEl.style.display='block';errEl.textContent='⚠ '+(error||'Code incorrect.');}
     return;
   }
   await completeRegistration();
@@ -9761,18 +10103,32 @@ async function completeRegistration(){
         console.error('Échec enregistrement profil professionnel de santé :', proErr);
         showToast('⚠️ Compte créé, mais votre profil professionnel n\'a pas pu être enregistré. Complétez-le depuis votre espace.','#f59e0b');
       }
+      // Correctif audit 2026-08-05 (Important #6) — le statut rpps_verified/
+      // rpps_status n'est plus jamais écrit par le client : on redemande à
+      // l'Edge Function verify-rpps de faire (et d'enregistrer, via
+      // service_role) la vérification faisant autorité, maintenant que la
+      // session est active.
+      if(roleData.rpps){
+        const rppsRes=await window.LS_SB.sbVerifyRpps(roleData.rpps,'professionnel_sante');
+        if(rppsRes?.error){
+          console.error('Échec vérification RPPS professionnel de santé :', rppsRes.error);
+          showToast('⚠️ Compte créé, mais votre numéro RPPS n\'a pas pu être vérifié. Il sera examiné manuellement.','#f59e0b');
+        }
+      }
     }
     if(role==='pharmacien'){
-      const {rpps,rppsStatus}=roleData;
-      if(rpps&&window.LS_SB?.getSB){
-        const sb=window.LS_SB.getSB();
-        if(sb){
-          await _regDelay(1500);
-          const {error:rppsErr}=await sb.from('profiles').update({rpps,rpps_verified:rppsStatus==='verified',rpps_status:rppsStatus}).eq('id',user.id);
-          if(rppsErr){
-            console.error('Échec enregistrement RPPS pharmacien :', rppsErr.message||rppsErr);
-            showToast('⚠️ Compte créé, mais votre numéro RPPS n\'a pas pu être enregistré. Vous pourrez le renseigner depuis votre espace.','#f59e0b');
-          }
+      const {rpps}=roleData;
+      if(rpps){
+        await _regDelay(1500);
+        // Correctif audit 2026-08-05 (Important #6) — auparavant écrit
+        // directement par le client (sb.from('profiles').update({rpps_verified...}))
+        // en se fiant à un statut déjà obtenu côté navigateur, trivialement
+        // rejouable avec rpps_verified:true. Désormais recalculé et écrit par
+        // l'Edge Function verify-rpps via service_role.
+        const rppsRes=await window.LS_SB.sbVerifyRpps(rpps,'pharmacien');
+        if(rppsRes?.error){
+          console.error('Échec vérification RPPS pharmacien :', rppsRes.error);
+          showToast('⚠️ Compte créé, mais votre numéro RPPS n\'a pas pu être vérifié. Vous pourrez le renseigner depuis votre espace.','#f59e0b');
         }
       }
     }
@@ -9965,30 +10321,6 @@ document.addEventListener('click',e=>{
   });
 });
 
-async function checkRPPSPro(){
-  const val=(document.getElementById('regRPPSPro')?.value||'').trim();
-  const msgEl=document.getElementById('rppsProMsg');
-  const resEl=document.getElementById('rppsProResult');
-  if(!val||val.length!==11){if(msgEl)msgEl.innerHTML='<span style="color:var(--err)">✗ Le numéro RPPS doit contenir exactement 11 chiffres.</span>';return;}
-  if(msgEl)msgEl.innerHTML='<span style="color:var(--ink-soft)">Vérification en cours…</span>';
-  try{
-    const res=await fetch(`https://annuaire.sante.fr/api/ps?rpps=${val}`);
-    if(res.ok){
-      const data=await res.json();
-      const nom=data?.nomUsage||data?.nomFamille||'—';
-      const prenom=data?.prenom||'—';
-      const prof=data?.profession||'Professionnel de santé';
-      if(msgEl)msgEl.innerHTML='<span style="color:var(--ok)">✓ RPPS valide</span>';
-      if(resEl){resEl.style.display='block';resEl.innerHTML=`<div style="font-weight:700">${esc(prenom)} ${esc(nom)}</div><div style="color:var(--ink-soft);font-size:12px">${esc(prof)}</div>`;}
-    } else {
-      if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ RPPS non trouvé — vérifiez le numéro (la vérification en ligne sera effectuée manuellement)</span>';
-      if(resEl)resEl.style.display='none';
-    }
-  }catch(e){
-    if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ Vérification hors-ligne — le RPPS sera validé manuellement par notre équipe</span>';
-  }
-}
-
 function initRegisterForm(){
   // Populate meds chips
   const medDiv=document.getElementById('regMeds');
@@ -10021,41 +10353,30 @@ function initRegisterForm(){
     });
   });
 }
-/** Vérifie un numéro RPPS auprès de l'Annuaire Santé national (FHIR API) */
-async function verifyRPPS(rpps){
+// ── Correctif audit 2026-08-05 (Important #6) ────────────────────────────────
+// L'ancien verifyRPPS() appelait l'Annuaire Santé directement depuis le
+// navigateur (échec quasi systématique en pratique — CORS/clé d'accès
+// manquante) et, en cas d'échec, "auto-approuvait" tout numéro au format
+// valide (`autoApproved:true`) en posant `dataset.rppsStatus='verified'` — un
+// attribut DOM trivialement modifiable via les DevTools, dont la valeur était
+// ensuite écrite telle quelle en base par le client. La vérification se fait
+// désormais côté serveur (Edge Function `verify-rpps`, pas de CORS), et
+// l'écriture de rpps_verified/rpps_status est refaite côté serveur à la
+// création du compte (cf. completeRegistration()) — jamais confiée au client.
+// En cas de RPPS non trouvé, on n'auto-approuve plus : le compte peut tout de
+// même être créé (pas de blocage sur une panne de l'API gouvernementale) mais
+// reste honnêtement marqué "pending" (examen manuel), jamais "verified".
+async function verifyRPPS(rpps,role){
   if(!/^\d{11}$/.test(rpps)) return {ok:false,msg:'Format invalide — 11 chiffres requis.'};
-  // Pharmaciens : RPPS commence par 10
-  if(!rpps.startsWith('10')) return {ok:false,msg:'Le RPPS d\'un pharmacien titulaire commence par 10.'};
-  try{
-    const url=`https://gateway.api.esante.gouv.fr/fhir/v1/Practitioner?identifier=http%3A%2F%2Fesante.gouv.fr%2Fnos%2Frpps%7C${rpps}&_format=json`;
-    const res=await fetch(url,{headers:{'Accept':'application/fhir+json'},signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined});
-    if(!res.ok) throw new Error('api_unavailable');
-    const data=await res.json();
-    if(!data.total||data.total===0) return {ok:false,msg:'Numéro RPPS non trouvé dans l\'Annuaire Santé national.'};
-    const entry=data.entry?.[0]?.resource;
-    const nom=(entry?.name?.[0]?.family||'').toUpperCase();
-    const prenom=entry?.name?.[0]?.given?.[0]||'';
-    const specialite=entry?.qualification?.[0]?.code?.coding?.[0]?.display||'Pharmacien';
-    return {ok:true,nom,prenom,specialite,msg:`✓ Vérifié : ${prenom} ${nom} — ${specialite}`};
-  }catch(e){
-    // CORS ou réseau — essai annuaire public
-    try{
-      const url2=`https://annuaire.sante.fr/api/ps?rpps=${rpps}`;
-      const res2=await fetch(url2,{signal:AbortSignal.timeout?AbortSignal.timeout(5000):undefined});
-      if(res2.ok){
-        const data2=await res2.json();
-        const entry2=data2?.[0]||data2?.results?.[0]||null;
-        if(entry2){
-          const nom=(entry2.nom||entry2.lastName||'').toUpperCase();
-          const prenom=entry2.prenom||entry2.firstName||'';
-          const specialite=entry2.profession||entry2.specialite||'Pharmacien';
-          return {ok:true,pending:false,verified:true,nom,prenom,specialite,msg:`✓ Vérifié : ${prenom} ${nom} — ${specialite}`};
-        }
-      }
-    }catch(e2){}
-    // Format seul — auto-activation immédiate (pharmaciens certifient leur RPPS)
-    return {ok:true,pending:false,verified:false,autoApproved:true,nom:'',prenom:'',specialite:'',msg:'✓ RPPS validé — format conforme à l\'Annuaire Santé (11 chiffres, préfixe pharmacien). Compte activé immédiatement.'};
+  if(role==='pharmacien'&&!rpps.startsWith('10')) return {ok:false,msg:'Le RPPS d\'un pharmacien titulaire commence par 10.'};
+  const res=await (window.LS_SB?.sbVerifyRpps ? window.LS_SB.sbVerifyRpps(rpps,role) : Promise.resolve({verified:false,error:'supabase_not_configured'}));
+  if(res.error&&!window.LS_SB?.SB_READY){
+    // Mode démo hors-ligne (pas de Supabase) : impossible de vérifier réellement.
+    return {ok:true,verified:false,nom:'',prenom:'',specialite:'',msg:'⚠ Vérification indisponible en mode démo — votre compte sera examiné manuellement.'};
   }
+  if(res.error) return {ok:false,msg:res.error};
+  if(res.verified) return {ok:true,verified:true,nom:res.nom||'',prenom:res.prenom||'',specialite:res.profession||(role==='pharmacien'?'Pharmacien':'Professionnel de santé'),msg:res.msg};
+  return {ok:true,verified:false,nom:'',prenom:'',specialite:'',msg:res.msg||'RPPS non trouvé dans l\'Annuaire Santé national — votre compte sera examiné manuellement par notre équipe.'};
 }
 async function checkRPPSPharma(){
   const input=document.getElementById('regRPPSPharma');
@@ -10065,24 +10386,46 @@ async function checkRPPSPharma(){
   if(!msgEl||!resEl) return;
   msgEl.textContent='⏳ Vérification en cours…';msgEl.style.color='#888';
   resEl.style.display='none';
-  const result=await verifyRPPS(rpps);
+  const result=await verifyRPPS(rpps,'pharmacien');
   if(!result.ok){
     msgEl.textContent='✗ '+result.msg; msgEl.style.color='var(--err)';
-  } else if(result.autoApproved){
-    msgEl.textContent=result.msg; msgEl.style.color='var(--ok)';
-    resEl.style.display='block';
-    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:700;color:var(--ok)">Compte pharmacien activé</div><div style="font-size:12px;color:#666;margin-top:2px">✓ Compte pharmacien activé. Vous pouvez continuer l'inscription.</div></div></div>`;
-    if(input) input.dataset.rppsStatus='verified';
-  } else {
+    return;
+  }
+  if(input) input.dataset.rppsStatus=result.verified?'verified':'pending';
+  if(result.verified){
     msgEl.textContent=result.msg; msgEl.style.color='var(--ok)';
     resEl.style.display='block';
     resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-weight:700;color:var(--ok)">${esc(result.prenom)} ${esc(result.nom)}</div><div style="font-size:12px;color:#666;margin-top:2px">${esc(result.specialite)} · RPPS ${esc(rpps)} vérifié dans l'Annuaire Santé national</div></div></div>`;
-    if(input) input.dataset.rppsStatus='verified';
     // Pré-remplir le prénom/nom si champs vides
     const prenomEl=document.getElementById('regPrenom');
     const nomEl=document.getElementById('regNom');
     if(prenomEl&&!prenomEl.value&&result.prenom) prenomEl.value=result.prenom;
     if(nomEl&&!nomEl.value&&result.nom) nomEl.value=result.nom;
+  } else {
+    msgEl.textContent='⚠ '+result.msg; msgEl.style.color='var(--warn)';
+    resEl.style.display='block';
+    resEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">⏳</span><div><div style="font-weight:700;color:var(--warn)">Compte en attente de validation manuelle</div><div style="font-size:12px;color:#666;margin-top:2px">Vous pouvez continuer l'inscription ; notre équipe vérifiera votre RPPS avant activation complète.</div></div></div>`;
+  }
+}
+async function checkRPPSPro(){
+  const input=document.getElementById('regRPPSPro');
+  const val=(input?.value||'').trim();
+  const msgEl=document.getElementById('rppsProMsg');
+  const resEl=document.getElementById('rppsProResult');
+  if(!val||val.length!==11){if(msgEl)msgEl.innerHTML='<span style="color:var(--err)">✗ Le numéro RPPS doit contenir exactement 11 chiffres.</span>';return;}
+  if(msgEl)msgEl.innerHTML='<span style="color:var(--ink-soft)">Vérification en cours…</span>';
+  const result=await verifyRPPS(val,'professionnel_sante');
+  if(!result.ok){
+    if(msgEl)msgEl.innerHTML='<span style="color:var(--err)">✗ '+esc(result.msg)+'</span>';
+    return;
+  }
+  if(input) input.dataset.rppsStatus=result.verified?'verified':'pending';
+  if(result.verified){
+    if(msgEl)msgEl.innerHTML='<span style="color:var(--ok)">✓ RPPS vérifié</span>';
+    if(resEl){resEl.style.display='block';resEl.innerHTML=`<div style="font-weight:700">${esc(result.prenom)} ${esc(result.nom)}</div><div style="color:var(--ink-soft);font-size:12px">${esc(result.specialite)}</div>`;}
+  } else {
+    if(msgEl)msgEl.innerHTML='<span style="color:var(--warn)">⚠ '+esc(result.msg)+'</span>';
+    if(resEl)resEl.style.display='none';
   }
 }
 
@@ -10336,21 +10679,24 @@ function renderProfile(){
   }
 
   // Livreur profile
+  // NB (correctif audit 2026-08-05, Important #7) : `u.driverInfo` n'était
+  // jamais assigné nulle part dans tout le code — ce panneau affichait donc
+  // systématiquement 0 € et aucun filleul, quoi qu'il arrive réellement. Les
+  // vraies données (`drivers` + RPC my_driver_referral_stats) sont chargées
+  // de façon asynchrone juste après l'injection du HTML ci-dessous.
   if(u.role==='livreur'){
-    const d=u.driverInfo||{};
-    const total=(d.referrals||[]).reduce((s,r)=>s+(r.earned||50),0);
     html+=`
     <div class="profile-section">
       <h3>🛵 Mon profil livreur</h3>
       <div class="pfield"><span class="pk">Prénom</span><span class="pv">${esc(u.prenom)}</span></div>
-      <div class="pfield"><span class="pk">Véhicule</span><span class="pv">${esc(d.vehicle||'—')}</span></div>
-      <div class="pfield"><span class="pk">SIRET</span><span class="pv">${esc(d.siret||'—')}</span></div>
-      <div class="pfield"><span class="pk">Code parrain</span><span class="pv highlight">${esc(d.refCode||'—')}</span></div>
+      <div class="pfield"><span class="pk">Véhicule</span><span class="pv" id="profDrVehicle">—</span></div>
+      <div class="pfield"><span class="pk">SIRET</span><span class="pv" id="profDrSiret">—</span></div>
+      <div class="pfield"><span class="pk">Code parrain</span><span class="pv highlight" id="profDrRefCode">—</span></div>
     </div>
     <div class="profile-section">
       <h3>🎁 Parrainage</h3>
-      <div class="pfield"><span class="pk">Gains cumulés</span><span class="pv" style="color:var(--ok);font-family:'Bricolage Grotesque';font-size:20px">€${total}</span></div>
-      ${(d.referrals||[]).map(r=>`<div class="pfield"><span class="pk">${esc(r.date)}</span><span class="pv">${esc(r.name)} · <span style="color:var(--ok)">+€${r.earned||50}</span></span></div>`).join('')}
+      <div id="profDrReferralStats" style="font-size:13px;color:var(--ink-soft)">Chargement…</div>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:8px">Le bonus de parrainage est versé manuellement par l'équipe après vérification de l'activation de chaque filleul.</div>
     </div>
     <div style="margin-top:10px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('livreur')">Accéder à mon espace →</button></div>`;
   }
@@ -10468,6 +10814,16 @@ function renderProfile(){
     <div style="margin-top:12px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('club')">Accéder à mon espace →</button></div>
   </div>`;
   }
+  // Messages réels de l'équipe Livraisanté (correctif audit 2026-08-05,
+  // Important #7 — remplace l'ancienne messagerie admin 100% localStorage,
+  // jamais livrée à personne). Conteneur masqué par défaut, révélé
+  // seulement s'il y a au moins un message réellement reçu.
+  if(u.role!=='admin') html+=`<div class="profile-section" id="profileAdminMsgsSection" style="display:none">
+    <h3>📣 Messages de l'équipe</h3>
+    <div id="profileAdminMsgsList"></div>
+  </div>`;
+  // Double authentification — patients uniquement (données de santé)
+  if(u.role==='patient'||u.role==='patient_licencie') html+=renderMfaSection();
   html+=`<button class="btn ghost" style="width:100%;margin-top:14px;font-size:14px;border-color:var(--err);color:var(--err)" onclick="doLogout()">Se déconnecter</button>`;
   // Section abonnement + parrainage patient
   if(u.role==='patient'||u.role==='patient_licencie') html+=renderPatientReferral();
@@ -10476,7 +10832,233 @@ function renderProfile(){
   document.querySelectorAll('[data-group="editPreg"] .chip').forEach(c=>c.addEventListener('click',e=>{
     document.querySelectorAll('[data-group="editPreg"] .chip').forEach(x=>x.classList.remove('sel')); e.target.classList.add('sel');
   }));
+  // ── Enrichissement asynchrone (données réelles Supabase) ────────────────
+  if(u.role==='livreur'&&window.LS_SB?.SB_READY&&u.id){
+    window.LS_SB.sbGetDriver(u.id).then(d=>{
+      if(!d) return;
+      const set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v||'—';};
+      set('profDrVehicle', d.vehicle);
+      set('profDrSiret', d.siret);
+      set('profDrRefCode', d.ref_code);
+    }).catch(()=>{});
+    window.LS_SB.sbGetMyDriverReferralStats().then(s=>{
+      const el=document.getElementById('profDrReferralStats'); if(!el) return;
+      el.innerHTML=s.totalReferred>0
+        ?`<b>${s.totalActive}</b> filleul${s.totalActive>1?'s':''} activé${s.totalActive>1?'s':''} sur <b>${s.totalReferred}</b> inscrit${s.totalReferred>1?'s':''} via ton code.`
+        :`Aucun filleul inscrit avec ton code pour le moment.`;
+    }).catch(()=>{});
+  }
+  if(u.role==='patient'||u.role==='patient_licencie') patchMfaSection();
+  if(u.role!=='admin'&&window.LS_SB?.SB_READY){
+    window.LS_SB.sbGetMyAdminMessages().then(msgs=>{
+      if(!msgs.length) return;
+      const sec=document.getElementById('profileAdminMsgsSection');
+      const list=document.getElementById('profileAdminMsgsList');
+      if(!sec||!list) return;
+      sec.style.display='';
+      list.innerHTML=msgs.map(m=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px">${esc(new Date(m.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}))}</div><div style="font-size:13.5px">${esc(m.body)}</div></div>`).join('');
+    }).catch(()=>{});
+  }
 }
+/* ═══ Double authentification (2FA TOTP) — 2026-08-12 ════════════════════
+   L'identité est fournie par Supabase Auth (le backend Clever Cloud ne fait
+   que vérifier les JWT). La 2FA s'appuie donc sur le MFA natif de Supabase.
+   Activation optionnelle depuis le profil ; une fois active, le code est
+   réclamé à chaque connexion et le backend exige le claim `aal2` sur les
+   routes du dossier de santé.
+   Prérequis : MFA/TOTP activé dans le Dashboard Supabase — voir docs/2FA-SETUP.md
+═══════════════════════════════════════════════════════════════════════════ */
+let _mfaEnrollFactorId=null;
+
+function renderMfaSection(){
+  return `<div class="profile-section" id="mfaSection">
+    <h3>🔐 Double authentification</h3>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px">
+      Ajoutez un code à usage unique généré par une application (Google Authenticator, Authy, votre gestionnaire de mots de passe…) en plus de votre mot de passe. Vos données de santé ne sont accessibles qu'avec ce second facteur une fois activé.
+    </div>
+    <div id="mfaState" style="font-size:13px;color:var(--ink-soft)">Chargement…</div>
+  </div>`;
+}
+
+function patchMfaSection(){
+  const el=document.getElementById('mfaState'); if(!el) return;
+  if(!window.LS_SB?.SB_READY){
+    el.innerHTML='<span style="color:var(--ink-soft)">Indisponible en mode hors-ligne.</span>';
+    return;
+  }
+  window.LS_SB.sbMfaListFactors().then(({totp,verified,error})=>{
+    const el2=document.getElementById('mfaState'); if(!el2) return;
+    if(error){ el2.innerHTML='<span style="color:var(--warn)">Impossible de vérifier l\'état de la double authentification.</span>'; return; }
+    if(verified){
+      const f=totp.find(x=>x.status==='verified');
+      el2.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px">
+        <span style="font-size:20px">✅</span>
+        <div><div style="font-weight:800;font-size:13.5px;color:#16a34a">Activée</div>
+        <div style="font-size:11.5px;color:var(--ink-soft)">Un code vous sera demandé à chaque connexion.</div></div>
+      </div>
+      <button class="btn ghost" style="margin-top:10px;font-size:13px;padding:8px 14px;border-color:var(--err);color:var(--err)" onclick="mfaDisable('${esc(f.id)}')">Désactiver</button>`;
+    } else {
+      el2.innerHTML=`<div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px">Non activée.</div>
+      <button class="btn primary" style="font-size:13.5px;padding:9px 16px" onclick="mfaStartEnroll()">Activer la double authentification</button>`;
+    }
+  }).catch(()=>{
+    const el2=document.getElementById('mfaState');
+    if(el2) el2.innerHTML='<span style="color:var(--warn)">Impossible de vérifier l\'état de la double authentification.</span>';
+  });
+}
+
+async function mfaStartEnroll(){
+  const el=document.getElementById('mfaState'); if(!el) return;
+  el.innerHTML='<span style="color:var(--ink-soft)">Génération du QR code…</span>';
+  const {factorId,qrCode,secret,error}=await window.LS_SB.sbMfaEnroll();
+  if(error){
+    el.innerHTML=`<span style="color:var(--err)">${esc(mfaErrorLabel(error))}</span>
+      <div style="margin-top:8px"><button class="btn ghost" style="font-size:13px;padding:8px 14px" onclick="patchMfaSection()">Réessayer</button></div>`;
+    return;
+  }
+  _mfaEnrollFactorId=factorId;
+  el.innerHTML=`<div style="font-size:13px;margin-bottom:8px"><b>1.</b> Scannez ce QR code avec votre application d'authentification :</div>
+    <div style="text-align:center;padding:12px;background:white;border:1.5px solid var(--line);border-radius:12px">
+      <img id="mfaQr" alt="QR code de configuration" style="width:180px;height:180px">
+    </div>
+    <div style="font-size:11.5px;color:var(--ink-soft);margin-top:8px">Impossible de scanner ? Saisissez cette clé manuellement :<br>
+      <code id="mfaSecret" style="font-family:monospace;font-size:12px;word-break:break-all">${esc(secret||'')}</code></div>
+    <div style="font-size:13px;margin:12px 0 6px"><b>2.</b> Saisissez le code à 6 chiffres affiché :</div>
+    <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
+      style="width:140px;padding:10px 12px;border:2px solid var(--line-strong);border-radius:8px;font-family:monospace;font-size:18px;letter-spacing:3px;text-align:center"
+      onkeypress="if(event.key==='Enter')mfaConfirmEnroll()">
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn primary" style="font-size:13.5px;padding:9px 16px" onclick="mfaConfirmEnroll()">Valider</button>
+      <button class="btn ghost" style="font-size:13.5px;padding:9px 16px" onclick="mfaCancelEnroll()">Annuler</button>
+    </div>
+    <div id="mfaEnrollMsg" style="font-size:12.5px;margin-top:8px"></div>`;
+  // Le QR est une data-URI SVG contenant des guillemets : on l'assigne en JS
+  // plutôt que de l'interpoler dans le HTML.
+  const img=document.getElementById('mfaQr'); if(img&&qrCode) img.src=qrCode;
+  document.getElementById('mfaCode')?.focus();
+}
+
+async function mfaConfirmEnroll(){
+  const code=(document.getElementById('mfaCode')?.value||'').trim();
+  const msg=document.getElementById('mfaEnrollMsg');
+  if(!_mfaEnrollFactorId) return;
+  if(msg){msg.style.color='var(--ink-soft)';msg.textContent='Vérification…';}
+  const {error}=await window.LS_SB.sbMfaVerify(_mfaEnrollFactorId,code);
+  if(error){
+    if(msg){msg.style.color='var(--err)';msg.textContent=mfaErrorLabel(error);}
+    return;
+  }
+  _mfaEnrollFactorId=null;
+  showToast('Double authentification activée ✅','var(--ok)');
+  patchMfaSection();
+}
+
+async function mfaCancelEnroll(){
+  // Le facteur créé reste en statut `unverified` s'il n'est pas supprimé : il
+  // encombrerait la liste et bloquerait un futur enrôlement.
+  if(_mfaEnrollFactorId){
+    await window.LS_SB.sbMfaUnenroll(_mfaEnrollFactorId).catch(()=>{});
+    _mfaEnrollFactorId=null;
+  }
+  patchMfaSection();
+}
+
+async function mfaDisable(factorId){
+  if(!confirm('Désactiver la double authentification ? Votre compte et vos données de santé seront protégés par le mot de passe seul.')) return;
+  // Retirer la 2FA est une opération aussi sensible que l'accès aux données
+  // qu'elle protège : on exige un code frais, sinon une session volée suffirait
+  // à la désactiver sans jamais posséder le téléphone.
+  if(!(await mfaPromptStepUp(factorId))) return;
+  const {error}=await window.LS_SB.sbMfaUnenroll(factorId);
+  if(error){ showToast(mfaErrorLabel(error),'var(--err)'); return; }
+  showToast('Double authentification désactivée','var(--warn)');
+  patchMfaSection();
+}
+
+/** Messages Supabase (anglais, techniques) → libellés patients. */
+function mfaErrorLabel(error){
+  const e=String(error||'').toLowerCase();
+  if(e==='code_invalide'||e.includes('invalid totp')||e.includes('invalid code')) return 'Code incorrect. Vérifiez l\'heure de votre téléphone et réessayez.';
+  if(e.includes('mfa')&&e.includes('disabled')) return 'La double authentification n\'est pas encore activée sur ce service.';
+  if(e.includes('rate')||e.includes('too many')) return 'Trop de tentatives. Patientez une minute avant de réessayer.';
+  return 'Une erreur est survenue. Réessayez dans un instant.';
+}
+
+/** Réclame le code TOTP juste après la saisie du mot de passe si le compte a
+ *  une 2FA active. Retourne true si la session est utilisable (aal2 atteint ou
+ *  pas de 2FA), false si l'utilisateur abandonne — auquel cas il est déconnecté. */
+async function mfaStepUpIfNeeded(){
+  if(!window.LS_SB?.SB_READY) return true;
+  // getAuthenticatorAssuranceLevel lit les claims de la session en local (pas
+  // d'appel réseau) : une erreur ici signifie qu'il n'y a pas de session
+  // exploitable, pas qu'on doit laisser passer sans vérifier.
+  let aal;
+  try{ aal=await window.LS_SB.sbMfaGetAal(); }catch(e){ return true; }
+  if(!aal?.needsStepUp) return true;
+  // À partir d'ici on SAIT que le compte a un second facteur (aal2 atteignable)
+  // et que la session ne l'a pas encore présenté : plus aucune branche ne doit
+  // laisser passer. Si la liste des facteurs est indisponible, on referme.
+  const {totp,error}=await window.LS_SB.sbMfaListFactors();
+  const factor=(totp||[]).find(f=>f.status==='verified');
+  if(error||!factor){
+    await window.LS_SB.sbSignOut().catch(()=>{});
+    return false;
+  }
+  const ok=await mfaPromptStepUp(factor.id);
+  if(!ok) await window.LS_SB.sbSignOut().catch(()=>{});
+  return ok;
+}
+
+/** Garde unique posée sur TOUS les chemins qui ouvrent une session (mot de
+ *  passe, OAuth Google, réinitialisation de mot de passe, restauration au
+ *  chargement de page). Sans elle, il suffisait de recharger la page pendant
+ *  l'écran de saisie du code pour entrer avec une session aal1 : la session
+ *  est persistée par Supabase dès la validation du mot de passe. */
+async function mfaEnforceOrAbort(){
+  if(await mfaStepUpIfNeeded()) return true;
+  currentUser=null;
+  try{ localStorage.removeItem('livraisante_session'); }catch(e){}
+  showToast('Connexion annulée : le code de double authentification est requis.','var(--err)');
+  setTimeout(()=>location.reload(),1200);
+  return false;
+}
+
+/** Overlay bloquant de saisie du code. Résout true/false. */
+function mfaPromptStepUp(factorId){
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML=`<div style="background:white;border-radius:16px;padding:24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;margin-bottom:6px">🔐 Code de vérification</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px">Saisissez le code à 6 chiffres affiché par votre application d'authentification.</div>
+      <input id="mfaStepCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
+        style="width:100%;box-sizing:border-box;padding:12px;border:2px solid var(--line-strong);border-radius:10px;font-family:monospace;font-size:22px;letter-spacing:5px;text-align:center">
+      <div id="mfaStepMsg" style="font-size:12.5px;color:var(--err);margin-top:8px;min-height:16px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn primary" id="mfaStepOk" style="flex:1;font-size:14px;padding:11px">Valider</button>
+        <button class="btn ghost" id="mfaStepCancel" style="font-size:14px;padding:11px">Annuler</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const input=ov.querySelector('#mfaStepCode');
+    const msg=ov.querySelector('#mfaStepMsg');
+    const btn=ov.querySelector('#mfaStepOk');
+    const done=v=>{ ov.remove(); resolve(v); };
+    const submit=async()=>{
+      const code=(input.value||'').trim();
+      btn.disabled=true; msg.style.color='var(--ink-soft)'; msg.textContent='Vérification…';
+      const {error}=await window.LS_SB.sbMfaVerify(factorId,code);
+      btn.disabled=false;
+      if(error){ msg.style.color='var(--err)'; msg.textContent=mfaErrorLabel(error); input.select(); return; }
+      done(true);
+    };
+    btn.addEventListener('click',submit);
+    input.addEventListener('keypress',e=>{ if(e.key==='Enter') submit(); });
+    ov.querySelector('#mfaStepCancel').addEventListener('click',()=>done(false));
+    input.focus();
+  });
+}
+
 function toggleEditHealth(){const p=document.getElementById('editHealthPanel'); if(p) p.classList.toggle('on');}
 function toggleEditPhysique(){const p=document.getElementById('editPhysiquePanel'); if(p) p.style.display=p.style.display==='none'?'block':'none';}
 function updateProfileBMI(){
@@ -11118,7 +11700,6 @@ window.addEventListener('DOMContentLoaded',()=>{
 /* ===================================================================
    SUPER ADMIN DASHBOARD
 =================================================================== */
-const LS_ADMIN_MESSAGES='livraisante_admin_messages';
 
 /* ===== SUPER ADMIN DASHBOARD ===== */
 async function loadAdminStats(){
@@ -11395,13 +11976,21 @@ async function toggleDriverActive(id,active){
   loadAdminDrivers();
 }
 
-function renderAdminMsgHistory(){
+const ADMIN_MSG_DEST_LABEL={all_pharmacies:'Toutes les pharmacies',all_patients:'Tous les patients',all_clubs:'Tous les clubs'};
+// Correctif audit 2026-08-05 (Important #7) : cet historique lisait
+// uniquement le localStorage du navigateur de l'admin — un message envoyé
+// n'était jamais livré à personne, et l'historique lui-même disparaissait
+// en changeant de navigateur/appareil. Persisté réellement dans
+// `admin_messages` désormais (voir sendAdminMessage / sbSendAdminMessage).
+async function renderAdminMsgHistory(){
   const el=document.getElementById('adminMsgHistory');
   if(!el) return;
-  let msgs=[]; try{msgs=JSON.parse(localStorage.getItem(LS_ADMIN_MESSAGES)||'[]');}catch(e){}
+  if(!window.LS_SB?.SB_READY){el.innerHTML='<div style="color:var(--ink-soft);font-size:13px">Mode démo : Supabase requis pour l\'historique des messages.</div>';return;}
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:13px">Chargement…</div>';
+  const msgs=await window.LS_SB.sbGetSentAdminMessages();
   if(!msgs.length){el.innerHTML='';return;}
   el.innerHTML=`<div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--ink-soft)">Messages envoyés (${msgs.length})</div>`+
-    msgs.slice().reverse().map(m=>`<div style="padding:10px 12px;background:var(--paper-2);border-radius:10px;margin-bottom:8px;font-size:13px"><div style="font-weight:700">→ ${esc(m.dest)}</div><div style="margin:4px 0">${esc(m.text)}</div><div style="font-size:11px;color:var(--ink-soft)">${esc(m.date)}</div></div>`).join('');
+    msgs.map(m=>`<div style="padding:10px 12px;background:var(--paper-2);border-radius:10px;margin-bottom:8px;font-size:13px"><div style="font-weight:700">→ ${esc(ADMIN_MSG_DEST_LABEL[m.target_scope]||m.target_scope)}</div><div style="margin:4px 0">${esc(m.body)}</div><div style="font-size:11px;color:var(--ink-soft)">${esc(new Date(m.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}))}</div></div>`).join('');
 }
 
 /* ===== FACTURES MENSUELLES ===== */
@@ -11597,44 +12186,40 @@ async function renderDriverInvoicesSection(containerId){
 /* ===== CAGNOTTE CLUBS — B2B2C =====
    Commission plateforme : 10% du total commande (panier + livraison)
    Reversement club      : 50% de la commission (= 5% du total)
+   Correctif audit 2026-08-05 (Important #7) : cette cagnotte était calculée
+   ET stockée entièrement côté client, dans le localStorage du PATIENT
+   (`livraisante_cagnotte_${clubId}`) — invisible du club comme de l'admin
+   sur un autre appareil, et créditée avant même la confirmation réelle du
+   paiement. Le solde réel vit désormais dans `club_cagnotte_entries`,
+   crédité uniquement par l'Edge Function `confirm-order` (service_role)
+   après paiement Stripe confirmé — voir js/supabase-client.js
+   (sbGetClubCagnotte/sbVerseCagnotte) et la migration
+   20260805210000_referrals_cagnotte_admin_messages.sql.
 ================================================= */
-const PLATFORM_FEE_RATE=0.10;   // Commission Livraisanté sur le total commande
-const CLUB_SHARE_RATE=0.50;      // Part reversée au club (= 5% du total)
-
+// Estimation d'affichage uniquement (panier, avant paiement) — le montant
+// RÉELLEMENT crédité est recalculé côté serveur dans confirm-order/index.ts
+// à partir du total effectivement débité par Stripe (mêmes taux ici, mais
+// cette fonction ne sert jamais à créditer quoi que ce soit).
+const PLATFORM_FEE_RATE=0.10;
+const CLUB_SHARE_RATE=0.50;
 function clubContributionAmount(orderTotal){
   return Math.round(orderTotal*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
 }
-function getCagnotte(clubId){
-  try{return JSON.parse(localStorage.getItem(`livraisante_cagnotte_${clubId}`)||'{"balance":0,"history":[]}');}catch(e){return{balance:0,history:[]};}
-}
-function saveCagnotte(clubId,data){
-  try{localStorage.setItem(`livraisante_cagnotte_${clubId}`,JSON.stringify(data));}catch(e){}
-}
-function addCagnotteContribution(clubId, orderId, orderTotal){
-  const amount=orderTotal>0?clubContributionAmount(orderTotal):0.15; // fallback 0.15€ minimum
-  const c=getCagnotte(clubId);
-  if(c.history.some(h=>h.orderId===orderId)) return;
-  c.balance=Math.round((c.balance+amount)*100)/100;
-  c.history.push({orderId,amount,date:new Date().toISOString()});
-  saveCagnotte(clubId,c);
-}
-function verseCagnotte(clubId){
-  const c=getCagnotte(clubId);
-  if(c.balance<=0){showToast('Cagnotte vide','var(--warn)');return;}
-  const amount=c.balance;
-  c.versements=c.versements||[];
-  c.versements.push({amount,date:new Date().toISOString(),year:new Date().getFullYear()});
-  c.balance=0;
-  saveCagnotte(clubId,c);
+async function verseCagnotte(clubId){
+  if(!window.LS_SB?.SB_READY){showToast('Mode démo : Supabase requis','var(--warn)');return;}
+  const {error,amount,count}=await window.LS_SB.sbVerseCagnotte(clubId);
+  if(error){showToast('✗ '+error,'var(--err)');return;}
+  if(!count){showToast('Cagnotte vide','var(--warn)');return;}
   showToast(`✅ Don de ${amount.toFixed(2)} € versé au club`,'var(--ok)');
   renderAdminCagnottes();
 }
 async function renderCagnotteClub(el, clubId, clubNom){
   if(!el) return;
-  const c=getCagnotte(clubId);
-  const lastVersement=c.versements?.slice(-1)[0];
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement…</div>';
+  if(!window.LS_SB?.SB_READY){el.innerHTML='';return;}
+  const c=await window.LS_SB.sbGetClubCagnotte(clubId);
   const thisYear=new Date().getFullYear();
-  const alreadyVerseThisYear=lastVersement&&new Date(lastVersement.date).getFullYear()===thisYear;
+  const alreadyVerseThisYear=c.lastVersement&&new Date(c.lastVersement.created_at).getFullYear()===thisYear;
   el.innerHTML=`
   <div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:1.5px solid #ddd6fe;border-radius:16px;padding:18px;margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
@@ -11645,8 +12230,8 @@ async function renderCagnotteClub(el, clubId, clubNom){
       </div>
     </div>
     <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:36px;color:var(--pharma);margin-bottom:4px">${c.balance.toFixed(2)} €</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">${c.history.length} commande${c.history.length>1?'s':''} contribuante${c.history.length>1?'s':''}</div>
-    ${lastVersement?`<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid #ddd6fe;padding-top:10px">Dernier don versé : <b>${parseFloat(lastVersement.amount).toFixed(2)} €</b> en ${new Date(lastVersement.date).getFullYear()}</div>`:''}
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">${c.count} commande${c.count>1?'s':''} contribuante${c.count>1?'s':''} en attente de versement</div>
+    ${c.lastVersement?`<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid #ddd6fe;padding-top:10px">Dernier don versé : <b>${parseFloat(c.lastVersement.amount_eur).toFixed(2)} €</b> en ${new Date(c.lastVersement.created_at).getFullYear()}</div>`:''}
     ${alreadyVerseThisYear?`<div style="font-size:12px;color:var(--ok);font-weight:700;margin-top:6px">✅ Don ${thisYear} déjà versé</div>`:''}
   </div>`;
 }
@@ -11656,25 +12241,29 @@ async function renderAdminCagnottes(){
   let clubs=[];
   if(sb){const {data}=await sb.from('clubs').select('id,nom,ville').order('nom');clubs=data||[];}
   if(!clubs.length){el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Aucun club inscrit.</div>';return;}
+  el.innerHTML='<div style="color:var(--ink-soft);font-size:14px">Chargement…</div>';
+  const thisYear=new Date().getFullYear();
+  const rows=await Promise.all(clubs.map(async club=>{
+    const c=await window.LS_SB.sbGetClubCagnotte(club.id);
+    return {club,c};
+  }));
   el.innerHTML=`<div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;margin-bottom:14px">🎁 Cagnottes des clubs</div>
-  <div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Modèle B2B2C : Livraisanté reverse automatiquement 50% de sa commission (20% du frais de livraison) au club de chaque licencié qui commande. Le cumul est versé comme don annuel par l'admin.</div>`+
-  clubs.map(club=>{
-    const c=getCagnotte(club.id);
-    const thisYear=new Date().getFullYear();
-    const lastV=c.versements?.slice(-1)[0];
-    const alreadyVerse=lastV&&new Date(lastV.date).getFullYear()===thisYear;
+  <div style="font-size:13px;color:var(--ink-soft);margin-bottom:16px">Modèle B2B2C : Livraisanté reverse automatiquement 50% de sa commission au club de chaque licencié qui commande, une fois le paiement confirmé. Le cumul est versé comme don annuel par l'admin.</div>`+
+  rows.map(({club,c})=>{
+    const lastV=c.lastVersement;
+    const alreadyVerse=lastV&&new Date(lastV.created_at).getFullYear()===thisYear;
     return `<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-weight:800;font-size:15px">${esc(club.nom||'—')}</div>
-        <div style="font-size:12px;color:var(--ink-soft)">${esc(club.ville||'')} · ${c.history.length} commandes</div>
-        ${lastV?`<div style="font-size:11px;color:var(--ink-soft)">Dernier don : ${parseFloat(lastV.amount).toFixed(2)} € (${new Date(lastV.date).getFullYear()})</div>`:''}
+        <div style="font-size:12px;color:var(--ink-soft)">${esc(club.ville||'')} · ${c.count} commande${c.count>1?'s':''} en attente</div>
+        ${lastV?`<div style="font-size:11px;color:var(--ink-soft)">Dernier don : ${parseFloat(lastV.amount_eur).toFixed(2)} € (${new Date(lastV.created_at).getFullYear()})</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div style="text-align:right">
           <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;color:var(--pharma)">${c.balance.toFixed(2)} €</div>
           <div style="font-size:11px;color:var(--ink-soft)">disponible</div>
         </div>
-        ${alreadyVerse?`<div style="font-size:12px;color:var(--ok);font-weight:700;padding:8px 14px;background:#f0faf2;border-radius:10px">✅ Versé ${thisYear}</div>`:
+        ${alreadyVerse&&c.balance<=0?`<div style="font-size:12px;color:var(--ok);font-weight:700;padding:8px 14px;background:#f0faf2;border-radius:10px">✅ Versé ${thisYear}</div>`:
         `<button onclick="verseCagnotte('${club.id}')" style="font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:10px;border:none;background:var(--pharma);color:white;cursor:pointer${c.balance<=0?';opacity:.4;cursor:not-allowed':''}">🎁 Verser don</button>`}
       </div>
     </div>`;
@@ -11782,17 +12371,26 @@ function adminSelectDest(btn){
   const emailRow=document.getElementById('adminMsgEmailRow');
   if(emailRow) emailRow.style.display=_adminMsgDest==='specific'?'block':'none';
 }
-function sendAdminMessage(){
+// Correctif audit 2026-08-05 (Important #7) : cette fonction n'écrivait
+// auparavant que dans le localStorage du navigateur de l'admin — aucun
+// message n'était jamais livré à un pharmacien/patient/club (voir
+// admin_messages_recipient_read en migration, et le panneau ajouté dans
+// renderProfile() côté destinataire).
+async function sendAdminMessage(){
   const text=(document.getElementById('adminMsgText')?.value||'').trim();
   if(!text){alert('Rédigez un message avant d\'envoyer.');return;}
   const email=_adminMsgDest==='specific'?(document.getElementById('adminMsgEmail')?.value||'').trim():'';
   if(_adminMsgDest==='specific'&&!email){alert('Renseignez l\'email du destinataire.');return;}
-  let msgs=[]; try{msgs=JSON.parse(localStorage.getItem(LS_ADMIN_MESSAGES)||'[]');}catch(e){}
-  msgs.push({dest:_adminMsgDest==='specific'?email:_adminMsgDest,text,date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})});
-  try{localStorage.setItem(LS_ADMIN_MESSAGES,JSON.stringify(msgs));}catch(e){}
-  alert('✅ Message enregistré.');
+  if(!window.LS_SB?.SB_READY){alert('Mode démo : Supabase requis pour envoyer un message.');return;}
+  const sendBtn=document.querySelector('#tabMessages .btn.primary');
+  if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Envoi…';}
+  const {error}=await window.LS_SB.sbSendAdminMessage(_adminMsgDest,email,text);
+  if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Envoyer →';}
+  if(error){alert('✗ '+error);return;}
+  alert('✅ Message envoyé.');
   if(document.getElementById('adminMsgText')) document.getElementById('adminMsgText').value='';
-  renderAdminDashboard();
+  if(document.getElementById('adminMsgEmail')) document.getElementById('adminMsgEmail').value='';
+  renderAdminMsgHistory();
 }
 function exportAdminCSV(){
   const allKeys=Object.keys(localStorage);
@@ -12048,14 +12646,17 @@ async function renderHealthProDashboard(){
         const timeStr=dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
         const statusColors={pending:'var(--warn)',confirmed:'var(--ok)',cancelled:'var(--err)',done:'var(--ink-soft)'};
         const statusLabels={pending:'En attente',confirmed:'Confirmé',cancelled:'Annulé',done:'Terminé'};
+        const isOpenSlot=!a.patient_id;
+        const patientLabel=isOpenSlot?'🔓 Créneau libre — en attente d\'un patient':`${esc(a.profiles?.prenom||'')} ${esc(a.profiles?.nom||'')}`.trim();
         return `<div class="ocard">
           <div class="otop">
-            <div class="oid">${dateStr} à ${timeStr}<small>${esc(a.profiles?.prenom||'')} ${esc(a.profiles?.nom||'')}</small></div>
+            <div class="oid">${dateStr} à ${timeStr}<small>${patientLabel}</small></div>
             <span class="ostatus" style="background:${statusColors[a.status]}20;color:${statusColors[a.status]}">${statusLabels[a.status]||a.status}</span>
           </div>
           ${a.motif?`<div style="font-size:13px;color:var(--ink-soft);margin-bottom:8px">Motif : ${esc(a.motif)}</div>`:''}
           <div class="oactions">
-            ${a.status==='pending'?`<button onclick="confirmAppt('${a.id}')">✓ Confirmer</button><button class="danger" onclick="cancelAppt('${a.id}')">✕ Annuler</button>`:''}
+            ${a.status==='pending'&&isOpenSlot?`<button class="danger" onclick="cancelAppt('${a.id}')">✕ Retirer le créneau</button>`:''}
+            ${a.status==='pending'&&!isOpenSlot?`<button onclick="confirmAppt('${a.id}')">✓ Confirmer</button><button class="danger" onclick="cancelAppt('${a.id}')">✕ Annuler</button>`:''}
             ${a.status==='confirmed'?`<button onclick="doneAppt('${a.id}')">✓ Terminé</button><button class="danger" onclick="cancelAppt('${a.id}')">✕ Annuler</button>`:''}
           </div>
         </div>`;

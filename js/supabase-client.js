@@ -90,8 +90,12 @@ async function sbUpsertPharmacy(userId, pharmacyData){
 // priorityMode, priorityLabs, planName, signupTs, ...). Comme pour les
 // commandes, ces deux fonctions sont le seul point de traduction — les
 // réglages sans colonne dédiée (busyPattern, googleHours, googlePlaceId,
-// customAdvice, promoCode) sont rangés dans la colonne fourre-tout
-// `extra_settings` (jsonb) pour éviter de multiplier les migrations.
+// customAdvice, promoCode, pricing) sont rangés dans la colonne fourre-tout
+// `extra_settings` (jsonb) pour éviter de multiplier les migrations. `pricing`
+// (mode éco/standard/premium + overrides par catégorie) est lu par l'Edge
+// Function `create-payment-intent` pour calculer le montant réellement
+// facturé (correctif audit 2026-08-05, Important #4 — ce réglage était
+// auparavant purement cosmétique, stocké seulement en localStorage).
 function pharmacyRowToJs(row){
   if(!row) return null;
   const extra = row.extra_settings || {};
@@ -127,6 +131,7 @@ function pharmacyRowToJs(row){
     googlePlaceId: extra.googlePlaceId || null,
     customAdvice: extra.customAdvice || [],
     promoCode: extra.promoCode || null,
+    pricing: extra.pricing || { mode:'std', overrides:{} },
     createdAt: row.created_at ? new Date(row.created_at).getTime() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null
   };
@@ -159,7 +164,8 @@ function pharmacyJsToRow(ph){
       googleHours: ph.googleHours || null,
       googlePlaceId: ph.googlePlaceId || null,
       customAdvice: ph.customAdvice || [],
-      promoCode: ph.promoCode || null
+      promoCode: ph.promoCode || null,
+      pricing: ph.pricing || { mode:'std', overrides:{} }
     }
     // NB : plan / period / plan_name volontairement exclus du payload —
     // verrouillés côté DB (trigger lock_pharmacy_plan_fields, migration
@@ -439,6 +445,22 @@ async function sbUpdateAppointment(apptId, updates){
   const { error } = await sb.from('appointments').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', apptId);
   return { error: error?.message || null };
 }
+// Créneaux ouverts (proposés par un pro, pas encore réclamés par un patient)
+async function sbGetOpenSlotsForClub(clubId){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('appointments').select('*').eq('club_id', clubId).is('patient_id', null).eq('status', 'pending').order('scheduled_at');
+  return data || [];
+}
+async function sbClaimAppointmentSlot(apptId, patientId){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data, error } = await sb.from('appointments')
+    .update({ patient_id: patientId, updated_at: new Date().toISOString() })
+    .eq('id', apptId).is('patient_id', null)
+    .select();
+  if(error) return { error: error.message };
+  if(!data || !data.length) return { error: 'slot_already_taken' };
+  return { error: null };
+}
 
 // ── Google OAuth ─────────────────────────────────────────────────────
 
@@ -496,6 +518,7 @@ async function sbCreatePaymentIntent(cart, metadata={}){
         donationEnabled:!!cart?.donationEnabled,
         currency:'eur',
         metadata,
+        pharmacyId:cart?.pharmacyId||null,
       }
     });
     if(error) return {error:error.message};
@@ -563,6 +586,223 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
 
+// ── Vérification d'inscription (code réel envoyé par email, cf. Edge Function
+//    `signup-verification` — correctif audit 2026-08-05 Critique #3) ───────
+
+/** Demande l'envoi d'un code de vérification à 6 chiffres par email. */
+async function sbSendSignupVerification(email){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  try{
+    const { data, error } = await sb.functions.invoke('signup-verification', { body:{ action:'send', email } });
+    if(error) return { error: error.message || 'send_failed' };
+    if(!data?.sent) return { error: data?.error || 'send_failed' };
+    return { sent:true, error:null };
+  }catch(e){
+    return { error: e?.message || 'send_failed' };
+  }
+}
+
+/** Vérifie le code à 6 chiffres saisi par l'utilisateur (comparaison serveur, hashée). */
+async function sbVerifySignupCode(email, code){
+  const sb = getSB(); if(!sb) return { ok:false, error:'supabase_not_configured' };
+  try{
+    const { data, error } = await sb.functions.invoke('signup-verification', { body:{ action:'verify', email, code } });
+    if(error) return { ok:false, error: error.message || 'verify_failed' };
+    if(!data?.ok) return { ok:false, error: data?.error || 'Code incorrect.' };
+    return { ok:true, error:null };
+  }catch(e){
+    return { ok:false, error: e?.message || 'verify_failed' };
+  }
+}
+
+// ── Vérification RPPS (côté serveur, cf. Edge Function `verify-rpps` —
+//    correctif audit 2026-08-05 Important #6) ───────────────────────────
+
+/** Vérifie un numéro RPPS auprès de l'Annuaire Santé national (côté serveur, pas de CORS).
+ *  Sans session active : simple consultation. Avec session active : écrit aussi
+ *  rpps_verified/rpps_status côté serveur (jamais confié au client). */
+async function sbVerifyRpps(rpps, role){
+  const sb = getSB(); if(!sb) return { verified:false, error:'supabase_not_configured' };
+  try{
+    const { data, error } = await sb.functions.invoke('verify-rpps', { body:{ rpps, role } });
+    if(error) return { verified:false, error: error.message || 'verify_failed' };
+    return data || { verified:false, error:'verify_failed' };
+  }catch(e){
+    return { verified:false, error: e?.message || 'verify_failed' };
+  }
+}
+
+// ── Parrainage livreur / cagnotte club / messagerie admin (correctif
+//    audit 2026-08-05, Important #7) ─────────────────────────────────────
+// Avant ce correctif, ces trois fonctionnalités vivaient exclusivement en
+// localStorage (jamais synchronisées entre appareils, jamais vues par le
+// vrai destinataire). Voir migration 20260805210000_referrals_cagnotte_admin_messages.sql.
+
+/** Enregistre le code de parrainage saisi par un livreur à son inscription
+ *  (déclaratif — ne débloque aucun crédit automatique, juste la traçabilité
+ *  réelle du lien parrain/filleul). */
+async function sbSetDriverReferredBy(code){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return { error:'not_authenticated' };
+  const { error } = await sb.from('drivers').update({ referred_by_code: code }).eq('user_id', user.id);
+  return { error: error?.message || null };
+}
+
+/** Nombre réel de filleuls inscrits / actifs via mon propre code parrain
+ *  (RPC SECURITY DEFINER — un livreur ne peut jamais lire le détail des
+ *  fiches d'un autre livreur, seulement ce compteur agrégé). */
+async function sbGetMyDriverReferralStats(){
+  const sb = getSB(); if(!sb) return { totalReferred:0, totalActive:0 };
+  const { data, error } = await sb.rpc('my_driver_referral_stats');
+  if(error || !data?.[0]) return { totalReferred:0, totalActive:0 };
+  return { totalReferred: data[0].total_referred||0, totalActive: data[0].total_active||0 };
+}
+
+/** Solde + historique réels de la cagnotte d'un club (créditée côté serveur
+ *  par l'Edge Function confirm-order — jamais par le client). */
+async function sbGetClubCagnotte(clubId){
+  const sb = getSB(); if(!sb) return { balance:0, count:0, entries:[], lastVersement:null };
+  const { data:entries } = await sb.from('club_cagnotte_entries')
+    .select('*').eq('club_id', clubId).eq('versed', false).order('created_at', { ascending:false });
+  const { data:versements } = await sb.from('club_cagnotte_versements')
+    .select('*').eq('club_id', clubId).order('created_at', { ascending:false }).limit(1);
+  const rows = entries || [];
+  const balance = Math.round(rows.reduce((s,e)=>s+parseFloat(e.amount_eur||0),0)*100)/100;
+  return { balance, count: rows.length, entries: rows, lastVersement: versements?.[0]||null };
+}
+
+/** Verse (marque réglée) le solde courant de la cagnotte d'un club — réservé
+ *  admin côté serveur (RPC SECURITY DEFINER, vérifie is_admin() en interne). */
+async function sbVerseCagnotte(clubId){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data, error } = await sb.rpc('verse_club_cagnotte', { p_club_id: clubId });
+  if(error) return { error: error.message };
+  const row = data?.[0]||{ versed_amount:0, entries_count:0 };
+  return { error:null, amount: parseFloat(row.versed_amount)||0, count: row.entries_count||0 };
+}
+
+/** Envoie un message admin réel (persisté en base, lisible par les vrais
+ *  destinataires ciblés — voir policies RLS admin_messages). Pour la cible
+ *  'specific', résout l'email saisi en user_id via `profiles` (lecture
+ *  admin déjà autorisée par la policy profiles_admin_read). */
+async function sbSendAdminMessage(targetScope, targetEmail, body){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return { error:'not_authenticated' };
+  let targetUserId=null;
+  if(targetScope==='specific'){
+    if(!targetEmail) return { error:'email_requis' };
+    const { data:profile } = await sb.from('profiles').select('id').eq('email', targetEmail).maybeSingle();
+    if(!profile?.id) return { error:'Aucun compte trouvé pour cet email.' };
+    targetUserId=profile.id;
+  }
+  const { error } = await sb.from('admin_messages').insert({
+    sender_id: user.id, target_scope: targetScope, target_user_id: targetUserId, body
+  });
+  return { error: error?.message || null };
+}
+
+/** Historique des messages envoyés par l'admin (toutes cibles confondues). */
+async function sbGetSentAdminMessages(){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('admin_messages').select('*').order('created_at', { ascending:false }).limit(200);
+  return data || [];
+}
+
+/** Messages réellement reçus par l'utilisateur connecté (ciblage direct ou
+ *  diffusion à son rôle réel — voir policy admin_messages_recipient_read). */
+async function sbGetMyAdminMessages(){
+  const sb = getSB(); if(!sb) return [];
+  const { data } = await sb.from('admin_messages').select('*').order('created_at', { ascending:false }).limit(50);
+  return data || [];
+}
+
+/* ── Double authentification (MFA TOTP) — 2026-08-12 ──────────────────
+   L'authentification est entièrement gérée par Supabase Auth : le backend
+   Clever Cloud ne fait que *vérifier* les JWT émis par Supabase (JWKS) et
+   exigera le niveau `aal2` sur les routes de données de santé. La 2FA se
+   pilote donc ici, via l'API MFA native de Supabase.
+
+   Choix produit (validés) : TOTP (application authentificator, pas de coût
+   par message et pas de risque de SIM-swap), activation *optionnelle* depuis
+   le profil patient — mais une fois activée, elle devient obligatoire pour
+   accéder au dossier santé.
+
+   Prérequis manuel : MFA/TOTP doit être activé dans le Dashboard Supabase
+   (Authentication → Multi-Factor Authentication). Voir docs/2FA-SETUP.md.
+─────────────────────────────────────────────────────────────────────── */
+
+/** Facteurs MFA de l'utilisateur. Retourne { totp:[], all:[], verified:bool, error }.
+ *  `totp` ne contient que les facteurs vérifiés ; `all` inclut les enrôlements
+ *  inachevés (statut `unverified`), nécessaires au nettoyage avant réenrôlement. */
+async function sbMfaListFactors(){
+  const sb = getSB(); if(!sb) return { totp:[], all:[], verified:false, error:'supabase_not_configured' };
+  const { data, error } = await sb.auth.mfa.listFactors();
+  if(error) return { totp:[], all:[], verified:false, error: error.message };
+  const totp = data?.totp || [];
+  return { totp, all: data?.all || totp, verified: totp.some(f => f.status === 'verified'), error:null };
+}
+
+/** Démarre l'enrôlement TOTP. Retourne { factorId, qrCode, secret, uri, error }.
+ *  Le facteur reste en statut `unverified` tant qu'un premier code n'a pas été
+ *  validé. Un enrôlement abandonné (onglet fermé) laisse donc un facteur
+ *  fantôme qui, lui, compte dans la limite MAX_ENROLLED_FACTORS de GoTrue et
+ *  bloquerait définitivement toute activation ultérieure : on purge ces
+ *  facteurs inachevés avant d'en créer un nouveau. Le nom inclut l'horodatage
+ *  complet car GoTrue refuse deux facteurs de même friendlyName. */
+async function sbMfaEnroll(){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { all } = await sbMfaListFactors();
+  for(const f of (all || [])){
+    if(f.status !== 'verified'){
+      await sb.auth.mfa.unenroll({ factorId: f.id }).catch(()=>{});
+    }
+  }
+  const { data, error } = await sb.auth.mfa.enroll({
+    factorType:'totp',
+    friendlyName:`Livraisanté ${new Date().toISOString()}`
+  });
+  if(error) return { error: error.message };
+  return { factorId:data.id, qrCode:data.totp?.qr_code, secret:data.totp?.secret, uri:data.totp?.uri, error:null };
+}
+
+/** Vérifie un code TOTP à 6 chiffres pour un facteur donné.
+ *  Sert à la fois à finaliser l'enrôlement et à l'élévation `aal1`→`aal2`
+ *  à la connexion : dans les deux cas Supabase exige un challenge puis un verify.
+ *  En cas de succès la session courante est réémise avec le claim aal2. */
+async function sbMfaVerify(factorId, code){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  if(!/^\d{6}$/.test(String(code||'').trim())) return { error:'code_invalide' };
+  const { data: ch, error: chErr } = await sb.auth.mfa.challenge({ factorId });
+  if(chErr) return { error: chErr.message };
+  const { error } = await sb.auth.mfa.verify({ factorId, challengeId: ch.id, code: String(code).trim() });
+  if(error) return { error: error.message };
+  return { error:null };
+}
+
+/** Désactive la 2FA (suppression du facteur). */
+async function sbMfaUnenroll(factorId){
+  const sb = getSB(); if(!sb) return { error:'supabase_not_configured' };
+  const { error } = await sb.auth.mfa.unenroll({ factorId });
+  if(error) return { error: error.message };
+  return { error:null };
+}
+
+/** Niveau d'assurance de la session. Retourne { current, next, needsStepUp }.
+ *  `needsStepUp` est vrai quand l'utilisateur a une 2FA active mais ne l'a pas
+ *  encore présentée sur cette session (aal1 alors que aal2 est atteignable). */
+async function sbMfaGetAal(){
+  const sb = getSB(); if(!sb) return { current:null, next:null, needsStepUp:false };
+  const { data, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(error) return { current:null, next:null, needsStepUp:false };
+  return {
+    current: data.currentLevel,
+    next: data.nextLevel,
+    needsStepUp: data.currentLevel === 'aal1' && data.nextLevel === 'aal2'
+  };
+}
+
 // ── Export (accessible globally) ────────────────────────────────
 window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
   sbSignInWithGoogle,
@@ -572,6 +812,7 @@ window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, s
   sbGetClub, sbUpsertClub, sbGetClubMembers, sbGetClubHealthPros, sbValidateHealthPro,
   sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
   sbGetAppointments, sbInsertAppointment, sbUpdateAppointment,
+  sbGetOpenSlotsForClub, sbClaimAppointmentSlot,
   sbCreatePaymentIntent, sbSubscribePush,
   // Commandes (branchement réel 2026-07-18)
   sbGetPublicPharmacies, sbInsertOrderFull, sbConfirmOrder, sbGetPatientOrders, sbGetOrdersForPharmacy,
@@ -580,4 +821,14 @@ window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, s
   // Réglages pharmacie / profil livreur / règlements (branchement réel 2026-07-21)
   pharmacyRowToJs, pharmacyJsToRow,
   // Événements d'usage / codes promo (branchement réel 2026-07-22)
-  sbLogEvent, sbRedeemPromoCode };
+  sbLogEvent, sbRedeemPromoCode,
+  // Vérification d'inscription réelle par email (branchement réel 2026-08-05)
+  sbSendSignupVerification, sbVerifySignupCode,
+  // Vérification RPPS réelle côté serveur (branchement réel 2026-08-05)
+  sbVerifyRpps,
+  // Parrainage livreur / cagnotte club / messagerie admin (branchement réel 2026-08-05)
+  sbSetDriverReferredBy, sbGetMyDriverReferralStats,
+  sbGetClubCagnotte, sbVerseCagnotte,
+  sbSendAdminMessage, sbGetSentAdminMessages, sbGetMyAdminMessages,
+  // Double authentification TOTP (2026-08-12)
+  sbMfaListFactors, sbMfaEnroll, sbMfaVerify, sbMfaUnenroll, sbMfaGetAal };

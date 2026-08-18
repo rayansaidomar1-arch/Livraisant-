@@ -17,14 +17,20 @@
 const express = require('express');
 const { z } = require('zod');
 const prisma = require('../lib/prisma');
-const { requireAuth, attachProfile } = require('../lib/auth');
+const { requireAuth, attachProfile, requireAal2, needsMfaStepUp } = require('../lib/auth');
 
 const router = express.Router();
 
 // ── GET /auth/me ── identité Supabase (profiles) + profil santé (Clever Cloud)
+// Cette route doit rester joignable même sans second facteur (le front en a
+// besoin pour afficher l'identité et proposer l'élévation) : on ne refuse donc
+// pas, on retire seulement le dossier de santé de la réponse.
 router.get('/me', requireAuth, attachProfile, async (req, res, next) => {
   try {
-    const healthProfile = await prisma.healthProfile.findUnique({ where: { userId: req.user.id } });
+    const mfaRequired = await needsMfaStepUp(req.user);
+    const healthProfile = mfaRequired
+      ? null
+      : await prisma.healthProfile.findUnique({ where: { userId: req.user.id } });
     res.json({
       id: req.profile.id,
       email: req.profile.email,
@@ -32,6 +38,7 @@ router.get('/me', requireAuth, attachProfile, async (req, res, next) => {
       nom: req.profile.nom,
       role: req.profile.role,
       healthProfile: healthProfile || null,
+      mfaRequired,
     });
   } catch (err) {
     next(err);
@@ -51,7 +58,7 @@ const healthProfileSchema = z.object({
 });
 
 // ── GET /auth/health-profile ── (équivalent profiles.health_profile / sport_license)
-router.get('/health-profile', requireAuth, async (req, res, next) => {
+router.get('/health-profile', requireAuth, requireAal2, async (req, res, next) => {
   try {
     const profile = await prisma.healthProfile.findUnique({ where: { userId: req.user.id } });
     res.json(profile || null);
@@ -62,7 +69,7 @@ router.get('/health-profile', requireAuth, async (req, res, next) => {
 
 // ── PUT /auth/health-profile ── (upsert, propriétaire uniquement — pas d'admin
 // bypass ici : ce sont des données de santé, seul le patient concerné les modifie)
-router.put('/health-profile', requireAuth, async (req, res, next) => {
+router.put('/health-profile', requireAuth, requireAal2, async (req, res, next) => {
   const parsed = healthProfileSchema.safeParse(req.body || {});
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
   try {

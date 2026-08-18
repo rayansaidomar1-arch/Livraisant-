@@ -18,10 +18,36 @@
 // ═══════════════════════════════════════════════════════════════════════
 const { Pool } = require('pg');
 
+// `rejectUnauthorized: false` acceptait n'importe quel certificat : un
+// attaquant en position d'interception sur le trajet Clever Cloud → Supabase
+// pouvait présenter le sien et lire/réécrire en clair les rôles et emails qui
+// transitent ici. Supabase signe ses certificats avec sa propre autorité : on
+// la fournit via SUPABASE_DB_CA (contenu PEM du certificat téléchargé depuis
+// Settings → Database → SSL configuration) et on vérifie réellement la chaîne.
+// Sans cette variable on refuse de dégrader silencieusement : le mode permissif
+// doit rester un choix explicite et visible dans les logs.
+const caCert = process.env.SUPABASE_DB_CA;
+if (!caCert) {
+  console.warn('⚠️  SUPABASE_DB_CA absente : la connexion Supabase ne vérifie pas le certificat serveur (MITM possible).');
+}
+
 const pool = new Pool({
   connectionString: process.env.SUPABASE_DB_URI,
-  ssl: { rejectUnauthorized: false },
+  ssl: caCert ? { ca: caCert, rejectUnauthorized: true } : { rejectUnauthorized: false },
+  // Supabase plafonne le nombre de connexions par projet ; sans `max`, `pg`
+  // en ouvre 10 par instance et un scale-up Clever Cloud épuise le quota.
+  max: Number(process.env.SUPABASE_DB_POOL_MAX || 5),
+  // Sans délai, une base injoignable laisse la requête (et la requête HTTP
+  // qui l'attend) pendue indéfiniment.
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
 });
+
+// Une connexion inactive fermée par Supabase émet 'error' sur le pool. Sans
+// écouteur, Node relance l'événement en exception non capturée et le process
+// meurt — un simple recyclage de connexion côté Supabase suffisait à faire
+// tomber le backend.
+pool.on('error', (err) => console.error('Erreur pool Supabase:', err.message));
 
 /** Retourne { id, email, prenom, nom, role } ou null. */
 async function getProfile(userId) {
@@ -55,4 +81,28 @@ async function deletePushSubscription(id) {
   await pool.query('DELETE FROM push_subscriptions WHERE id = $1', [id]);
 }
 
-module.exports = { pool, getProfile, isActiveDriver, getPushSubscriptions, deletePushSubscription };
+/**
+ * true si l'utilisateur a une double authentification réellement active.
+ *
+ * La 2FA est optionnelle : on ne peut donc pas exiger `aal2` de tout le monde
+ * sans couper l'accès à ceux qui ne l'ont pas activée. Le middleware
+ * requireAal2 (lib/auth.js) s'appuie sur cette lecture pour n'exiger le second
+ * facteur qu'à ceux qui en possèdent un — et seulement un facteur `verified`,
+ * un enrôlement abandonné restant en `unverified` ne doit rien verrouiller.
+ */
+async function hasVerifiedMfaFactor(userId) {
+  const { rows } = await pool.query(
+    "SELECT 1 FROM auth.mfa_factors WHERE user_id = $1 AND status = 'verified' LIMIT 1",
+    [userId]
+  );
+  return rows.length > 0;
+}
+
+module.exports = {
+  pool,
+  getProfile,
+  isActiveDriver,
+  getPushSubscriptions,
+  deletePushSubscription,
+  hasVerifiedMfaFactor,
+};

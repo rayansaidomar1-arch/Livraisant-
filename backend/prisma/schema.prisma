@@ -89,10 +89,15 @@ model Order {
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 
-  @@index([patientId])
-  @@index([pharmacyId])
-  @@index([driverId])
-  @@index([status])
+  // Index composites : chaque écran liste des commandes filtrées PUIS triées
+  // par date (routes/orders.js). Avec un index sur la seule colonne de filtre,
+  // Postgres devait encore trier le résultat en mémoire — coûteux dès qu'une
+  // pharmacie accumule des milliers de commandes. La colonne de tri fait donc
+  // partie de l'index.
+  @@index([patientId, createdAt])
+  @@index([pharmacyId, createdAt])
+  @@index([driverId, status, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
