@@ -26,7 +26,10 @@ const { Pool } = require('pg');
 // Settings → Database → SSL configuration) et on vérifie réellement la chaîne.
 // Sans cette variable on refuse de dégrader silencieusement : le mode permissif
 // doit rester un choix explicite et visible dans les logs.
-const caCert = process.env.SUPABASE_DB_CA;
+// Une variable d'environnement Clever Cloud est mono-ligne : le PEM y est
+// stocké avec des « \n » littéraux, que `tls` ne sait pas parser. On rétablit
+// les vrais sauts de ligne, et on accepte aussi un PEM déjà multi-ligne.
+const caCert = process.env.SUPABASE_DB_CA?.replace(/\\n/g, '\n');
 if (!caCert) {
   console.warn('⚠️  SUPABASE_DB_CA absente : la connexion Supabase ne vérifie pas le certificat serveur (MITM possible).');
 }
