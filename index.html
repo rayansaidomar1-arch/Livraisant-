@@ -10091,7 +10091,43 @@ async function completeRegistration(){
   if(window.LS_SB?.SB_READY){
     const licenseNum=roleData?.sportLicense||null;
     const {user,error}=await window.LS_SB.sbSignUp(email,pwd,{prenom,nom,role,tel,sport_license:licenseNum});
-    if(error){if(errEl){errEl.style.display='block';errEl.textContent='Erreur : '+error;}cancelVerification();return;}
+    if(error){
+      // Ne PAS appeler cancelVerification() ici : elle fait `panel.innerHTML=''`,
+      // ce qui détruisait le #verifyErr qu'on venait tout juste de remplir. Le
+      // message était donc systématiquement effacé avant d'avoir pu être lu, et
+      // n'importe quel refus d'inscription (adresse déjà prise, mot de passe
+      // trop court, quota d'emails Supabase) se manifestait par un retour
+      // inexpliqué au formulaire. On reste sur le panneau de vérification.
+      //
+      // Réessayer y est possible sans redemander de code : l'Edge Function
+      // `signup-verification` ne consomme pas le code à la vérification, elle
+      // pose seulement `verified_at`. Une seconde tentative aboutit donc tant
+      // que le code n'a pas expiré (10 minutes).
+      //
+      // Supabase formule ce refus de plusieurs façons selon la version et le
+      // réglage de confirmation d'email (« User already registered », « …has
+      // already been registered », « Email address already exists ») : le motif
+      // couvre les variantes plutôt qu'une chaîne exacte.
+      const dejaInscrit=/already\s+(?:been\s+)?registered|already\s+(?:exists|in use|taken)/i.test(error);
+      if(errEl){
+        errEl.style.display='block';
+        errEl.textContent=dejaInscrit
+          ? '⚠ Cette adresse email a déjà un compte. Connectez-vous plutôt que de créer un second compte.'
+          : 'Erreur : '+error;
+      }
+      // Sur une adresse déjà inscrite, se réinscrire ne pourra jamais aboutir :
+      // on propose la seule action qui mène quelque part.
+      if(dejaInscrit&&errEl&&!document.getElementById('verifyGoLogin')){
+        const goLogin=document.createElement('button');
+        goLogin.id='verifyGoLogin';
+        goLogin.className='btn primary';
+        goLogin.style.cssText='width:100%;margin-top:10px;font-size:15px;padding:12px';
+        goLogin.textContent='Se connecter →';
+        goLogin.onclick=()=>{cancelVerification();enterRole('loginScreen');};
+        errEl.insertAdjacentElement('afterend',goLogin);
+      }
+      return;
+    }
     // Délai avant l'écriture des données liées au rôle : laisse le trigger
     // handle_new_user créer la ligne `profiles` côté Supabase avant qu'on
     // essaie d'y référencer user.id depuis health_professionals/clubs.
