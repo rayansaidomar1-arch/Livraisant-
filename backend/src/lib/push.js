@@ -35,8 +35,32 @@ async function buildVapidHeaders(endpoint, vapidPublic, vapidPrivate, subject) {
   const payload = b64urlEncode(Buffer.from(JSON.stringify({ aud: audience, exp, sub: subject })));
   const unsigned = `${header}.${payload}`;
 
-  const privBytes = b64urlDecode(vapidPrivate);
-  const key = await subtle.importKey('raw', privBytes, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  // WebCrypto n'accepte le format 'raw' pour une clé EC que s'il s'agit d'une clé
+  // PUBLIQUE : réclamer l'usage 'sign' sur le scalaire privé brut lève
+  // « SyntaxError: Unsupported key usage for ECDSA key ». Comme l'exception était
+  // avalée par le catch de la boucle d'envoi, aucune notification ne partait
+  // jamais et rien ne le signalait. La clé privée doit donc passer par JWK, dont
+  // les coordonnées x/y se relisent dans la clé publique VAPID (65 octets non
+  // compressés : 0x04 ‖ x ‖ y).
+  const pubBytes = b64urlDecode(vapidPublic);
+  if (pubBytes.length !== 65 || pubBytes[0] !== 4) {
+    throw new Error(`VAPID_PUBLIC_KEY invalide : ${pubBytes.length} octets, attendu 65 commençant par 0x04`);
+  }
+  // Le round-trip décode/encode normalise un éventuel base64 standard ou padké
+  // en base64url strict, seule forme admise dans un JWK.
+  const jwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: b64urlEncode(pubBytes.subarray(1, 33)),
+    y: b64urlEncode(pubBytes.subarray(33, 65)),
+    d: b64urlEncode(b64urlDecode(vapidPrivate)),
+    ext: false,
+    key_ops: ['sign'],
+  };
+  // Si la clé privée n'appartient pas à la clé publique, l'import échoue ici :
+  // une paire dépareillée est signalée bruyamment plutôt que de produire des
+  // signatures que les services de push rejetteraient en 401.
+  const key = await subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const sig = await subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
   const sigB64 = b64urlEncode(new Uint8Array(sig));
 

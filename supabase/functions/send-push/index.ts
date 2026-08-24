@@ -25,8 +25,28 @@ async function buildVapidHeaders(endpoint: string, vapidPublic: string, vapidPri
   const payload = btoa(JSON.stringify({ aud: audience, exp, sub: subject })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   const unsigned = `${header}.${payload}`;
 
+  // WebCrypto n'accepte le format 'raw' pour une clé EC que s'il s'agit d'une clé
+  // PUBLIQUE : réclamer l'usage 'sign' sur le scalaire privé brut lève
+  // « Unsupported key usage for ECDSA key ». L'exception étant avalée par le
+  // catch de la boucle d'envoi, aucune notification ne partait jamais et rien ne
+  // le signalait. La clé privée passe donc par JWK, dont les coordonnées x/y se
+  // relisent dans la clé publique VAPID (65 octets non compressés : 0x04 ‖ x ‖ y).
+  const b64url = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const pubBytes = Uint8Array.from(atob(vapidPublic.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+  if (pubBytes.length !== 65 || pubBytes[0] !== 4) {
+    throw new Error(`VAPID_PUBLIC_KEY invalide : ${pubBytes.length} octets, attendu 65 commençant par 0x04`);
+  }
   const privBytes = Uint8Array.from(atob(vapidPrivate.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey('raw', privBytes, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  // Un import JWK échoue si la clé privée n'appartient pas à la clé publique :
+  // une paire dépareillée est signalée plutôt que de produire des signatures
+  // que les services de push rejetteraient en 401.
+  const key = await crypto.subtle.importKey('jwk', {
+    kty: 'EC', crv: 'P-256',
+    x: b64url(pubBytes.subarray(1, 33)),
+    y: b64url(pubBytes.subarray(33, 65)),
+    d: b64url(privBytes),
+    ext: false, key_ops: ['sign'],
+  }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
   const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
