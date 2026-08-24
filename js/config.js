@@ -11,8 +11,12 @@ window.LIVR_CONFIG = {
   supabase_anon: 'sb_publishable_lkkWiVC0Zs59wv7WBqGiuQ_XKIarkBc',
 
   // ── Web Push VAPID (notifications push) ────────────────────────────
-  // Clé publique uniquement — la clé privée est dans Supabase secrets (VAPID_PRIVATE_KEY)
-  vapid_public_key: 'BDrxRAUmDSOPKkOzKR_I2-C3eQJU7rTDGD_Grlz9-fXGD397z7PFXWKltUacqR21uHcBDNHXffeAKjqEhjKvkb8',
+  // Clé publique uniquement. La clé privée correspondante vit désormais à DEUX
+  // endroits qui doivent rester synchronisés avec cette valeur : les secrets
+  // Supabase (Edge Function send-push) et les variables Clever Cloud (backend
+  // HDS). En changer une sans les autres dépareille la paire : l'import de clé
+  // échoue côté serveur et plus aucune notification ne part.
+  vapid_public_key: 'BPUX2OGu5sonn2IfsUXS_RGKdqLrtzdKOHK-7wpHEiBBWcpliuJaiWxLSrnLPgSRus1lrXqLY5DLJ-gWoIijBZg',
 
   // ── Stripe (https://dashboard.stripe.com/apikeys) ──────────────────
   stripe_pk: 'pk_live_51TlGbmACKGmHTUUGH77rzrcCUd7ALnHKu9ZqIwmX3gtjuzbMAldFb2mCg7MdFUXMcPzCiDkOJ1UYsTK4JODSK7aJ00BDwgXD9H',
