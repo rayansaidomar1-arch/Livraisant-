@@ -548,6 +548,24 @@ async function sbConfirmOrder(payload){
 
 // ── Web Push ─────────────────────────────────────────────────────
 
+/** Borne une étape dans le temps. Sans cela, certaines promesses de l'API push
+ *  ne se règlent JAMAIS — ni succès ni rejet — et l'utilisateur reste devant un
+ *  écran muet (constaté le 2026-08-28 : le toast « Demande de permission… »
+ *  restait seul, sans suite). Les coupables typiques :
+ *   - `navigator.serviceWorker.ready` quand aucun worker n'arrive à s'activer ;
+ *   - `pushManager.subscribe()` quand le service de push du navigateur (FCM,
+ *     Mozilla autopush, APNs) est injoignable — réseau filtré, VPN, pare-feu.
+ *  On ne borne PAS `Notification.requestPermission()` : elle attend légitimement
+ *  une action humaine, qui peut prendre le temps qu'elle veut.
+ */
+function pushStep(promise, ms, step) {
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timeout_' + step)), ms); })
+  ]);
+}
+
 /** Abonne l'utilisateur aux notifications push et sauvegarde dans Supabase.
  *
  *  Deux pièges, tous deux constatés en production le 2026-08-28 (la table
@@ -578,56 +596,58 @@ async function sbSubscribePush(userId) {
     const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
     // Sans session valide, la policy `push_own` rejettera l'insertion : autant
     // le dire maintenant, avec un message actionnable.
-    const { data: sess } = await sb.auth.getSession();
+    const { data: sess } = await pushStep(sb.auth.getSession(), 10000, 'session');
     if (!sess?.session) return { error: 'session_expired' };
 
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await pushStep(navigator.serviceWorker.ready, 10000, 'sw');
     const wanted = urlBase64ToUint8Array(vapidKey);
 
     // ── 1. Purger un abonnement dépareillé ──
-    const existing = await reg.pushManager.getSubscription();
+    const existing = await pushStep(reg.pushManager.getSubscription(), 10000, 'lecture');
     if (existing) {
       const current = existing.options?.applicationServerKey;
       if (!current || !sameBytes(new Uint8Array(current), wanted)) {
-        await existing.unsubscribe();
+        await pushStep(existing.unsubscribe(), 10000, 'resiliation');
       }
     }
 
+    const doSubscribe = () => pushStep(reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: wanted
+    }), 25000, 'abonnement');
+
     let sub;
     try {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: wanted
-      });
+      sub = await doSubscribe();
     } catch (e) {
+      // Un dépassement de délai n'est pas un conflit de clé : ne pas résilier
+      // un abonnement valide sur cette base, et remonter la cause telle quelle.
+      if (String(e.message).startsWith('timeout_')) throw e;
       // Filet de sécurité : certains navigateurs n'exposent pas
       // `options.applicationServerKey`, la comparaison ci-dessus est alors
       // impossible et c'est `subscribe()` qui refuse. On résilie et on retente.
-      const stale = await reg.pushManager.getSubscription();
+      const stale = await pushStep(reg.pushManager.getSubscription(), 10000, 'lecture');
       if (!stale) throw e;
-      await stale.unsubscribe();
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: wanted
-      });
+      await pushStep(stale.unsubscribe(), 10000, 'resiliation');
+      sub = await doSubscribe();
     }
 
     const json = sub.toJSON();
-    const { error } = await sb.from('push_subscriptions').upsert({
+    const { error } = await pushStep(sb.from('push_subscriptions').upsert({
       user_id: userId,
       endpoint: json.endpoint,
       p256dh: json.keys.p256dh,
       auth: json.keys.auth
-    }, { onConflict: 'user_id,endpoint' });
+    }, { onConflict: 'user_id,endpoint' }), 15000, 'enregistrement');
     if (error) return { error: error.message };
 
     // ── 2. Vérifier que la ligne est réellement en base ──
-    const { data: check, error: checkErr } = await sb
+    const { data: check, error: checkErr } = await pushStep(sb
       .from('push_subscriptions')
       .select('id')
       .eq('user_id', userId)
       .eq('endpoint', json.endpoint)
-      .maybeSingle();
+      .maybeSingle(), 15000, 'relecture');
     if (checkErr) return { error: checkErr.message };
     if (!check) return { error: 'subscription_not_persisted' };
 
@@ -647,8 +667,10 @@ async function sbPushStatus(userId) {
     return { active: false, reason: 'permission_' + (typeof Notification === 'undefined' ? 'denied' : Notification.permission) };
   }
   try {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
+    // Bornées elles aussi : sinon le bloc « ⏳ Vérification… » du panneau de
+    // notifications resterait affiché indéfiniment.
+    const reg = await pushStep(navigator.serviceWorker.ready, 10000, 'sw');
+    const sub = await pushStep(reg.pushManager.getSubscription(), 10000, 'lecture');
     if (!sub) return { active: false, reason: 'no_browser_subscription' };
 
     // Clé dépareillée = le serveur ne pourra pas chiffrer pour cet abonnement.

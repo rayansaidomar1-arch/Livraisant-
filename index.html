@@ -5025,6 +5025,15 @@ const PUSH_ERRORS={
   not_in_database:'⚠️ Abonnement absent de la base — le serveur ne peut rien vous envoyer',
   db_error:'⚠️ Vérification impossible — base injoignable',
   permission_default:'⚠️ Permission non encore accordée',
+  // Étapes bornées dans le temps (cf. pushStep dans js/supabase-client.js) :
+  // un blocage nomme désormais son étape au lieu de laisser l'écran muet.
+  timeout_session:'❌ Bloqué : Supabase ne répond pas (session)',
+  timeout_sw:'❌ Bloqué : le service worker ne s\'active pas — fermez tous les onglets du site puis rouvrez',
+  timeout_lecture:'❌ Bloqué : lecture de l\'abonnement du navigateur',
+  timeout_resiliation:'❌ Bloqué : résiliation de l\'ancien abonnement',
+  timeout_abonnement:'❌ Bloqué : le service de push du navigateur est injoignable — VPN, pare-feu ou réseau filtré ?',
+  timeout_enregistrement:'❌ Bloqué : enregistrement en base',
+  timeout_relecture:'❌ Bloqué : relecture de l\'abonnement en base',
 };
 function pushErrorLabel(code){ return PUSH_ERRORS[code]||('❌ '+code); }
 
