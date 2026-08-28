@@ -230,7 +230,23 @@ Deno.serve(async (req) => {
       console.error('send-push: lecture de push_subscriptions refusée -', subsErr.code, subsErr.message);
       return new Response(JSON.stringify({ error: `Lecture des abonnements impossible : ${subsErr.message}` }), { status: 500, headers: corsHeaders });
     }
-    if (!subs || subs.length === 0) return new Response(JSON.stringify({ sent: 0 }), { headers: corsHeaders });
+    if (!subs || subs.length === 0) {
+      // Une clé sans privilège ne provoque pas d'erreur : PostgREST répond
+      // `200 []` parce que la RLS a filtré. « Aucun abonné » et « je n'ai pas le
+      // droit de voir les abonnés » sont donc littéralement la même réponse, et
+      // le contrôle de `subsErr` ci-dessus ne peut pas les séparer.
+      // On lève l'ambiguïté par une opération réservée à service_role : si elle
+      // échoue, la lecture précédente n'était pas fiable et le vide observé ne
+      // veut rien dire.
+      const { error: probeErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1 });
+      if (probeErr) {
+        console.error('send-push: la clé utilisée n\'a pas les privilèges service_role -', probeErr.message);
+        return new Response(JSON.stringify({
+          error: 'La fonction n\'a pas les privilèges service_role : les abonnements sont invisibles pour elle. Vérifiez le secret SERVICE_ROLE_KEY.',
+        }), { status: 500, headers: corsHeaders });
+      }
+      return new Response(JSON.stringify({ sent: 0 }), { headers: corsHeaders });
+    }
 
     const payload = JSON.stringify({ title: validated.title, body: validated.body, url: validated.url, tag: 'commande' });
     let sent = 0;
