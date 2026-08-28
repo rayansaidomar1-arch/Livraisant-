@@ -1,5 +1,5 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v122';
+const CACHE = 'livraisante-v123';
 const SHELL = [
   '/',
   '/index.html',
@@ -58,6 +58,45 @@ self.addEventListener('notificationclick', e => {
   );
 });
 
+// ── Stratégie de cache ────────────────────────────────────────────
+//
+// L'app shell (index.html, js/config.js, js/supabase-client.js) était servie en
+// « cache d'abord, sans jamais revalider » : une fois `caches.match()` positif,
+// le réseau n'était plus jamais consulté. Le contenu ne pouvait donc changer
+// qu'en incrémentant CACHE à la main — et cette incrémentation a été oubliée
+// sur trois déploiements d'affilée (nouvelle clé VAPID, correctif inscription,
+// correctif push). Résultat : les visiteurs déjà venus restaient figés sur la
+// version d'avant le 2026-08-24, avec l'ANCIENNE clé publique VAPID, et aucun
+// correctif ne les atteignait.
+//
+// On passe donc l'app shell en « stale-while-revalidate » : réponse immédiate
+// depuis le cache (l'index fait ~950 Ko, on ne veut pas attendre le réseau),
+// mise à jour en arrière-plan. Une version au plus de retard, convergence
+// automatique, sans dépendre d'un geste manuel. Les binaires immuables
+// (icônes, images, polices) restent en cache d'abord.
+const SHELL_LIKE = /\.(?:html|js|json|css)$/;
+
+function staleWhileRevalidate(request) {
+  // `cache: 'no-cache'` est indispensable : le serveur statique renvoie
+  // `max-age=31536000` sur les .js (politique par défaut de Static Web Server,
+  // et clevercloud/httpserver.json n'est pas lu par ce runtime). Sans cela, la
+  // revalidation serait elle-même servie par le cache HTTP du navigateur et ne
+  // verrait jamais la nouvelle version. 'no-cache' force un aller-retour
+  // conditionnel — un 304 si rien n'a changé, donc quasi gratuit.
+  const revalidation = new Request(request.url, { cache: 'no-cache', credentials: 'same-origin' });
+  return caches.match(request).then(cached => {
+    const network = fetch(revalidation).then(res => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(request, copy));
+      }
+      return res;
+    }).catch(() => cached);
+    // Servir le cache tout de suite s'il existe, sinon attendre le réseau.
+    return cached || network;
+  });
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
@@ -65,11 +104,18 @@ self.addEventListener('fetch', e => {
   if (url.hostname.includes('supabase.co') || url.hostname.includes('jsdelivr.net')) return;
 
   // Navigation directe / refresh sur une URL de route (ex. /sante, /livreur/inscription)
-  // → toujours servir index.html depuis le cache (SPA History API)
+  // → servir index.html (SPA History API), en le revalidant en arrière-plan.
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      caches.match('/index.html').then(c => c || fetch('/index.html'))
+      staleWhileRevalidate(new Request('/index.html'))
+        .then(r => r || caches.match('/index.html'))
+        .catch(() => caches.match('/index.html'))
     );
+    return;
+  }
+
+  if (url.origin === self.location.origin && SHELL_LIKE.test(url.pathname)) {
+    e.respondWith(staleWhileRevalidate(e.request));
     return;
   }
 
