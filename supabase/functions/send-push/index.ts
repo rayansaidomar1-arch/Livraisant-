@@ -161,8 +161,18 @@ Deno.serve(async (req) => {
 
   // Auth : service_role (serveur→serveur) OU JWT anon valide (auto-test, envoi à soi-même uniquement)
   const authHeader = req.headers.get('authorization') || '';
-  const serviceKey  = Deno.env.get('SERVICE_ROLE_KEY') || '';
-  const isServiceRole = !!serviceKey && timingSafeEqual(authHeader, `Bearer ${serviceKey}`);
+  // `SERVICE_ROLE_KEY` est un secret posé à la main ; `SUPABASE_SERVICE_ROLE_KEY`
+  // est injectée par la plateforme et suit les rotations de clés. Pour accéder à
+  // la base on privilégie donc celle de la plateforme, toujours à jour, et on
+  // retombe sur le secret manuel s'il est seul présent.
+  const platformKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  const manualKey   = Deno.env.get('SERVICE_ROLE_KEY') || '';
+  const serviceKey  = platformKey || manualKey;
+  // Un appelant serveur→serveur peut présenter l'une ou l'autre : ce sont deux
+  // noms pour le même rôle. La comparaison reste à temps constant.
+  const isServiceRole =
+    (!!platformKey && timingSafeEqual(authHeader, `Bearer ${platformKey}`)) ||
+    (!!manualKey   && timingSafeEqual(authHeader, `Bearer ${manualKey}`));
 
   try {
     const { user_id, title, body, url = '/' } = await req.json();
@@ -185,8 +195,8 @@ Deno.serve(async (req) => {
     // se traduire plus bas par une lecture vide indiscernable d'un utilisateur
     // sans abonnement.
     if (!serviceKey) {
-      console.error('send-push: SERVICE_ROLE_KEY absente des secrets de la fonction');
-      return new Response(JSON.stringify({ error: 'SERVICE_ROLE_KEY manquante côté serveur' }), { status: 500, headers: corsHeaders });
+      console.error('send-push: aucune clé service_role (ni SUPABASE_SERVICE_ROLE_KEY ni SERVICE_ROLE_KEY)');
+      return new Response(JSON.stringify({ error: 'Clé service_role manquante côté serveur' }), { status: 500, headers: corsHeaders });
     }
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
 
