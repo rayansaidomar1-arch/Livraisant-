@@ -5037,11 +5037,18 @@ const PUSH_ERRORS={
 };
 function pushErrorLabel(code){ return PUSH_ERRORS[code]||('❌ '+code); }
 
+// Dernière cause d'échec de l'activation. Le toast s'efface au bout de quelques
+// secondes, et l'utilisateur le manque : la cause disparaissait avant d'avoir pu
+// être lue, ne laissant que le symptôme (« aucun abonnement sur cet appareil »),
+// qui ne dit pas POURQUOI. On la conserve pour l'afficher dans le panneau.
+let dernierEchecPush=null;
+
 async function activerPush(){
   if(!currentUser?.id){showToast('Connectez-vous d\'abord','#e11d48');return;}
   if(!window.LS_SB?.SB_READY){showToast('Supabase non configuré','#e11d48');return;}
   showToast('Demande de permission…','#6366f1');
   const res=await window.LS_SB.sbSubscribePush(currentUser.id);
+  dernierEchecPush=res.error||null;
   if(res.error) showToast(pushErrorLabel(res.error),'#e11d48');
   else showToast('✅ Abonnement enregistré — vous pouvez tester','var(--ok)');
   // Rafraîchir le panneau
@@ -5063,9 +5070,18 @@ async function refreshPushBlock(){
       <div style="flex:1;font-size:12px;color:#166534;font-weight:600">Notifications push activées</div>
       <button onclick="testerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:var(--ink);color:var(--lime);border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">📤 Tester</button>`;
   } else {
+    // `reason` décrit le SYMPTÔME constaté (« aucun abonnement sur cet
+    // appareil »). `dernierEchecPush` retient la CAUSE de la dernière tentative,
+    // bien plus utile : on la privilégie, et on affiche le code brut pour qu'un
+    // diagnostic reste possible sans ouvrir la console.
+    const motif=dernierEchecPush||reason;
     el.style.background='#fffbeb'; el.style.borderColor='#fcd34d';
+    el.style.alignItems='flex-start';
     el.innerHTML=`<span style="font-size:18px">⚠️</span>
-      <div style="flex:1;font-size:12px;color:#92400e;font-weight:600">${esc(pushErrorLabel(reason).replace(/^[❌⚠️]️?\s*/,''))}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:#92400e;font-weight:600">${esc(pushErrorLabel(motif).replace(/^[❌⚠️]️?\s*/,''))}</div>
+        <div style="font-size:10px;color:#a16207;margin-top:3px;word-break:break-word">code : ${esc(motif)}</div>
+      </div>
       <button onclick="activerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:#16a34a;color:white;border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">Réactiver</button>`;
   }
 }

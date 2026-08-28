@@ -653,7 +653,11 @@ async function sbSubscribePush(userId) {
 
     return { endpoint: json.endpoint, error: null };
   } catch (e) {
-    return { error: e.message };
+    // Les échecs de l'API push sont des DOMException dont le `message` est
+    // souvent vide ou générique ; c'est le `name` qui porte l'information
+    // (NotAllowedError, AbortError, NotSupportedError…). Le perdre revient à
+    // afficher une erreur vide — on préfixe donc systématiquement.
+    return { error: e.name && e.name !== 'Error' ? e.name + (e.message ? ' : ' + e.message : '') : e.message };
   }
 }
 
