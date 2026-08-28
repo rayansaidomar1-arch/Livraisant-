@@ -4984,11 +4984,17 @@ function renderNotifPanel(){
         <button onclick="activerPush()" style="font-family:inherit;font-weight:700;font-size:12px;background:#16a34a;color:white;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap">Activer</button>
       </div>`;
     } else if(perm==='granted'){
-      pushBlock=`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:18px">✅</span>
-        <div style="flex:1;font-size:12px;color:#166534;font-weight:600">Notifications push activées</div>
-        <button onclick="testerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:var(--ink);color:var(--lime);border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">📤 Tester</button>
+      // La permission accordée ne prouve RIEN sur le push : elle autorise aussi
+      // les notifications locales de pushNotification() (`new Notification`),
+      // qui ne passent par aucun serveur. Afficher « activées » ici a masqué
+      // pendant des semaines une table push_subscriptions vide. On part donc
+      // d'un état neutre et c'est refreshPushBlock() qui tranche, en vérifiant
+      // l'abonnement navigateur ET sa présence en base.
+      pushBlock=`<div id="pushBlock" style="background:#f8fafc;border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">⏳</span>
+        <div style="flex:1;font-size:12px;color:#475569;font-weight:600">Vérification de l'abonnement…</div>
       </div>`;
+      setTimeout(refreshPushBlock,0);
     } else {
       pushBlock=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#991b1b">
         🚫 Notifications bloquées dans les réglages du navigateur
@@ -5004,21 +5010,55 @@ function renderNotifPanel(){
     :'<div style="font-size:13px;color:var(--ink-soft);padding:8px 0">Aucune notification pour le moment.</div>'}
   </div>`;
 }
+// Messages d'échec du push. Sans cette table, l'utilisateur voyait passer des
+// libellés bruts (« Registration failed - different applicationServerKey ») ou,
+// pire, rien du tout.
+const PUSH_ERRORS={
+  permission_denied:'❌ Permission refusée — réactivez-la dans les réglages du navigateur',
+  push_not_supported:'❌ Push non supporté sur ce navigateur',
+  vapid_key_missing:'❌ Clé VAPID absente de la configuration',
+  supabase_not_configured:'❌ Supabase non configuré',
+  session_expired:'❌ Session expirée — reconnectez-vous puis réessayez',
+  subscription_not_persisted:'❌ Abonnement non enregistré en base — reconnectez-vous puis réessayez',
+  stale_vapid_key:'⚠️ Abonnement obsolète (clé serveur changée) — cliquez sur « Réactiver »',
+  no_browser_subscription:'⚠️ Aucun abonnement sur cet appareil',
+  not_in_database:'⚠️ Abonnement absent de la base — le serveur ne peut rien vous envoyer',
+  db_error:'⚠️ Vérification impossible — base injoignable',
+  permission_default:'⚠️ Permission non encore accordée',
+};
+function pushErrorLabel(code){ return PUSH_ERRORS[code]||('❌ '+code); }
+
 async function activerPush(){
   if(!currentUser?.id){showToast('Connectez-vous d\'abord','#e11d48');return;}
   if(!window.LS_SB?.SB_READY){showToast('Supabase non configuré','#e11d48');return;}
   showToast('Demande de permission…','#6366f1');
   const res=await window.LS_SB.sbSubscribePush(currentUser.id);
-  if(res.error){
-    if(res.error==='permission_denied') showToast('❌ Permission refusée dans les réglages','#e11d48');
-    else if(res.error==='push_not_supported') showToast('❌ Push non supporté sur ce navigateur','#e11d48');
-    else showToast('❌ '+res.error,'#e11d48');
-  } else {
-    showToast('✅ Notifications push activées !','var(--ok)');
-  }
+  if(res.error) showToast(pushErrorLabel(res.error),'#e11d48');
+  else showToast('✅ Abonnement enregistré — vous pouvez tester','var(--ok)');
   // Rafraîchir le panneau
   document.getElementById('notifPanel')?.remove();
   setTimeout(toggleNotifPanel,150);
+}
+
+/** Remplace le bloc « ⏳ Vérification… » par l'état réel de l'abonnement.
+ *  N'affirme « activées » que si la ligne existe vraiment en base. */
+async function refreshPushBlock(){
+  const el=document.getElementById('pushBlock');
+  if(!el||!currentUser?.id||!window.LS_SB?.sbPushStatus) return;
+  const {active,reason}=await window.LS_SB.sbPushStatus(currentUser.id);
+  // Le panneau a pu être fermé entre-temps.
+  if(!document.getElementById('pushBlock')) return;
+  if(active){
+    el.style.background='#f0fdf4'; el.style.borderColor='#86efac';
+    el.innerHTML=`<span style="font-size:18px">✅</span>
+      <div style="flex:1;font-size:12px;color:#166534;font-weight:600">Notifications push activées</div>
+      <button onclick="testerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:var(--ink);color:var(--lime);border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">📤 Tester</button>`;
+  } else {
+    el.style.background='#fffbeb'; el.style.borderColor='#fcd34d';
+    el.innerHTML=`<span style="font-size:18px">⚠️</span>
+      <div style="flex:1;font-size:12px;color:#92400e;font-weight:600">${esc(pushErrorLabel(reason).replace(/^[❌⚠️]️?\s*/,''))}</div>
+      <button onclick="activerPush()" style="font-family:inherit;font-weight:700;font-size:11px;background:#16a34a;color:white;border:none;padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap">Réactiver</button>`;
+  }
 }
 async function testerPush(){
   if(!currentUser?.id){showToast('Connectez-vous d\'abord','#e11d48');return;}
@@ -5026,11 +5066,21 @@ async function testerPush(){
   if(!sb){showToast('Supabase non configuré','#e11d48');return;}
   try{
     showToast('📤 Envoi du test…','#6366f1');
-    const {error}=await sb.functions.invoke('send-push',{
+    const {data,error}=await sb.functions.invoke('send-push',{
       body:{user_id:currentUser.id,title:'🔔 Test Livraisanté',body:'Vos notifications push fonctionnent parfaitement !',url:'/'}
     });
-    if(error) showToast('❌ '+error.message,'#e11d48');
-    else showToast('✅ Notification envoyée ! Vérifiez votre écran','var(--ok)');
+    if(error){ showToast('❌ '+error.message,'#e11d48'); return; }
+    // `send-push` répond {sent:n} : n=0 signifie qu'il n'avait aucun abonnement
+    // à qui envoyer. Annoncer « envoyée » dans ce cas est un mensonge — c'est
+    // précisément ce qui a fait croire pendant des semaines que le push
+    // marchait alors que la table était vide.
+    if(!data||typeof data.sent!=='number'){ showToast('❌ Réponse inattendue du serveur','#e11d48'); return; }
+    if(data.sent===0){
+      showToast('⚠️ Aucun abonnement actif — rien n\'a été envoyé','#e11d48');
+      refreshPushBlock();
+      return;
+    }
+    showToast(`✅ Notification envoyée (${data.sent} appareil${data.sent>1?'s':''}) — titre « 🔔 Test Livraisanté »`,'var(--ok)');
   }catch(e){showToast('❌ '+e.message,'#e11d48');}
 }
 function toggleNotifPanel(){

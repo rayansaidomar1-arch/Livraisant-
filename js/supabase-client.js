@@ -548,7 +548,24 @@ async function sbConfirmOrder(payload){
 
 // ── Web Push ─────────────────────────────────────────────────────
 
-/** Abonne l'utilisateur aux notifications push et sauvegarde dans Supabase */
+/** Abonne l'utilisateur aux notifications push et sauvegarde dans Supabase.
+ *
+ *  Deux pièges, tous deux constatés en production le 2026-08-28 (la table
+ *  `push_subscriptions` était restée vide alors que l'interface annonçait
+ *  « notifications activées ») :
+ *
+ *  1. `pushManager.subscribe()` ÉCHOUE si le navigateur détient déjà un
+ *     abonnement créé avec une AUTRE clé applicative — ce qui est le cas de
+ *     tout appareil abonné avant la régénération VAPID du 2026-08-24. Le
+ *     service worker n'accepte qu'une seule clé serveur à la fois. Il faut donc
+ *     relire l'abonnement existant, comparer sa clé à la nôtre, et le résilier
+ *     s'il est dépareillé.
+ *  2. L'`upsert` peut être refusé silencieusement par la RLS `push_own`
+ *     (`user_id = auth.uid()`) quand la session Supabase a expiré : le client
+ *     n'émet alors aucune erreur exploitable, mais rien n'est écrit. On relit
+ *     donc la ligne pour EXIGER la preuve qu'elle existe, plutôt que de
+ *     déduire le succès de l'absence d'erreur.
+ */
 async function sbSubscribePush(userId) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return { error: 'push_not_supported' };
   const vapidKey = window.LIVR_CONFIG?.vapid_public_key;
@@ -558,25 +575,107 @@ async function sbSubscribePush(userId) {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return { error: 'permission_denied' };
 
+    const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
+    // Sans session valide, la policy `push_own` rejettera l'insertion : autant
+    // le dire maintenant, avec un message actionnable.
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess?.session) return { error: 'session_expired' };
+
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey)
-    });
+    const wanted = urlBase64ToUint8Array(vapidKey);
+
+    // ── 1. Purger un abonnement dépareillé ──
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      const current = existing.options?.applicationServerKey;
+      if (!current || !sameBytes(new Uint8Array(current), wanted)) {
+        await existing.unsubscribe();
+      }
+    }
+
+    let sub;
+    try {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: wanted
+      });
+    } catch (e) {
+      // Filet de sécurité : certains navigateurs n'exposent pas
+      // `options.applicationServerKey`, la comparaison ci-dessus est alors
+      // impossible et c'est `subscribe()` qui refuse. On résilie et on retente.
+      const stale = await reg.pushManager.getSubscription();
+      if (!stale) throw e;
+      await stale.unsubscribe();
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: wanted
+      });
+    }
 
     const json = sub.toJSON();
-    const sb = getSB(); if (!sb) return { error: 'supabase_not_configured' };
     const { error } = await sb.from('push_subscriptions').upsert({
       user_id: userId,
       endpoint: json.endpoint,
       p256dh: json.keys.p256dh,
       auth: json.keys.auth
     }, { onConflict: 'user_id,endpoint' });
+    if (error) return { error: error.message };
 
-    return { error: error?.message || null };
+    // ── 2. Vérifier que la ligne est réellement en base ──
+    const { data: check, error: checkErr } = await sb
+      .from('push_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('endpoint', json.endpoint)
+      .maybeSingle();
+    if (checkErr) return { error: checkErr.message };
+    if (!check) return { error: 'subscription_not_persisted' };
+
+    return { endpoint: json.endpoint, error: null };
   } catch (e) {
     return { error: e.message };
   }
+}
+
+/** Vrai état du push : un abonnement navigateur ET la ligne correspondante en
+ *  base. La permission de notification ne prouve rien — elle autorise aussi les
+ *  notifications purement locales (`new Notification(...)`), qui ne passent par
+ *  aucun serveur. */
+async function sbPushStatus(userId) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return { active: false, reason: 'push_not_supported' };
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+    return { active: false, reason: 'permission_' + (typeof Notification === 'undefined' ? 'denied' : Notification.permission) };
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return { active: false, reason: 'no_browser_subscription' };
+
+    // Clé dépareillée = le serveur ne pourra pas chiffrer pour cet abonnement.
+    const vapidKey = window.LIVR_CONFIG?.vapid_public_key;
+    const current = sub.options?.applicationServerKey;
+    if (vapidKey && current && !sameBytes(new Uint8Array(current), urlBase64ToUint8Array(vapidKey))) {
+      return { active: false, reason: 'stale_vapid_key' };
+    }
+
+    const sb = getSB(); if (!sb) return { active: false, reason: 'supabase_not_configured' };
+    const { data, error } = await sb
+      .from('push_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('endpoint', sub.endpoint)
+      .maybeSingle();
+    if (error) return { active: false, reason: 'db_error' };
+    return data ? { active: true, reason: null } : { active: false, reason: 'not_in_database' };
+  } catch (e) {
+    return { active: false, reason: e.message };
+  }
+}
+
+function sameBytes(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -813,7 +912,7 @@ window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, s
   sbGetHealthPro, sbUpsertHealthPro, sbGetProsForMember,
   sbGetAppointments, sbInsertAppointment, sbUpdateAppointment,
   sbGetOpenSlotsForClub, sbClaimAppointmentSlot,
-  sbCreatePaymentIntent, sbSubscribePush,
+  sbCreatePaymentIntent, sbSubscribePush, sbPushStatus,
   // Commandes (branchement réel 2026-07-18)
   sbGetPublicPharmacies, sbInsertOrderFull, sbConfirmOrder, sbGetPatientOrders, sbGetOrdersForPharmacy,
   sbGetAvailableOrdersForDriver, sbGetMyDriverOrders, sbClaimOrder, sbUpdateOrderFields,
