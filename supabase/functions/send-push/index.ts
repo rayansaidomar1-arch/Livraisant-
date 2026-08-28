@@ -163,16 +163,40 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get('authorization') || '';
   // `SERVICE_ROLE_KEY` est un secret posé à la main ; `SUPABASE_SERVICE_ROLE_KEY`
   // est injectée par la plateforme et suit les rotations de clés. Pour accéder à
-  // la base on privilégie donc celle de la plateforme, toujours à jour, et on
-  // retombe sur le secret manuel s'il est seul présent.
+  // la base on privilégie celle de la plateforme, toujours à jour, et on retombe
+  // sur le secret manuel s'il est seul présent.
+  //
+  // Mais ce secret sert AUSSI à reconnaître un appelant serveur→serveur. Le jour
+  // où l'on y range par erreur une clé publique — ce qui est arrivé : la clé
+  // `sb_publishable_…`, publiée dans js/config.js, s'y trouvait — n'importe quel
+  // visiteur peut la présenter en `Authorization` et se faire passer pour un
+  // appelant interne, donc pousser des notifications à n'importe quel compte.
+  // Une clé publique ne doit jamais pouvoir tenir ce rôle : on l'écarte
+  // explicitement, au lieu de faire confiance au nom de la variable.
+  const looksPrivileged = (k: string): boolean => {
+    if (!k) return false;
+    if (k.startsWith('sb_publishable_')) return false;      // clé publique par nature
+    if (k.startsWith('sb_secret_')) return true;
+    if (k.startsWith('eyJ')) {                              // ancien format JWT
+      try {
+        const claims = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return claims.role === 'service_role';
+      } catch { return false; }
+    }
+    return false;
+  };
+
   const platformKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   const manualKey   = Deno.env.get('SERVICE_ROLE_KEY') || '';
-  const serviceKey  = platformKey || manualKey;
-  // Un appelant serveur→serveur peut présenter l'une ou l'autre : ce sont deux
-  // noms pour le même rôle. La comparaison reste à temps constant.
-  const isServiceRole =
-    (!!platformKey && timingSafeEqual(authHeader, `Bearer ${platformKey}`)) ||
-    (!!manualKey   && timingSafeEqual(authHeader, `Bearer ${manualKey}`));
+  const candidates  = [platformKey, manualKey].filter(looksPrivileged);
+  for (const rejected of [platformKey, manualKey]) {
+    if (rejected && !looksPrivileged(rejected)) {
+      console.error('send-push: une clé sans privilège est configurée comme clé service_role — ignorée');
+    }
+  }
+  const serviceKey = candidates[0] || '';
+  // Comparaison à temps constant, et uniquement contre des clés réellement privilégiées.
+  const isServiceRole = candidates.some((k) => timingSafeEqual(authHeader, `Bearer ${k}`));
 
   try {
     const { user_id, title, body, url = '/' } = await req.json();
@@ -195,8 +219,10 @@ Deno.serve(async (req) => {
     // se traduire plus bas par une lecture vide indiscernable d'un utilisateur
     // sans abonnement.
     if (!serviceKey) {
-      console.error('send-push: aucune clé service_role (ni SUPABASE_SERVICE_ROLE_KEY ni SERVICE_ROLE_KEY)');
-      return new Response(JSON.stringify({ error: 'Clé service_role manquante côté serveur' }), { status: 500, headers: corsHeaders });
+      console.error('send-push: aucune clé service_role valide (SUPABASE_SERVICE_ROLE_KEY / SERVICE_ROLE_KEY absentes ou sans privilège)');
+      return new Response(JSON.stringify({
+        error: 'Aucune clé service_role valide côté serveur : le secret SERVICE_ROLE_KEY doit contenir une clé sb_secret_… (pas la clé publishable).',
+      }), { status: 500, headers: corsHeaders });
     }
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
 
