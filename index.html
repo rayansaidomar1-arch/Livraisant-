@@ -13322,6 +13322,20 @@ window.addEventListener('unhandledrejection', function(e){
 
 /* ---------- PWA : service worker ---------- */
 if('serviceWorker' in navigator){
+  // Le service worker fait skipWaiting() + clients.claim() : une nouvelle
+  // version prend donc le contrôle immédiatement. Mais la page DÉJÀ chargée
+  // conserve en mémoire le JS de l'ancienne — il fallait un second
+  // rechargement manuel pour voir le correctif, ce que personne ne fait.
+  // On recharge donc une fois, automatiquement, quand le contrôleur change.
+  const avaitDejaUnControleur = !!navigator.serviceWorker.controller;
+  let rechargementEnCours = false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    // Première prise de contrôle (visite initiale, page non contrôlée au
+    // chargement) : c'est normal, il n'y a rien de périmé à recharger.
+    if(!avaitDejaUnControleur || rechargementEnCours) return;
+    rechargementEnCours = true;
+    location.reload();
+  });
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
