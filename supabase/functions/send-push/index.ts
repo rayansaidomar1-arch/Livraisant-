@@ -53,6 +53,11 @@ async function buildVapidHeaders(endpoint: string, vapidPublic: string, vapidPri
   return {
     'Authorization': `vapid t=${unsigned}.${sigB64},k=${vapidPublic}`,
     'Content-Type': 'application/octet-stream',
+    // Sans `Content-Encoding`, le service de push ignore comment le corps a été
+    // chiffré et rejette l'envoi (Apple : 400 BadWebPushRequest). Le statut
+    // n'étant ni 2xx ni 410/404, la boucle n'incrémentait simplement pas `sent`
+    // et l'échec ne laissait aucune trace.
+    'Content-Encoding': 'aesgcm',
     'TTL': '86400',
   };
 }
@@ -218,7 +223,10 @@ Deno.serve(async (req) => {
           headers: {
             ...vapidHeaders,
             'Encryption': `salt=${salt64.replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}`,
-            'Crypto-Key': `dh=${spk64.replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')};${vapidHeaders['Authorization'].split(',')[1]}`,
+            // `Crypto-Key` ne porte que la clé éphémère ECDH ; la clé publique
+            // VAPID voyage dans `k=` de `Authorization` (RFC 8292). L'y répéter
+            // sous une étiquette que cet en-tête ne définit pas participait au rejet.
+            'Crypto-Key': `dh=${spk64.replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}`,
           },
           body: encrypted,
         });
@@ -228,6 +236,10 @@ Deno.serve(async (req) => {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id);
         } else if (res.ok || res.status === 201) {
           sent++;
+        } else {
+          // Ne pas laisser un statut inattendu disparaître sans trace.
+          const detail = await res.text().catch(() => '');
+          console.error('Push refusé par', new URL(sub.endpoint).host, '-', res.status, detail.slice(0, 200));
         }
       } catch (err) {
         console.error('Push failed for sub', sub.id, err.message);

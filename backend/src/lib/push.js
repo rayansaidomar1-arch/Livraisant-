@@ -67,6 +67,11 @@ async function buildVapidHeaders(endpoint, vapidPublic, vapidPrivate, subject) {
   return {
     'Authorization': `vapid t=${unsigned}.${sigB64},k=${vapidPublic}`,
     'Content-Type': 'application/octet-stream',
+    // Sans `Content-Encoding`, le service de push ne sait pas comment le corps a
+    // été chiffré et refuse la requête. Apple répondait 400 BadWebPushRequest sur
+    // chaque envoi — silencieusement, le statut n'étant ni 2xx ni 410/404, la
+    // boucle d'envoi se contentait de ne pas incrémenter le compteur.
+    'Content-Encoding': 'aesgcm',
     'TTL': '86400',
   };
 }
@@ -134,7 +139,11 @@ async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande'
         headers: {
           ...vapidHeaders,
           'Encryption': `salt=${salt64}`,
-          'Crypto-Key': `dh=${spk64};${vapidHeaders['Authorization'].split(',')[1]}`,
+          // `Crypto-Key` ne transporte que la clé éphémère ECDH. La clé publique
+          // VAPID voyage dans le paramètre `k=` de `Authorization` (RFC 8292) ;
+          // la répéter ici sous une étiquette `k=`, que cet en-tête ne définit
+          // pas, faisait partie du rejet.
+          'Crypto-Key': `dh=${spk64}`,
         },
         body: encrypted,
         signal: AbortSignal.timeout(PUSH_TIMEOUT_MS),
@@ -144,6 +153,11 @@ async function sendPushToUser(userId, { title, body, url = '/', tag = 'commande'
         await deletePushSubscription(sub.id);
       } else if (res.ok || res.status === 201) {
         sent++;
+      } else {
+        // Un statut inattendu ne doit pas disparaître : c'est exactement ce qui a
+        // masqué le 400 pendant toute la mise au point du push.
+        const detail = await res.text().catch(() => '');
+        console.error('Push refusé par', new URL(sub.endpoint).host, '-', res.status, detail.slice(0, 200));
       }
     } catch (err) {
       console.error('Push failed for sub', sub.id, err.message);
