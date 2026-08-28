@@ -181,7 +181,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
+    // Un secret absent doit échouer ici, avec un message lisible, plutôt que de
+    // se traduire plus bas par une lecture vide indiscernable d'un utilisateur
+    // sans abonnement.
+    if (!serviceKey) {
+      console.error('send-push: SERVICE_ROLE_KEY absente des secrets de la fonction');
+      return new Response(JSON.stringify({ error: 'SERVICE_ROLE_KEY manquante côté serveur' }), { status: 500, headers: corsHeaders });
+    }
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
 
     // ── Rate-limiting (audit 2026-07-23, Moyen) — clé sur le user_id CIBLE (le
     // destinataire), pas l'appelant : ça borne les dégâts même dans le pire cas
@@ -202,8 +209,17 @@ Deno.serve(async (req) => {
     const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY')!;
     const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:administratif@livraisante.fr';
 
-    // Récupère tous les abonnements de cet utilisateur
-    const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('user_id', user_id);
+    // Récupère tous les abonnements de cet utilisateur.
+    // L'erreur de lecture était ignorée : une clé refusée, une RLS qui mord ou
+    // une panne réseau donnaient `subs = null`, donc `{sent:0}` — réponse
+    // strictement identique à celle d'un utilisateur sans abonnement. Le vrai
+    // motif ne doit plus être confondu avec l'absence d'abonné.
+    const { data: subs, error: subsErr } = await supabase
+      .from('push_subscriptions').select('*').eq('user_id', user_id);
+    if (subsErr) {
+      console.error('send-push: lecture de push_subscriptions refusée -', subsErr.code, subsErr.message);
+      return new Response(JSON.stringify({ error: `Lecture des abonnements impossible : ${subsErr.message}` }), { status: 500, headers: corsHeaders });
+    }
     if (!subs || subs.length === 0) return new Response(JSON.stringify({ sent: 0 }), { headers: corsHeaders });
 
     const payload = JSON.stringify({ title: validated.title, body: validated.body, url: validated.url, tag: 'commande' });
