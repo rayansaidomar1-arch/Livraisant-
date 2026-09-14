@@ -282,7 +282,6 @@ Deno.serve(async (req) => {
         const { encrypted, salt, serverPublicKey } = await encryptPayload({ p256dh: sub.p256dh, auth: sub.auth }, payload);
         const vapidHeaders = await buildVapidHeaders(sub.endpoint, vapidPublic, vapidPrivate, vapidSubject);
 
-        const body64 = btoa(String.fromCharCode(...encrypted));
         const salt64 = btoa(String.fromCharCode(...salt));
         const spk64  = btoa(String.fromCharCode(...serverPublicKey));
 
