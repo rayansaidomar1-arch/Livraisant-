@@ -53,6 +53,37 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+// Même garde que send-push/index.ts. Le secret `SERVICE_ROLE_KEY` a contenu la clé
+// `sb_publishable_…`, publiée dans js/config.js — donc connue de tout visiteur. Or ce
+// secret sert ici de preuve d'identité : n'importe qui pouvait la présenter en
+// `Authorization` et se faire passer pour un appelant interne, ce qui rouvrait le
+// relai d'e-mails que l'audit du 2026-08-05 avait fermé. Le rôle service_role ne
+// s'accorde donc plus sur la foi du nom de la variable : on vérifie que la clé est
+// réellement privilégiée.
+function looksPrivileged(k: string): boolean {
+  if (!k) return false;
+  if (k.startsWith('sb_publishable_')) return false;   // clé publique par nature
+  if (k.startsWith('sb_secret_')) return true;
+  if (k.startsWith('eyJ')) {                           // ancien format JWT
+    try {
+      const claims = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return claims.role === 'service_role';
+    } catch { return false; }
+  }
+  return false;
+}
+
+// `SUPABASE_SERVICE_ROLE_KEY` est injectée par la plateforme et suit les rotations de
+// clés ; `SERVICE_ROLE_KEY` est le secret posé à la main. On ne retient que celles qui
+// sont réellement privilégiées, et l'on signale les autres plutôt que de les ignorer.
+function privilegedKeys(): string[] {
+  const candidates = [Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '', Deno.env.get('SERVICE_ROLE_KEY') || ''];
+  for (const k of candidates) {
+    if (k && !looksPrivileged(k)) console.error('send-email: une clé sans privilège est configurée comme clé service_role — ignorée');
+  }
+  return candidates.filter(looksPrivileged);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -99,8 +130,7 @@ Deno.serve(async (req) => {
     // par email cible — voir supabase/functions/signup-verification/index.ts).
     if (type === 'signup_verification') {
       const authHeader = req.headers.get('Authorization') || '';
-      const serviceKey = Deno.env.get('SERVICE_ROLE_KEY') || '';
-      const isServiceRole = !!serviceKey && timingSafeEqual(authHeader, `Bearer ${serviceKey}`);
+      const isServiceRole = privilegedKeys().some((k) => timingSafeEqual(authHeader, `Bearer ${k}`));
       if (!isServiceRole) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
       }
@@ -124,14 +154,21 @@ Deno.serve(async (req) => {
       const rlMax = authedUserId ? 15 : 5;
       const rlWindow = authedUserId ? 600 : 3600;
       try {
-        const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
+        const adminKey = privilegedKeys()[0];
+        if (!adminKey) throw new Error('aucune clé service_role valide configurée');
+        const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, adminKey);
         const { data: allowed, error: rlErr } = await supabaseAdmin.rpc('check_rate_limit', {
           p_bucket: rlBucket, p_max_hits: rlMax, p_window_seconds: rlWindow,
         });
+        if (rlErr) console.error('send-email: rate-limiting inopérant -', rlErr.message);
         if (!rlErr && allowed === false) {
           return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez plus tard.' }), { status: 429, headers: corsHeaders });
         }
-      } catch (_e) { /* fail-open volontaire, voir commentaire ci-dessus */ }
+      } catch (e) {
+        // fail-open volontaire (voir ci-dessus), mais la cause doit rester visible :
+        // un rate-limiting désactivé en silence ne se remarque qu'au moment de l'abus.
+        console.error('send-email: rate-limiting ignoré -', e instanceof Error ? e.message : String(e));
+      }
     }
 
     // Échappe tous les champs texte libres avant de les passer aux templates HTML

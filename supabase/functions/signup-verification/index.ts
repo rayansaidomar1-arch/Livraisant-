@@ -39,12 +39,46 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+// Même garde que send-push/index.ts. Le secret `SERVICE_ROLE_KEY` a contenu la clé
+// `sb_publishable_…`, qui n'a aucun privilège : `signup_verifications` ayant sa RLS
+// fermée, toutes les lectures et écritures de cette fonction devenaient vaines sans
+// qu'aucune erreur ne le dise — PostgREST répond `200 []` quand la RLS filtre.
+function looksPrivileged(k: string): boolean {
+  if (!k) return false;
+  if (k.startsWith('sb_publishable_')) return false;   // clé publique par nature
+  if (k.startsWith('sb_secret_')) return true;
+  if (k.startsWith('eyJ')) {                           // ancien format JWT
+    try {
+      const claims = JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return claims.role === 'service_role';
+    } catch { return false; }
+  }
+  return false;
+}
+
+// La plateforme injecte `SUPABASE_SERVICE_ROLE_KEY` et la maintient à jour ;
+// `SERVICE_ROLE_KEY` est le secret manuel. On ne retient que les clés privilégiées.
+function privilegedKeys(): string[] {
+  const candidates = [Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '', Deno.env.get('SERVICE_ROLE_KEY') || ''];
+  for (const k of candidates) {
+    if (k && !looksPrivileged(k)) console.error('signup-verification: une clé sans privilège est configurée comme clé service_role — ignorée');
+  }
+  return candidates.filter(looksPrivileged);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY')!;
+  const serviceRoleKey = privilegedKeys()[0];
+  // Sans privilège, la RLS fermée de `signup_verifications` transforme chaque lecture
+  // en `200 []` et chaque écriture en no-op : le flux d'inscription échouerait sans
+  // qu'aucune erreur ne l'indique. Mieux vaut refuser bruyamment.
+  if (!serviceRoleKey) {
+    console.error('signup-verification: aucune clé service_role valide configurée');
+    return new Response(JSON.stringify({ error: 'Configuration serveur invalide' }), { status: 500, headers: corsHeaders });
+  }
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
   const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
 
