@@ -2328,7 +2328,10 @@ function resetAll(){
    Marge Livraisanté 10% sur prix pharmacie + Frais de livraison au livreur
 =================================================================== */
 const MARGE_PCT=0.10;
-const FRAIS_LIVRAISON=3.90; // fallback si distance inconnue
+// Pas de forfait de repli : si la distance est inconnue, aucun tarif de livraison
+// n'est déterminable et la commande est bloquée avant paiement (voir
+// getDeliveryFee / placeOrderSante). Même règle côté Edge Function
+// create-payment-intent, qui refuse une commande `livraison` sans distanceKm.
 
 // Frais de fonctionnement prélevés sur le panier, affichés au patient, et
 // intégralement reversés à la cagnotte du club dont il est adhérent validé.
@@ -2432,14 +2435,21 @@ const PROFESSIONS_ORDRE = [
 
 let deliveryDistanceKm=null; // calculé via GPS ou estimé
 
+/**
+ * Frais de livraison en euros, ou `null` si la distance est inconnue : il n'existe
+ * pas de forfait de repli, un tarif indéterminable bloque la commande.
+ * @returns {number|null}
+ */
 function getDeliveryFee(mode){
   const acc=currentUser?getAccounts()[currentUser.email]:null;
+  if(mode==='cnc'||mode==='cnc_club') return 0; // retrait : aucun frais de livraison
   if(acc?.patientSub?.active) return 0; // abonné = livraison gratuite
-  if(mode==='cnc_club') return 0; // Click & Collect club sportif : frais pris en charge par Livraisanté
-  if(deliveryDistanceKm===null) return FRAIS_LIVRAISON; // distance inconnue
+  if(deliveryDistanceKm===null) return null; // distance inconnue → tarif indéterminable
   const tier=DELIVERY_TIERS.find(t=>deliveryDistanceKm<=t.maxKm);
   return tier?tier.price:9.90;
 }
+/** true si le tarif de livraison ne peut pas être calculé (distance inconnue) */
+function isDeliveryFeeUnknown(mode){ return getDeliveryFee(mode)===null; }
 function getDeliveryTier(){
   if(deliveryDistanceKm===null) return null;
   return DELIVERY_TIERS.find(t=>deliveryDistanceKm<=t.maxKm)||DELIVERY_TIERS[3];
@@ -4625,7 +4635,7 @@ function showRgpdModal(section='intro'){
         <li>Plus de 4 km et jusqu'à 20 km : <b>6,90 €</b></li>
         <li>Au-delà de 20 km : <b>9,90 €</b></li>
       </ul>
-      <p>Lorsque la distance ne peut pas être déterminée automatiquement, un forfait de <b>3,90 €</b> est appliqué. Le montant exact des frais de livraison est affiché dans le récapitulatif du panier <b>avant</b> tout paiement et constitue le montant effectivement débité.</p>
+      <p>Aucun forfait n'est appliqué en l'absence de distance connue : lorsque la distance entre l'officine et l'adresse de livraison ne peut pas être déterminée, <b>la commande en livraison ne peut pas être validée</b> et le Client est invité à activer sa géolocalisation ou à opter pour le retrait en pharmacie. Le montant exact des frais de livraison est affiché dans le récapitulatif du panier <b>avant</b> tout paiement et constitue le montant effectivement débité.</p>
       <p>Le retrait en pharmacie (Click &amp; Collect) est <b>exempt de frais de livraison</b> ; les frais de fonctionnement de 5 % restent dus et sont alors calculés sur le seul montant des produits. Le paiement s'effectue exclusivement en ligne via Stripe (CB, Apple Pay, Google Pay).</p>
 
       <h4 style="margin:14px 0 6px">Article 5 — Livraison</h4>
@@ -7380,7 +7390,10 @@ function removeFromCart(key){ patientCart=patientCart.filter(p=>cartKey(p)!==key
 function cartTotal(mode){
   const base=patientCart.reduce((s,p)=>s+(p.prix||0),0);
   const subtotal=base*(1+MARGE_PCT);
-  return mode==='cnc' ? subtotal : subtotal+getDeliveryFee(mode);
+  const fee=getDeliveryFee(mode);
+  // fee===null : distance inconnue. On renvoie un total *hors livraison*, signalé
+  // comme tel dans le panier ; le paiement est bloqué par placeOrderSante().
+  return fee===null ? subtotal : subtotal+fee;
 }
 /** Frais de fonctionnement Livraisanté (transparents, affichés au client) */
 function platformCommission(mode){ return parseFloat((cartTotal(mode)*PLATFORM_FEE_RATE).toFixed(2)); }
@@ -7400,9 +7413,9 @@ function renderCart(){
   // Ligne livraison
   let feeLine='';
   if(deliveryMode==='livraison'){
-    const feeLabel=deliveryDistanceKm!==null
+    const feeLabel=fee!==null
         ?`<span style="font-weight:800;color:${tier?.color||'var(--ink)'}">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">${tier?.label||''}</span>`
-        :`<span style="font-weight:700">€${fee.toFixed(2)}</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">distance à calculer</span>`;
+        :`<span style="font-weight:700;color:var(--warn)">À calculer</span><span style="font-size:11px;color:var(--ink-soft);margin-left:6px">distance inconnue</span>`;
     feeLine=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #eee;font-size:13.5px">
       <span style="color:var(--ink-soft)">🛵 Livraison</span>
       <div style="text-align:right">${feeLabel}</div>
@@ -7458,9 +7471,9 @@ function renderCart(){
       </div>`:''}
     </div>
     <div class="cart-total-row">
-      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':deliveryMode==='cnc_club'?'Retrait au club':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
-      ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
-      <div class="cart-grand-total">€${total.toFixed(2)}</div>
+      <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':deliveryMode==='cnc_club'?'Retrait au club':fee===null?'Hors frais de livraison':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
+      ${fee===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Activez votre position pour calculer les frais de livraison — obligatoire avant le paiement</div>':''}</div>
+      <div class="cart-grand-total">€${total.toFixed(2)}${fee===null?'<span style="display:block;font-size:11px;font-weight:600;color:var(--warn)">+ livraison</span>':''}</div>
     </div>
     ${supportBlock()}`;
   // Charger les options club en asynchrone après le rendu
@@ -8165,7 +8178,9 @@ function setMode(m){
       ${tiersHtml}
       ${deliveryDistanceKm!==null?`<div style="margin-top:10px;padding:8px 12px;background:white;border-radius:8px;border:1px solid var(--line);font-size:13px">
         📍 Distance estimée : <b>${deliveryDistanceKm.toFixed(1)} km</b> → <b style="color:${tier?.color||'var(--ink)'}">€${fee.toFixed(2)}</b>
-      </div>`:`<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;padding:0 12px">📍 Prix calculé selon votre distance — utilisez le bouton <b>📍 Ma position</b> pour un tarif exact.</div>`}
+      </div>`:fee!==null?`<div style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #86efac;font-size:13px">
+        ✅ <b>Livraison offerte</b> — incluse dans votre abonnement Livraison+, quelle que soit la distance.
+      </div>`:`<div style="font-size:12px;color:var(--warn);margin-top:8px;padding:8px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">📍 Distance inconnue — utilisez le bouton <b>📍 Ma position</b> pour calculer vos frais de livraison. <b>Sans distance, la commande ne peut pas être validée.</b></div>`}
     </div>
     ${renderPharmacyCard()}
     <div class="cnc-info" style="margin-bottom:8px">Délai estimé <b>1 à 3 heures</b> selon disponibilité du livreur et de la pharmacie partenaire.</div>`;
@@ -8285,6 +8300,9 @@ function placeOrderSante(){
     deliveryMode==='cnc_club'?`Retrait Club · ${_cncClub?.clubInfo?.nom||'Club'}${_cncClub?.clubInfo?.adresse?' · '+_cncClub.clubInfo.adresse:''}`:
     (document.getElementById('santeAddr')?.value||'').trim();
   if(deliveryMode==='livraison'&&!addr){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card">Indiquez votre adresse ou utilisez 📍.</div>';return;}
+  // Sans distance, les frais de livraison ne sont pas calculables : on bloque plutôt
+  // que de facturer un forfait arbitraire (l'Edge Function refuse aussi la commande).
+  if(isDeliveryFeeUnknown(deliveryMode)){const t=document.getElementById('santeOrderTrack');if(t)t.innerHTML='<div class="track-card warn-caution">📍 Distance inconnue — les frais de livraison dépendent de la distance entre l\'officine et votre adresse. Utilisez le bouton <b>📍 Ma position</b> pour la calculer, ou choisissez le retrait en pharmacie.</div>';return;}
   // Estimation client (affichage instantané uniquement) — le montant réellement
   // facturé est recalculé côté serveur à partir de `cart.items` (voir showStripePayment).
   const estimateEur=cartTotalFull(deliveryMode);

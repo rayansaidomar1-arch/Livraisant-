@@ -19,7 +19,9 @@
 const { pool } = require('./supabaseDb');
 
 const MARGE_PCT = 0.1;
-const FRAIS_LIVRAISON_DEFAUT = 3.9; // distance inconnue
+// Pas de forfait par défaut : sans distance exploitable, le tarif de livraison
+// n'est pas déterminable et la commande est refusée (cf. getDeliveryFee() dans
+// index.html et l'article 4 des CGV patient).
 const DELIVERY_TIERS = [
   { maxKm: 2, price: 3.0 },
   { maxKm: 4, price: 4.5 },
@@ -34,10 +36,14 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * @returns {number|null} frais en euros, ou `null` si la distance est inexploitable
+ *   en mode livraison — l'appelant doit alors refuser la commande.
+ */
 function deliveryFeeFor(mode, distanceKm) {
   if (mode === 'cnc' || mode === 'cnc_club') return 0; // retrait sur place
   if (typeof distanceKm !== 'number' || !Number.isFinite(distanceKm) || distanceKm < 0) {
-    return FRAIS_LIVRAISON_DEFAUT;
+    return null; // distance inconnue → tarif indéterminable
   }
   return DELIVERY_TIERS.find((t) => distanceKm <= t.maxKm).price;
 }
@@ -50,7 +56,7 @@ function deliveryFeeFor(mode, distanceKm) {
  * des articles gratuits (c'est exactement la faille qu'on ferme ici).
  *
  * @returns {{itemsTotal:number, deliveryFee:number, total:number, lines:Array}}
- * @throws  {Error} `code` = 'panier_vide' | 'article_inconnu' | 'mode_invalide'
+ * @throws  {Error} `code` = 'panier_vide' | 'article_inconnu' | 'mode_invalide' | 'distance_requise'
  */
 async function priceCart({ items, deliveryMode = 'livraison', distanceKm = null }) {
   if (!DELIVERY_MODES.includes(deliveryMode)) {
@@ -84,6 +90,12 @@ async function priceCart({ items, deliveryMode = 'livraison', distanceKm = null 
   const base = lines.reduce((s, l) => s + l.ligne, 0);
   const itemsTotal = round2(base * (1 + MARGE_PCT));
   const deliveryFee = deliveryFeeFor(deliveryMode, distanceKm);
+  if (deliveryFee === null) {
+    throw Object.assign(
+      new Error('Distance de livraison manquante ou invalide : les frais de livraison ne peuvent pas être calculés.'),
+      { code: 'distance_requise' }
+    );
+  }
 
   return { itemsTotal, deliveryFee, total: round2(itemsTotal + deliveryFee), lines };
 }

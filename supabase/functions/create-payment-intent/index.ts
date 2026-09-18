@@ -49,7 +49,9 @@ const corsHeaders={
 const PRICING_MODES: Record<string, number> = { eco:0.85, std:1.00, prem:1.15 };
 const MARGE_PCT=0.10;         // marge Livraisanté sur les produits (cf. MARGE_PCT index.html)
 const COMMISSION_PCT=0.05;    // frais de fonctionnement (cf. PLATFORM_FEE_RATE index.html)
-const FRAIS_LIVRAISON_FALLBACK=3.90; // cf. FRAIS_LIVRAISON index.html (distance inconnue)
+// Aucun forfait de repli : une commande `livraison` sans distance exploitable est
+// refusée (400) plutôt que facturée à un tarif arbitraire — cf. getDeliveryFee()
+// et placeOrderSante() dans index.html, et l'article 4 des CGV patient.
 const DELIVERY_TIERS=[        // cf. DELIVERY_TIERS index.html — doit rester synchronisé
   {maxKm:2,        price:3.00},
   {maxKm:4,        price:4.50},
@@ -59,11 +61,12 @@ const DELIVERY_TIERS=[        // cf. DELIVERY_TIERS index.html — doit rester s
 const MAX_ITEMS=30;           // taille de panier raisonnable
 const MAX_DISTANCE_KM=500;    // borne de cohérence sur la distance déclarée
 
-function deliveryFeeEur(mode: string, distanceKm: unknown): number{
+/** @returns frais en euros, ou `null` si la distance est inexploitable (mode livraison). */
+function deliveryFeeEur(mode: string, distanceKm: unknown): number|null{
   if(mode==='cnc'||mode==='cnc_club') return 0;
   const d=(typeof distanceKm==='number' && isFinite(distanceKm) && distanceKm>=0)
     ? Math.min(distanceKm, MAX_DISTANCE_KM) : null;
-  if(d===null) return FRAIS_LIVRAISON_FALLBACK;
+  if(d===null) return null; // distance inconnue → tarif indéterminable
   const tier=DELIVERY_TIERS.find(t=>d<=t.maxKm);
   return tier?tier.price:9.90;
 }
@@ -155,6 +158,11 @@ Deno.serve(async (req)=>{
 
     const subtotal=base*(1+MARGE_PCT);
     const feeEur=deliveryFeeEur(deliveryMode,distanceKm);
+    if(feeEur===null){
+      // Livraison sans distance exploitable : refus explicite. Le front bloque déjà
+      // ce cas (placeOrderSante), ce garde-fou couvre les appels directs à l'API.
+      return new Response(JSON.stringify({error:'Distance de livraison manquante ou invalide : les frais de livraison ne peuvent pas être calculés.'}),{status:400,headers:corsHeaders});
+    }
     const raw=deliveryMode==='cnc' ? subtotal : subtotal+feeEur; // cf. cartTotal() index.html
     const commission=raw*COMMISSION_PCT;
     const donation=donationEnabled ? donationAmountEur(raw) : 0;
