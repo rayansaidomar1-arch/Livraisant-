@@ -13,16 +13,24 @@ const { getProfile, getValidatedClubId, insertCagnotteEntry } = require('../lib/
 const router = express.Router();
 const webhookRouter = express.Router();
 
-// Cagnotte club : 10 % de commission Livraisanté, dont 50 % reversés au club
-// du patient adhérent. Reprise à l'identique de l'Edge Function `confirm-order`.
+// Cagnotte club : frais de fonctionnement Livraisanté, intégralement reversés
+// au club du patient adhérent. Doit rester aligné sur PLATFORM_FEE_RATE /
+// CLUB_SHARE_RATE d'index.html et sur les Edge Functions.
 //
-// ⚠️ Ne PAS remplacer par MARGE_PCT de lib/pricing.js : cette constante vaut
-// aussi 0.10 mais s'applique à une base différente (`base * (1 + MARGE_PCT)`,
-// donc la marge s'ajoute au prix), alors que la commission ci-dessous se
-// calcule sur le total réellement débité. Les confondre modifierait en silence
-// les sommes dues aux clubs.
-const PLATFORM_FEE_RATE = 0.10;
-const CLUB_SHARE_RATE = 0.50;
+// ⚠️ Ne PAS remplacer par MARGE_PCT de lib/pricing.js : cette constante
+// s'applique à une base différente (`base * (1 + MARGE_PCT)`, donc la marge
+// s'ajoute au prix), alors que les frais ci-dessous se calculent sur le total
+// débité. Les confondre modifierait en silence les sommes dues aux clubs.
+//
+// 🚨 BLOQUANT AVANT DE ROUTER LE TRAFIC MÉTIER ICI : `priceCart` (lib/pricing.js)
+// ne facture AUCUN frais de fonctionnement — `order.totalPrice` vaut
+// `itemsTotal + deliveryFee`, sans la ligne que le patient voit dans le panier
+// côté Supabase. Ce chemin crédite donc au club des frais jamais encaissés,
+// pris sur la marge produit. Ajouter la commission dans `priceCart` et la
+// transmettre via `metadata.commissionCents` (cf. create-payment-intent) avant
+// toute bascule.
+const PLATFORM_FEE_RATE = 0.05;
+const CLUB_SHARE_RATE = 1.00;
 
 // Instanciation paresseuse : le SDK Stripe lève une exception dès le
 // constructeur si la clé est absente, ce qui ferait planter tout le
@@ -152,7 +160,14 @@ webhookRouter.post('/', async (req, res) => {
               await (async () => {
                 const clubId = await getValidatedClubId(order.patientId);
                 if (!clubId) return;
-                const amountEur = Math.round((pi.amount / 100) * PLATFORM_FEE_RATE * CLUB_SHARE_RATE * 100) / 100;
+                // Priorité aux frais réellement prélevés, transmis dans la
+                // metadata du PaymentIntent. À défaut (commandes créées avant
+                // ce champ), repli sur le taux appliqué au montant débité.
+                const commissionCents = Number(pi.metadata?.commissionCents);
+                const commissionEur = Number.isFinite(commissionCents) && commissionCents > 0
+                  ? commissionCents / 100
+                  : (pi.amount / 100) * PLATFORM_FEE_RATE;
+                const amountEur = Math.round(commissionEur * CLUB_SHARE_RATE * 100) / 100;
                 // La colonne impose amount_eur > 0 : une commande à 0,05 €
                 // arrondirait à 0 et ferait échouer l'insertion.
                 if (amountEur <= 0) return;

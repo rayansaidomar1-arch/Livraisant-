@@ -32,21 +32,26 @@
 // le patient via `sbInsertOrderFull`, avec `pricing.totalEur` toujours NULL.
 //
 // ── Correctif audit 2026-08-05 (Important #7) ───────────────────────────
-// La cagnotte club (10% de commission Livraisanté, dont 50% reversés au
+// La cagnotte club (frais de fonctionnement Livraisanté, reversés au
 // club du patient adhérent) était créditée côté client, dans le
 // localStorage du PATIENT (`livraisante_cagnotte_${clubId}`) — jamais vue
 // par le club ni par l'admin sur un autre appareil, et créditée AVANT même
 // la confirmation réelle du paiement, sur un total non vérifié envoyé par
 // le client. Comme pour `pricing.totalEur` plus haut, on ne fait plus
 // confiance à rien venant du client : la contribution est désormais
-// calculée ICI à partir de `totalEur` (dérivé du PaymentIntent Stripe
-// réellement débité), et seulement si le patient appartient à un club où
-// son adhésion est validée (`club_members.validated=true` — jamais son
-// propre statut auto-déclaré). Best-effort, non bloquant : un club qui n'a
-// pas encore d'entrée `clubs` valide ou une erreur d'insertion ne doit
-// jamais faire échouer la commande déjà payée.
-const PLATFORM_FEE_RATE=0.10;
-const CLUB_SHARE_RATE=0.50;
+// calculée ICI à partir du PaymentIntent Stripe réellement débité, et
+// seulement si le patient appartient à un club où son adhésion est validée
+// (`club_members.validated=true` — jamais son propre statut auto-déclaré).
+// Best-effort, non bloquant : un club qui n'a pas encore d'entrée `clubs`
+// valide ou une erreur d'insertion ne doit jamais faire échouer la commande
+// déjà payée.
+//
+// La base est `metadata.commissionCents`, posée par create-payment-intent, et
+// NON `pi.amount` : ce dernier contient le panier, la commission elle-même et
+// l'arrondi du don solidaire. Créditer CLUB_SHARE_RATE de `pi.amount` reversait
+// donc plus que les frais encaissés — supportable tant que Livraisanté gardait
+// la moitié, déficitaire depuis que la totalité revient au club.
+const CLUB_SHARE_RATE=1.00;
 //
 // ── Correctif audit 2026-08-05 (Critique #1) ────────────────────────────────
 // `stripe-webhook` était censé notifier le patient (push + email facture) une
@@ -161,6 +166,8 @@ Deno.serve(async (req)=>{
     const totalEur=pi.amount/100;
     const deliveryFeeCents=Number(pi.metadata?.deliveryFeeCents||0);
     const deliveryFeeEur=deliveryFeeCents/100;
+    const commissionCents=Number(pi.metadata?.commissionCents||0);
+    const commissionEur=Number.isFinite(commissionCents)?commissionCents/100:0;
 
     const row={
       id, code: code||null, kind,
@@ -172,7 +179,7 @@ Deno.serve(async (req)=>{
       patient_name: patient?.name||null,
       patient_address: patient?.addr||null,
       patient_pos: patient?.pos||null,
-      pricing: { totalEur, deliveryFeeEur },
+      pricing: { totalEur, deliveryFeeEur, commissionEur },
       payment: { email: patient?.email||'', donation: patient?.donation||null, paymentIntentId },
     };
     const {data,error}=await supabaseAdmin.from('orders').insert(row).select().single();
@@ -205,7 +212,7 @@ Deno.serve(async (req)=>{
           .eq('user_id',userId).eq('validated',true)
           .maybeSingle();
         if(membership?.club_id){
-          const amountEur=Math.round(totalEur*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
+          const amountEur=Math.round(commissionEur*CLUB_SHARE_RATE*100)/100;
           if(amountEur>0){
             await supabaseAdmin.from('club_cagnotte_entries').insert({
               club_id: membership.club_id,

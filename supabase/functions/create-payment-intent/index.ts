@@ -48,7 +48,7 @@ const corsHeaders={
 // avant de calculer le sous-total.
 const PRICING_MODES: Record<string, number> = { eco:0.85, std:1.00, prem:1.15 };
 const MARGE_PCT=0.10;         // marge Livraisanté sur les produits (cf. MARGE_PCT index.html)
-const COMMISSION_PCT=0.10;    // frais de fonctionnement (cf. platformCommission index.html)
+const COMMISSION_PCT=0.05;    // frais de fonctionnement (cf. PLATFORM_FEE_RATE index.html)
 const FRAIS_LIVRAISON_FALLBACK=3.90; // cf. FRAIS_LIVRAISON index.html (distance inconnue)
 const DELIVERY_TIERS=[        // cf. DELIVERY_TIERS index.html — doit rester synchronisé
   {maxKm:2,        price:3.00},
@@ -173,7 +173,12 @@ Deno.serve(async (req)=>{
       // `confirm-order` puisse relire une part de tarification faisant autorité au moment
       // de créer la commande, sans jamais avoir à refaire confiance à une valeur envoyée
       // par le client à ce moment-là (cf. migration 20260722030000 + confirm-order/index.ts).
-      metadata:{...metadata,platform:'livraisante',userId,deliveryFeeCents:String(Math.round(finalDeliveryFeeEur*100))},
+      // `commissionCents` suit la même logique que `deliveryFeeCents` : la cagnotte
+      // club se calcule sur les frais RÉELLEMENT prélevés, pas sur `pi.amount`, qui
+      // contient en plus la commission elle-même et l'arrondi du don solidaire. La
+      // recalculer depuis le total créditerait au club davantage que l'encaissé —
+      // un déficit net maintenant que la totalité des frais lui revient.
+      metadata:{...metadata,platform:'livraisante',userId,deliveryFeeCents:String(Math.round(finalDeliveryFeeEur*100)),commissionCents:String(Math.round(commission*100))},
     });
     return new Response(JSON.stringify({
       clientSecret:paymentIntent.client_secret,
