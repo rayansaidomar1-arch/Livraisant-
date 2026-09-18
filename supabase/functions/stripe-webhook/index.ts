@@ -129,9 +129,27 @@ Deno.serve(async (req) => {
           // (un remboursement peut être déclenché depuis le dashboard Stripe, sans
           // aucune action côté client à ce moment-là).
           if (order.patient_id) {
-            await supabase.functions.invoke('send-push', {
-              body: { user_id: order.patient_id, title: '↩️ Remboursement effectué', body: 'Votre commande a été annulée et remboursée.', url: '/#commandes' }
-            });
+            // `functions.invoke` échouait systématiquement d'une Edge Function à une
+            // autre (constaté sur signup-verification, réparé en passant à fetch).
+            // L'échec doit rester local : remonter jusqu'au catch global ferait
+            // répondre 500 à Stripe, qui rejouerait l'événement de remboursement en
+            // boucle alors que la commande est déjà marquée remboursée.
+            try {
+              const pushRes = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${supabaseServiceKey}`,
+                  'apikey': Deno.env.get('SUPABASE_ANON_KEY') || supabaseServiceKey,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: order.patient_id, title: '↩️ Remboursement effectué', body: 'Votre commande a été annulée et remboursée.', url: '/#commandes' }),
+              });
+              if (!pushRes.ok) {
+                console.error('stripe-webhook push remboursement -', pushRes.status, (await pushRes.text().catch(() => '')).slice(0, 200));
+              }
+            } catch (pushErr) {
+              console.error('stripe-webhook push remboursement (non bloquant)', pushErr instanceof Error ? pushErr.message : String(pushErr));
+            }
           }
           console.log(`↩️ Order ${order.id} refunded`);
         } else {

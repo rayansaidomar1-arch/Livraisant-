@@ -69,6 +69,25 @@ const ALLOWED_KINDS=['santé','click-collect','cnc-club'];
 const DELIVERY_MODE_BY_KIND: Record<string,string>={ 'santé':'livraison', 'click-collect':'cnc', 'cnc-club':'cnc_club' };
 const MAX_ITEMS=30;
 
+// Appel d'une Edge Function depuis une autre. `functions.invoke` échouait
+// systématiquement sur ce trajet — vérifié sur signup-verification, où le passage à
+// fetch a suffi à réparer l'envoi. Ici les deux appels sont délibérément non bloquants,
+// donc l'échec était avalé : ni la facture ni la notification ne sont jamais parties
+// après une commande, sans que rien ne l'indique dans la réponse HTTP.
+// On lève en cas de statut non-2xx pour que les catch des appelants journalisent la
+// cause au lieu de constater un succès qui n'en est pas un.
+async function callEdgeFunction(baseUrl:string,name:string,body:unknown,bearer:string,apikey:string){
+  const res=await fetch(`${baseUrl}/functions/v1/${name}`,{
+    method:'POST',
+    headers:{ 'Authorization':bearer, 'apikey':apikey, 'Content-Type':'application/json' },
+    body:JSON.stringify(body),
+  });
+  if(!res.ok){
+    const detail=await res.text().catch(()=>'');
+    throw new Error(`${name} a répondu ${res.status} — ${detail.slice(0,200)}`);
+  }
+}
+
 Deno.serve(async (req)=>{
   if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
   try{
@@ -201,9 +220,11 @@ Deno.serve(async (req)=>{
       }
     })();
 
-    const pushPromise=supabaseAdmin.functions.invoke('send-push',{
-      body:{ user_id:userId, title:'✅ Commande validée', body:`Votre paiement de ${totalEur}€ a été accepté. Votre commande est en préparation.`, url:'/#commandes' }
-    }).catch(pushErr=>console.error('confirm-order push (non bloquant)',pushErr));
+    const anonKeyForCalls=Deno.env.get('SUPABASE_ANON_KEY')||serviceRoleKey;
+
+    const pushPromise=callEdgeFunction(supabaseUrl,'send-push',{
+      user_id:userId, title:'✅ Commande validée', body:`Votre paiement de ${totalEur}€ a été accepté. Votre commande est en préparation.`, url:'/#commandes'
+    },`Bearer ${serviceRoleKey}`,anonKeyForCalls).catch(pushErr=>console.error('confirm-order push (non bloquant)',pushErr));
 
     const emailPromise=(async()=>{
       if(!patient?.email) return;
@@ -213,14 +234,12 @@ Deno.serve(async (req)=>{
         // `send-email` exige un JWT utilisateur valide pour type='validation' (pas
         // un appel service_role — voir send-email/index.ts) : on relaie le JWT du
         // patient déjà vérifié plus haut, plutôt que la clé service_role de ce client.
-        await supabaseAdmin.functions.invoke('send-email',{
-          headers: authHeader ? { Authorization: authHeader } : undefined,
-          body:{
-            type:'validation',
-            to:patient.email,
-            order:{ id, patient_nom:patient?.name||'', pharmacy_nom:pharmacy?.nom||'', medicaments, adresse:patient?.addr||'', montant:totalEur }
-          }
-        });
+        if(!authHeader) throw new Error('aucun JWT patient à relayer — send-email refuserait le type validation');
+        await callEdgeFunction(supabaseUrl,'send-email',{
+          type:'validation',
+          to:patient.email,
+          order:{ id, patient_nom:patient?.name||'', pharmacy_nom:pharmacy?.nom||'', medicaments, adresse:patient?.addr||'', montant:totalEur }
+        },authHeader,anonKeyForCalls);
       }catch(emailErr){
         console.error('confirm-order email (non bloquant)',emailErr);
       }
