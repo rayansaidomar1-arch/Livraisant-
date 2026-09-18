@@ -120,11 +120,24 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: upsertErr.message }), { status: 500, headers: corsHeaders });
       }
 
-      const { error: emailErr } = await supabaseAdmin.functions.invoke('send-email', {
-        body: { type: 'signup_verification', to: email, order: { code: plainCode } },
+      // `functions.invoke` réduit tout échec à « non-2xx status code » : impossible de
+      // distinguer un refus d'authentification d'une panne Resend. On appelle donc
+      // send-email directement, pour disposer du statut et du corps de sa réponse.
+      const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': serviceRoleKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'signup_verification', to: email, order: { code: plainCode } }),
       });
-      if (emailErr) {
-        return new Response(JSON.stringify({ error: "Échec de l'envoi de l'email" }), { status: 502, headers: corsHeaders });
+      if (!emailRes.ok) {
+        const detail = await emailRes.text().catch(() => '');
+        console.error('signup-verification: send-email a refusé l\'envoi -', emailRes.status, detail.slice(0, 300));
+        // Le statut seul ne révèle rien d'exploitable mais sépare les deux causes :
+        // 401 = la clé présentée n'est pas reconnue, 5xx = l'envoi lui-même a échoué.
+        return new Response(JSON.stringify({ error: "Échec de l'envoi de l'email", upstream: emailRes.status }), { status: 502, headers: corsHeaders });
       }
 
       return new Response(JSON.stringify({ sent: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
