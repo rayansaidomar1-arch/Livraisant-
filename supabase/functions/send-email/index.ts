@@ -258,6 +258,7 @@ function emailPreparation(o: any): string {
   </div>
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
     Référence commande : <strong>${o.id?.slice(0, 8).toUpperCase() || '—'}</strong> · ${date}<br>
+    Accompagnement Livraisanté : <a href="tel:+33761650972" style="color:#999">07 61 65 09 72</a><br>
     © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
   </div>
 </div>`;
@@ -283,6 +284,7 @@ function emailSignupVerification(o: any): string {
     </p>
   </div>
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
+    Accompagnement Livraisanté : <a href="tel:+33761650972" style="color:#999">07 61 65 09 72</a><br>
     © Livraisanté · 1 Rue des Vergers, 69120 Vaulx-en-Velin
   </div>
 </div>`;
@@ -368,10 +370,11 @@ function emailValidation(o: any): string {
     </div>
 
     <p style="font-size:13px;color:#888;line-height:1.5">
-      Conservez cet email comme justificatif. Pour toute question : <a href="mailto:administratif@livraisante.fr" style="color:#0D0E09">administratif@livraisante.fr</a>
+      Conservez cet email comme justificatif. Pour toute question : <a href="mailto:administratif@livraisante.fr" style="color:#0D0E09">administratif@livraisante.fr</a> ou <a href="tel:+33761650972" style="color:#0D0E09">07 61 65 09 72</a>
     </p>
   </div>
   <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:12px;color:#999">
+    Accompagnement Livraisanté : <a href="tel:+33761650972" style="color:#999">07 61 65 09 72</a><br>
     © Livraisanté SAS · RCS Lyon 933 484 917 · 1 Rue des Vergers, 69120 Vaulx-en-Velin
   </div>
 </div>`;
