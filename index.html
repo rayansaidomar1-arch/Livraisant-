@@ -518,6 +518,9 @@
   .abandon-reasons{display:flex;flex-direction:column;gap:8px}
   .abandon-reason-btn{text-align:left;font-family:inherit;font-size:14px;padding:11px 15px;border:1.5px solid var(--line-strong);border-radius:10px;background:var(--card);cursor:pointer;display:flex;align-items:center;gap:10px}
   .abandon-reason-btn:hover{border-color:var(--ink);background:var(--paper)}
+
+  /* Impression */
+  @media print{
     body{background:#fff;background-image:none}
     .nav,.topbar .pill{display:none}
     .gauge-wrap{background:#fff;color:#000;border:2px solid #000}
@@ -8308,7 +8311,9 @@ async function dsNext(from){
     }
     if(!addr1||!city){showErr1('⚠ Adresse de facturation complète obligatoire (rue et ville).','drAddr1');return;}
     const password=document.getElementById('drPassword')?.value||'';
-    if(!password||password.length<8){showErr1('⚠ Mot de passe obligatoire (minimum 8 caractères).','drPassword');return;}
+    // Le champ mot de passe est masqué quand la session existe déjà : l'exiger
+    // bloquait l'étape sur une erreur pointant un champ invisible.
+    if(!currentUser&&(!password||password.length<8)){showErr1('⚠ Mot de passe obligatoire (minimum 8 caractères).','drPassword');return;}
     if(errEl) errEl.style.display='none';
     const bdMsg=document.getElementById('dsBirthdateMsg');
     if(bdMsg){bdMsg.className='field-msg ok';bdMsg.textContent='✓ Majorité confirmée.';}
