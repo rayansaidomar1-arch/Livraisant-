@@ -1,11 +1,16 @@
 /* Livraisanté — service worker (cache de l'app shell pour le mode hors-ligne) */
-const CACHE = 'livraisante-v126';
+const CACHE = 'livraisante-v127';
+// Les URL portent `?v=` : le serveur statique renvoie `max-age=31536000` sur les
+// .js, donc seul un changement d'URL garantit qu'un correctif atteigne un
+// navigateur qui détient déjà l'ancien fichier. Ces entrées doivent rester
+// identiques aux `src` d'index.html, sinon le shell est mis en cache deux fois.
 const SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/js/supabase-client.js',
-  '/js/config.js',
+  '/js/vendor/supabase-js-2.49.4.min.js?v=127',
+  '/js/supabase-client.js?v=127',
+  '/js/config.js?v=127',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',

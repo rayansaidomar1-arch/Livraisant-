@@ -3,7 +3,7 @@
 <head>
 <script>/* Apex → www redirect — must be first */if(location.hostname==='livraisante.fr')location.replace('https://www.livraisante.fr'+location.pathname+location.search+location.hash);</script>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com https://browser.sentry-cdn.com https://plausible.io https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com https://overpass-api.de https://geo.api.gouv.fr https://nominatim.openstreetmap.org https://plausible.io https://sentry.io https://*.ingest.sentry.io https://www.google-analytics.com; frame-src https://js.stripe.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Livraisanté — Santé du quotidien, livré</title>
@@ -102,13 +102,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer
   integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
   crossorigin="anonymous"></script>
-<!-- Supabase JS SDK (CDN) — version épinglée + SRI -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"
-  integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil"
-  crossorigin="anonymous"></script>
+<!-- SDK Supabase servi depuis le domaine. Chargé depuis un CDN tiers, un simple
+     blocage réseau laissait `window.supabase` indéfini et figeait SB_READY à false :
+     toute l'authentification devenait inerte pour la durée de la page. -->
+<script src="js/vendor/supabase-js-2.49.4.min.js?v=127"></script>
 <!-- Configuration production (clés publiques) -->
-<script src="js/config.js"></script>
-<script src="js/supabase-client.js"></script>
+<script src="js/config.js?v=127"></script>
+<script src="js/supabase-client.js?v=127"></script>
 <style>
   :root{
     --paper:#FFFFFF;
@@ -13638,7 +13638,12 @@ function skipClubSelection(){
 
 // ── Google Sign-In ───────────────────────────────────────────────────
 async function doGoogleLogin(){
-  if(!window.LS_SB?.SB_READY){showToast('Service non disponible','var(--err)');return;}
+  if(!window.LS_SB?.SB_READY){
+    const cause=window.LS_SB?.sbUnavailableReason?.()||'js/supabase-client.js non chargé';
+    console.error('Connexion Google impossible —',cause);
+    showToast('Connexion indisponible — '+cause,'var(--err)');
+    return;
+  }
   // Flag persistant pour détecter le retour OAuth après redirect
   sessionStorage.setItem('pendingOAuth','google');
   const {error}=await window.LS_SB.sbSignInWithGoogle();

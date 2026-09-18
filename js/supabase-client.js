@@ -13,10 +13,22 @@ const SUPABASE_ANON = window.LIVR_CONFIG?.supabase_anon;
 
 // ── Init ─────────────────────────────────────────────────────────
 let _sb = null;
+
+// Nomme la cause de l'indisponibilité, ou null si le client est utilisable.
+// `SUPABASE_URL.includes(...)` était évalué sans garde : un config.js absent ou
+// périmé levait une TypeError ici même, `window.LS_SB` n'était alors jamais créé
+// et l'application entière échouait derrière un message qui ne disait rien.
+function sbUnavailableReason(){
+  if(_sb) return null;
+  if(typeof window.supabase === 'undefined') return 'SDK Supabase non chargé';
+  if(!SUPABASE_URL || !SUPABASE_ANON) return 'js/config.js absent ou périmé';
+  if(SUPABASE_URL.includes('YOUR_PROJECT')) return 'Supabase non configuré';
+  return null;
+}
+
 function getSB(){
   if(_sb) return _sb;
-  if(typeof window.supabase === 'undefined') return null; // SDK not loaded
-  if(SUPABASE_URL.includes('YOUR_PROJECT')) return null;   // Not configured yet
+  if(sbUnavailableReason()) return null;
   _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
     auth:{
       autoRefreshToken: true,
@@ -929,7 +941,7 @@ async function sbMfaGetAal(){
 }
 
 // ── Export (accessible globally) ────────────────────────────────
-window.LS_SB = { SB_READY, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
+window.LS_SB = { SB_READY, sbUnavailableReason, getSB, sbSignIn, sbSignUp, sbSignOut, sbGetSession, sbGetProfile,
   sbSignInWithGoogle,
   sbResetPassword, sbUpdatePassword,
   sbGetPharmacy, sbUpsertPharmacy, sbGetOrders, sbInsertOrder, sbUpdateOrderStatus,
