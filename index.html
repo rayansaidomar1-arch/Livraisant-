@@ -1575,7 +1575,7 @@
     <div class="plans-grid" id="plansGrid">
       <!-- rendered by JS -->
     </div>
-    <div class="note">💳 <div><b>Résiliable en 3 clics</b> depuis votre tableau de bord, conformément à l'article L215-1 du Code de la consommation. Préavis d'1 mois (offres sans engagement et annuelle) ou de 3 mois (engagement 2 ans). Les offres « mois offerts » ne sont utilisables qu'une seule fois et se renouvellent ensuite au mois, au prix de l'offre souscrite.</div></div>
+    <div class="note">💳 <div><b>Prix hors taxes</b>, TVA 20 % en sus. <b>Résiliable en 3 clics</b> depuis votre tableau de bord : nous vous accordons cette faculté par contrat, l'article L215-1 du Code de la consommation ne s'appliquant pas entre professionnels. Préavis d'1 mois (offres sans engagement et annuelle) ou de 3 mois (engagement 2 ans). Les offres « mois offerts » ne sont utilisables qu'une seule fois et se renouvellent ensuite au mois, au prix de l'offre souscrite. <button onclick="showRgpdModal('cgvpro')" type="button" style="font-family:inherit;color:var(--pharma);font-weight:700;background:none;border:none;cursor:pointer;font-size:inherit;padding:0;text-decoration:underline">Lire les CGV officine →</button></div></div>
     <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(1)">← Retour</button></div>
   </div>
 
@@ -4645,14 +4645,119 @@ function showRgpdModal(section='intro'){
       <h4 style="margin:14px 0 6px">Article 10 — Droit applicable</h4>
       <p>Les présentes CGV sont soumises au <b>droit français</b>. Tout litige relève de la compétence des juridictions françaises.</p>
       <p style="margin-top:14px;font-size:12px;color:#888">Livraisanté SAS · 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 · <a href="mailto:retours@livraisante.fr" style="color:var(--pharma)">retours@livraisante.fr</a></p>`,
+    cgvpro:`<h3>Conditions Générales de Vente et de Service — Officines partenaires</h3>
+      <p style="font-size:11px;color:#888">Version 1.0 — Entrée en vigueur : 18 septembre 2026 · Livraisanté SAS · RCS 933 484 917 Lyon<br>Contrat entre professionnels. Les dispositions protectrices du Code de la consommation ne s'appliquent pas de plein droit ; celles que la Société accorde ci-après le sont à titre contractuel.</p>
+
+      <h4 style="margin:14px 0 6px">Article 1 — Objet et documents contractuels</h4>
+      <p>Les présentes Conditions Générales de Vente et de Service (ci-après « CGVS ») régissent la relation entre <b>Livraisanté SAS</b>, société par actions simplifiée au capital de 1 000 €, dont le siège est 1 Rue des Vergers, 69120 Vaulx-en-Velin, immatriculée 933 484 917 R.C.S. Lyon (ci-après « la Société »), et toute <b>officine de pharmacie</b> souscrivant un abonnement à la plateforme Livraisanté (ci-après « l'Officine »).</p>
+      <p>Elles constituent le <b>socle unique de la négociation commerciale</b> au sens de l'article L441-1 du Code de commerce. En cas de contradiction, l'ordre de priorité est le suivant : (1) le récapitulatif d'abonnement accepté lors de la souscription, (2) les présentes CGVS, (3) les Conditions Générales d'Utilisation. Toute condition d'achat contraire émanant de l'Officine est inopposable à la Société, sauf acceptation écrite expresse.</p>
+
+      <h4 style="margin:14px 0 6px">Article 2 — Conditions d'accès au service</h4>
+      <p>L'accès est strictement réservé aux officines régulièrement établies en France. L'Officine déclare et garantit :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>Être exploitée par un <b>pharmacien titulaire</b> régulièrement inscrit au tableau de l'Ordre national des pharmaciens</li>
+        <li>Disposer d'une <b>licence d'officine</b> en cours de validité et d'un numéro <b>FINESS</b> actif</li>
+        <li>Être couverte par une <b>assurance de responsabilité civile professionnelle</b> en cours de validité</li>
+        <li>Exercer dans le respect du <b>Code de la santé publique</b> et du Code de déontologie des pharmaciens (art. R4235-1 et suivants)</li>
+      </ul>
+      <p>La Société vérifie ces éléments lors de l'inscription et peut les contrôler à tout moment. Toute déclaration inexacte entraîne la résiliation immédiate prévue à l'Article 7.4. La Société se réserve le droit de refuser une souscription sans avoir à justifier sa décision.</p>
+
+      <h4 style="margin:14px 0 6px">Article 3 — Offre, durée et reconduction</h4>
+      <p>La Société propose une <b>offre unique, toutes fonctionnalités incluses</b>. Seule la durée d'engagement fait varier le prix. Les durées disponibles sont :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li><b>Essai gratuit</b> — 3 livraisons offertes, sans engagement ni moyen de paiement. Prend fin à la troisième livraison.</li>
+        <li><b>Découverte</b> — 49,90 € HT pour <b>2 mois</b> (1 mois acheté, 1 mois offert). Offre de bienvenue <b>utilisable une seule fois par officine</b>. Puis reconduction <b>mensuelle</b> tacite à 49,90 € HT/mois, sans engagement.</li>
+        <li><b>Lancement</b> — 119,70 € HT pour <b>6 mois</b> (3 mois achetés, 3 mois offerts). <b>Utilisable une seule fois par officine</b>. Puis reconduction <b>mensuelle</b> tacite à 39,90 € HT/mois, sans engagement.</li>
+        <li><b>Annuel</b> — 298,80 € HT pour <b>12 mois</b>, soit 24,90 € HT/mois, payables en une fois. Reconduction tacite par périodes de 12 mois.</li>
+        <li><b>Partenaire 2 ans</b> — engagement ferme de <b>24 mois</b>, facturé 238,80 € HT par an, soit 19,90 € HT/mois. Reconduction tacite par périodes de 12 mois à l'issue de l'engagement initial.</li>
+      </ul>
+      <p>Les offres « mois offerts » ne sont pas cumulables entre elles et ne peuvent être souscrites qu'une fois, quelle que soit l'évolution de la forme sociale ou de l'actionnariat de l'Officine. La Société notifie l'échéance de reconduction <b>par courriel au moins 30 jours</b> avant celle-ci, en rappelant la date limite de résiliation.</p>
+
+      <h4 style="margin:14px 0 6px">Article 4 — Prix de l'abonnement, facturation et TVA</h4>
+      <p>Tous les prix d'abonnement sont exprimés <b>hors taxes</b>. La <b>TVA au taux de 20 %</b> s'y ajoute. À titre indicatif, l'abonnement Annuel représente 298,80 € HT, soit <b>358,56 € TTC</b> ; l'abonnement Partenaire 2 ans représente 238,80 € HT par an, soit <b>286,56 € TTC</b>.</p>
+      <p>Le montant de la période souscrite est débité <b>en une seule fois</b> à la souscription. Une <b>facture électronique</b> est mise à disposition dans l'espace pharmacien et adressée par courriel.</p>
+      <p><b>Révision tarifaire :</b> la Société peut réviser ses tarifs <b>au maximum une fois par an</b>. Toute révision est notifiée par courriel <b>au moins 2 mois</b> avant son entrée en vigueur et ne s'applique qu'aux périodes postérieures. L'Officine qui refuse la révision peut résilier sans frais ni pénalité, par dérogation aux préavis de l'Article 7, jusqu'à la date d'effet de la nouvelle grille. Le prix des périodes déjà payées n'est jamais révisé.</p>
+
+      <h4 style="margin:14px 0 6px">Article 5 — Modalités de paiement et retard de paiement</h4>
+      <p>Le paiement s'effectue exclusivement par carte bancaire via le prestataire <b>Stripe</b>. Le paiement est exigible <b>au comptant</b> à la souscription et à chaque reconduction.</p>
+      <p>Conformément à l'article <b>L441-10 du Code de commerce</b>, tout retard de paiement entraîne de plein droit, sans qu'un rappel soit nécessaire :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>Des <b>pénalités de retard</b> calculées au taux d'intérêt appliqué par la Banque centrale européenne à son opération de refinancement la plus récente, <b>majoré de 10 points</b> de pourcentage</li>
+        <li>Une <b>indemnité forfaitaire pour frais de recouvrement de 40 €</b> (art. D441-5 du Code de commerce), sans préjudice d'une indemnisation complémentaire sur justificatifs si les frais réellement exposés la dépassent</li>
+      </ul>
+      <p>En cas d'échec de prélèvement, la Société en informe l'Officine et représente le paiement. À défaut de régularisation <b>15 jours</b> après une mise en demeure restée infructueuse, l'accès à la plateforme peut être suspendu, les commandes en cours étant menées à leur terme.</p>
+
+      <h4 style="margin:14px 0 6px">Article 6 — Codes promotionnels</h4>
+      <p>La Société peut émettre des codes promotionnels réservés aux officines. Sauf mention contraire portée sur le code : il est <b>valable une seule fois</b>, <b>non cumulable</b> avec un autre code, s'impute <b>uniquement sur le premier paiement</b> de la période souscrite et non sur les reconductions, n'est ni cessible ni échangeable et ne peut donner lieu à aucun versement en espèces. Un code saisi est réputé consommé, y compris si la souscription n'est pas menée à son terme.</p>
+
+      <h4 style="margin:14px 0 6px">Article 7 — Résiliation et rétractation</h4>
+      <p><b>7.1 Résiliation en 3 clics.</b> L'article L215-1 du Code de la consommation, relatif à la reconduction tacite et à la résiliation en ligne, ne s'applique pas aux contrats conclus entre professionnels. La Société <b>accorde néanmoins contractuellement</b> à l'Officine une faculté de résiliation en ligne, accessible en trois clics depuis son tableau de bord, sans avoir à motiver sa demande ni à recourir à un autre support.</p>
+      <p><b>7.2 Préavis.</b> Le préavis court à compter de la réception de la demande et prend effet à l'échéance de la période en cours :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li><b>1 mois</b> pour les offres Découverte, Lancement (en phase de reconduction mensuelle) et Annuel</li>
+        <li><b>3 mois</b> pour l'offre Partenaire 2 ans</li>
+      </ul>
+      <p>L'engagement ferme de 24 mois de l'offre Partenaire 2 ans ne peut être interrompu avant son terme, sauf application des Articles 4 (refus de révision tarifaire), 7.3, 7.4 ou 15.</p>
+      <p><b>7.3 Rétractation.</b> Le droit de rétractation de l'article L221-18 du Code de la consommation n'est pas ouvert de plein droit aux professionnels. La Société accorde contractuellement à toute officine un délai de <b>14 jours calendaires</b> à compter de sa <b>première</b> souscription pour y renoncer et en obtenir le remboursement intégral, par simple demande à <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a>. Ce droit ne s'applique pas aux reconductions ni aux souscriptions ultérieures.</p>
+      <p><b>7.4 Résiliation pour manquement.</b> Chaque partie peut résilier de plein droit, après mise en demeure restée sans effet pendant 15 jours, en cas de manquement grave de l'autre partie. La résiliation est <b>immédiate et sans mise en demeure préalable</b> en cas de déclaration inexacte au titre de l'Article 2, de radiation de l'Ordre, de retrait de la licence d'officine, ou de manquement aux règles de dispensation mettant en cause la sécurité des patients.</p>
+      <p><b>7.5 Effets.</b> La résiliation ne donne lieu à aucun remboursement de la période déjà courue, hors cas prévus aux Articles 4, 7.3 et 15. Les commandes en cours sont menées à leur terme. L'Officine dispose de <b>90 jours</b> pour exporter ses données depuis son espace ; au-delà, elles sont supprimées dans les conditions de l'Article 11.</p>
+
+      <h4 style="margin:14px 0 6px">Article 8 — Obligations de l'Officine</h4>
+      <p>L'Officine demeure, en toutes circonstances, <b>seule responsable de l'acte de dispensation et du conseil pharmaceutique</b>. Elle s'engage à :</p>
+      <ul style="padding-left:16px;line-height:2">
+        <li>Confirmer ou refuser la disponibilité du stock dans le délai de <b>2 heures</b> annoncé au Patient</li>
+        <li>Ne proposer via la plateforme que des <b>compléments alimentaires</b> et <b>dispositifs médicaux marqués CE</b>, à l'exclusion de tout médicament soumis à prescription ou à autorisation de mise sur le marché</li>
+        <li>Vérifier la conformité, la date de péremption et l'intégrité du conditionnement de chaque produit remis au livreur</li>
+        <li>Assurer le conseil pharmaceutique et la vigilance requise, notamment en cas d'interaction signalée par le questionnaire patient</li>
+        <li>Maintenir à jour son catalogue, ses horaires et son positionnement tarifaire dans son espace</li>
+        <li>Respecter le secret professionnel et ne traiter les données patients que dans le cadre de la prise en charge</li>
+        <li>Signaler sans délai à la Société tout incident, rappel de lot ou réclamation susceptible d'affecter la sécurité des patients</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px">Article 9 — Obligations de la Société et niveau de service</h4>
+      <p>La Société met à disposition la plateforme, l'outil de gestion des commandes, la mise en relation avec les livreurs partenaires et un <b>accompagnement téléphonique au 07 61 65 09 72</b> aux horaires ouvrés.</p>
+      <p>La Société s'engage à une <b>obligation de moyens</b> quant à la disponibilité de la plateforme. Les interventions de maintenance programmée sont annoncées avec un préavis raisonnable et planifiées, dans la mesure du possible, en dehors des heures d'ouverture des officines. <b>Aucun volume de commandes, chiffre d'affaires ou nombre de patients n'est garanti</b> : les projections figurant dans les outils de simulation sont indicatives et ne constituent pas un engagement contractuel.</p>
+
+      <h4 style="margin:14px 0 6px">Article 10 — Modèle économique et reversement</h4>
+      <p><b>10.1 Prix des produits.</b> L'Officine fixe librement son positionnement tarifaire depuis son espace. La rémunération de la Société sur les produits, soit <b>10 %</b>, est <b>ajoutée au prix fixé par l'Officine</b> et supportée par le Patient : l'Officine perçoit donc l'intégralité du prix qu'elle a défini, sans commission prélevée sur celui-ci.</p>
+      <p><b>10.2 Frais de fonctionnement.</b> Des frais de fonctionnement de <b>5 %</b> du panier sont facturés au Patient. Lorsque celui-ci est adhérent validé d'un club sportif partenaire, <b>la totalité</b> de ces frais est reversée à la cagnotte de son club. Ils ne sont en aucun cas prélevés sur la part revenant à l'Officine.</p>
+      <p><b>10.3 Frais de livraison.</b> Ils rémunèrent le livreur partenaire et sont étrangers à la part de l'Officine.</p>
+      <p><b>10.4 Reversement.</b> Les sommes encaissées par la Société pour le compte de l'Officine lui sont reversées par virement <b>mensuellement, le 10 du mois suivant</b>, accompagnées d'un relevé détaillant chaque commande. La Société peut compenser ce reversement avec toute somme due par l'Officine au titre de son abonnement. Les commandes annulées, remboursées ou faisant l'objet d'une contestation de paiement sont déduites du reversement de la période au cours de laquelle elles surviennent.</p>
+
+      <h4 style="margin:14px 0 6px">Article 11 — Données personnelles et données de santé</h4>
+      <p><b>11.1 Qualités respectives.</b> Pour les données traitées aux fins de la dispensation, l'Officine agit en qualité de <b>responsable de traitement</b> et la Société en qualité de <b>sous-traitant</b> au sens de l'article 28 du RGPD. Le présent article vaut acte d'encadrement de la sous-traitance. Pour les données de son propre compte professionnel, l'Officine est personne concernée et la Société responsable de traitement.</p>
+      <p><b>11.2 Instructions et sécurité.</b> La Société ne traite les données que sur instruction documentée de l'Officine, garantit la confidentialité des personnes autorisées à y accéder, met en œuvre des mesures techniques et organisationnelles appropriées (chiffrement en transit et au repos, cloisonnement par politiques d'accès, journalisation) et assiste l'Officine dans la réponse aux demandes d'exercice de droits.</p>
+      <p><b>11.3 Sous-traitants ultérieurs.</b> L'Officine autorise le recours à : <b>Supabase</b> (base de données et authentification), <b>Stripe</b> (paiement), <b>Clever Cloud</b> (hébergement applicatif, France). Toute modification de cette liste est notifiée avec un préavis de 30 jours, l'Officine pouvant s'y opposer par écrit et résilier sans pénalité.</p>
+      <p><b>11.4 Hébergement des données de santé.</b> L'article L1111-8 du Code de la santé publique impose un hébergement certifié HDS pour les données de santé à caractère personnel recueillies à l'occasion d'activités de prévention, de diagnostic ou de soins. <b>La Société informe l'Officine de l'état réel de son infrastructure :</b> à la date d'entrée en vigueur des présentes, les données sont hébergées chez Supabase (Union européenne) et une infrastructure certifiée HDS est déployée mais ne reçoit pas encore le trafic métier. La Société s'engage à achever cette bascule et à en informer l'Officine. Dans l'intervalle, seules des données de santé non cliniques sont traitées.</p>
+      <p><b>11.5 Violation de données.</b> La Société notifie à l'Officine toute violation de données la concernant <b>dans les 48 heures</b> suivant sa découverte, avec les éléments permettant à l'Officine de satisfaire à son obligation de notification à la CNIL.</p>
+      <p><b>11.6 Sort des données.</b> Au terme du contrat, les données sont restituées sous format exploitable puis supprimées dans le délai de l'Article 7.5, sous réserve des durées de conservation imposées par la loi.</p>
+
+      <h4 style="margin:14px 0 6px">Article 12 — Propriété intellectuelle et confidentialité</h4>
+      <p>La plateforme, son interface, ses protocoles et ses algorithmes demeurent la propriété exclusive de la Société. L'abonnement confère un <b>droit d'usage personnel, non exclusif et non cessible</b>, limité à la durée du contrat. L'Officine conserve la propriété de ses données, de son catalogue et de ses éléments d'identification.</p>
+      <p>Chaque partie s'engage à préserver la confidentialité des informations commerciales et techniques reçues de l'autre, pendant la durée du contrat et <b>3 ans</b> après son terme. La Société ne peut citer l'Officine comme référence commerciale qu'avec son accord écrit préalable.</p>
+
+      <h4 style="margin:14px 0 6px">Article 13 — Responsabilité</h4>
+      <p>La Société intervient en qualité d'<b>intermédiaire technique</b>. Elle n'exerce aucun acte pharmaceutique et ne saurait être tenue responsable de la dispensation, du conseil délivré, de la qualité des produits remis au livreur ni du respect par l'Officine de ses obligations déontologiques.</p>
+      <p>Hors dommage corporel, faute lourde ou dolosive, la responsabilité de la Société est <b>plafonnée au montant hors taxes des sommes versées par l'Officine au titre de son abonnement sur les 12 mois précédant le fait générateur</b>. Sont exclus les dommages indirects, notamment les pertes d'exploitation, de clientèle ou d'image.</p>
+      <p>Aucune des parties ne répond d'un manquement résultant d'un cas de <b>force majeure</b> au sens de l'article 1218 du Code civil, incluant les défaillances des réseaux de communication électronique et des prestataires d'hébergement ou de paiement.</p>
+
+      <h4 style="margin:14px 0 6px">Article 14 — Assurance</h4>
+      <p>Chaque partie déclare être titulaire d'une assurance de responsabilité civile professionnelle couvrant les conséquences pécuniaires des dommages engageant sa responsabilité au titre du présent contrat, et s'engage à en justifier sur simple demande.</p>
+
+      <h4 style="margin:14px 0 6px">Article 15 — Modification des CGVS</h4>
+      <p>La Société peut modifier les présentes CGVS. Toute modification substantielle est notifiée par courriel et par notification dans l'espace pharmacien <b>au moins 30 jours</b> avant son entrée en vigueur. L'Officine qui refuse les nouvelles conditions peut résilier sans frais ni pénalité jusqu'à la date d'effet, y compris en cours d'engagement ferme. À défaut de résiliation dans ce délai, les nouvelles conditions sont réputées acceptées.</p>
+
+      <h4 style="margin:14px 0 6px">Article 16 — Droit applicable et juridiction</h4>
+      <p>Les présentes CGVS sont soumises au <b>droit français</b>. Les parties s'efforcent de régler amiablement tout différend. À défaut d'accord dans un délai de 30 jours, <b>compétence exclusive est attribuée au Tribunal de commerce de Lyon</b>, y compris en cas de pluralité de défendeurs, d'appel en garantie ou de procédure d'urgence.</p>
+      <p style="margin-top:14px;font-size:12px;color:#888">Livraisanté SAS · 1 Rue des Vergers, 69120 Vaulx-en-Velin · RCS 933 484 917 R.C.S. Lyon · <a href="mailto:administratif@livraisante.fr" style="color:var(--pharma)">administratif@livraisante.fr</a> · 07 61 65 09 72</p>`,
   };
   const modal=document.createElement('div');
   modal.id='rgpdModal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0';
   modal.innerHTML=`<div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:540px;max-height:80vh;overflow-y:auto;animation:slideDown .3s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="display:flex;gap:8px">
-        ${['intro','cookies','mentions','cgu','cgv'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal','cgu':'📜 CGU','cgv':'🛒 CGV'}[s]}</button>`).join('')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['intro','cookies','mentions','cgu','cgv','cgvpro'].map(s=>`<button onclick="showRgpdModal('${s}')" style="font-family:inherit;font-weight:${section===s?'800':'600'};font-size:12px;padding:5px 10px;border:1.5px solid ${section===s?'var(--ink)':'#e5e5e5'};border-radius:20px;background:${section===s?'var(--ink)':'white'};color:${section===s?'white':'var(--ink-soft)'};cursor:pointer;white-space:nowrap">${{'intro':'🔒 Données','cookies':'🍪 Cookies','mentions':'📋 Légal','cgu':'📜 CGU','cgv':'🛒 CGV','cgvpro':'🏥 Officine'}[s]}</button>`).join('')}
       </div>
       <button onclick="document.getElementById('rgpdModal').remove()" style="font-size:20px;background:none;border:none;cursor:pointer;color:var(--ink-soft)">✕</button>
     </div>
@@ -8623,19 +8728,19 @@ const PLANS=[
   {id:'m1',name:'Découverte',icon:'🎁',color:'#2B8A3E',monthly:49.90,upfront:49.90,months:2,renewMonthly:49.90,
    badge:'1 mois offert',
    sub:'1 mois acheté = 1 mois offert',
-   terms:'Offre de bienvenue utilisable <b>une seule fois</b> : 49,90 € débités, 2 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 49,90 €/mois, sans engagement, résiliable en 3 clics.'},
+   terms:'Offre de bienvenue utilisable <b>une seule fois</b> : 49,90 € HT débités (59,88 € TTC), 2 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 49,90 € HT/mois, sans engagement, résiliable en 3 clics.'},
   {id:'m3',name:'Lancement',icon:'🚀',monthly:39.90,upfront:119.70,months:6,renewMonthly:39.90,
    badge:'3 mois offerts',
    sub:'3 mois achetés = 3 mois offerts',
-   terms:'Offre utilisable <b>une seule fois</b> : 119,70 € débités, 6 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 39,90 €/mois, sans engagement, résiliable en 3 clics.'},
+   terms:'Offre utilisable <b>une seule fois</b> : 119,70 € HT débités (143,64 € TTC), 6 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 39,90 € HT/mois, sans engagement, résiliable en 3 clics.'},
   {id:'y1',name:'Annuel',icon:'⭐',popular:true,monthly:24.90,upfront:298.80,months:12,renewMonthly:24.90,
    badge:'Populaire',
    sub:'Engagement 12 mois, payable en une fois',
-   terms:'298,80 € payables en une fois pour 12 mois. Tacite reconduction annuelle, <b>préavis d\'1 mois</b>, résiliable en 3 clics conformément à l\'article L215-1 du Code de la consommation.'},
+   terms:'298,80 € HT payables en une fois pour 12 mois (358,56 € TTC). Tacite reconduction annuelle, <b>préavis d\'1 mois</b>, résiliable en 3 clics depuis votre tableau de bord.'},
   {id:'y2',name:'Partenaire 2 ans',icon:'👑',color:'var(--sport)',monthly:19.90,upfront:238.80,months:12,commitMonths:24,renewMonthly:19.90,
    badge:'Le meilleur prix',
    sub:'Engagement 24 mois, payable une fois par an',
-   terms:'238,80 € payables une fois par an, pendant 2 ans. Tacite reconduction, <b>préavis de 3 mois</b>, résiliable en 3 clics conformément à l\'article L215-1 du Code de la consommation.'},
+   terms:'238,80 € HT payables une fois par an (286,56 € TTC), pendant 2 ans. Tacite reconduction, <b>préavis de 3 mois</b>, résiliable en 3 clics depuis votre tableau de bord.'},
 ];
 function renderPlans(){
   document.getElementById('plansGrid').innerHTML=PLANS.map(pl=>{
@@ -8660,11 +8765,11 @@ function renderPlans(){
         <div class="level">${pl.icon} ${esc(pl.sub)}</div>
         <h3>${pl.name}</h3>
         <div class="plan-price">
-          <div><span class="amount">€${pl.monthly.toFixed(2)}</span><span class="per">/mois</span></div>
+          <div><span class="amount">€${pl.monthly.toFixed(2)}</span><span class="per"> HT/mois</span></div>
           <div class="plan-save">${(()=>{const net=planUpfrontAfterPromo(pl.upfront);
             return net<pl.upfront
-              ? `Soit <s style="opacity:.55;font-weight:600">€${pl.upfront.toFixed(2)}</s> <b>€${net.toFixed(2)}</b> débités pour ${pl.months} mois`
-              : `Soit €${pl.upfront.toFixed(2)} débités pour ${pl.months} mois`;})()}</div>
+              ? `Soit <s style="opacity:.55;font-weight:600">€${pl.upfront.toFixed(2)}</s> <b>€${net.toFixed(2)} HT</b> débités pour ${pl.months} mois`
+              : `Soit €${pl.upfront.toFixed(2)} HT débités pour ${pl.months} mois`;})()}</div>
         </div>
         <div class="plan-limits">Toutes les fonctionnalités incluses · Labs et commandes illimités</div>
       </div>
@@ -8721,7 +8826,7 @@ function selectPlan(pid){
   const total=planUpfrontAfterPromo(pl.upfront||0);
   const promoNote=_planAppliedPromo?` (${promoDiscountLabel(_planAppliedPromo)} code ${_planAppliedPromo.code})`:'';
   try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=pid;ph.planName=pl.name;if(_planAppliedPromo)ph.promoCode=_planAppliedPromo.code;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
-  const planLabel=pid==='free'?'Essai gratuit (3 livraisons offertes)':`"${pl.name}" — €${total.toFixed(2)} pour ${pl.months} mois${promoNote}`;
+  const planLabel=pid==='free'?'Essai gratuit (3 livraisons offertes)':`"${pl.name}" — €${total.toFixed(2)} HT pour ${pl.months} mois${promoNote}`;
   showToast(`✅ ${planLabel} sélectionné`, 'var(--ok)');
   psGo(3);
 }
@@ -10798,7 +10903,7 @@ function renderProfile(){
     <div class="profile-section">
       <h3>📦 Abonnement Livraisanté</h3>
       <div class="pfield"><span class="pk">Offre</span><span class="pv highlight">${esc(planName)}</span></div>
-      ${plan?.upfront?`<div class="pfield"><span class="pk">Facturation</span><span class="pv">€${plan.upfront.toFixed(2)} pour ${plan.months} mois, puis €${plan.renewMonthly.toFixed(2)}/mois</span></div>`:''}
+      ${plan?.upfront?`<div class="pfield"><span class="pk">Facturation</span><span class="pv">€${plan.upfront.toFixed(2)} HT pour ${plan.months} mois, puis €${plan.renewMonthly.toFixed(2)} HT/mois</span></div>`:''}
       <div class="pfield"><span class="pk">Labs max</span><span class="pv">${c.maxLabs||'Illimité'}</span></div>
       <div class="pfield"><span class="pk">Zone</span><span class="pv">${c.radius/1000} km</span></div>
     </div>
