@@ -2411,7 +2411,7 @@ const PRICING_MODES={
 const DELIVERY_TIERS=[
   {maxKm:2,        price:3.00, label:'0 – 2 km',   color:'#16A34A', desc:'Livraison express'},
   {maxKm:4,        price:4.50, label:'2 – 4 km',   color:'#2563EB', desc:'Livraison quartier'},
-  {maxKm:20,       price:6.90, label:'5 – 20 km',  color:'#EA580C', desc:'Livraison ville'},
+  {maxKm:20,       price:6.90, label:'4 – 20 km',  color:'#EA580C', desc:'Livraison ville'},
   {maxKm:Infinity, price:9.90, label:'+ 20 km',    color:'#7C3AED', desc:'Livraison grande distance'},
 ];
 
@@ -4617,14 +4617,16 @@ function showRgpdModal(section='intro'){
       <p>La commande est validée à réception du paiement complet. Un email de confirmation est adressé dans les 15 minutes. La pharmacie partenaire dispose de <b>2 heures</b> pour confirmer la disponibilité du stock. En cas d'indisponibilité, la commande est annulée et le paiement intégralement remboursé sous 3 à 5 jours ouvrés.</p>
 
       <h4 style="margin:14px 0 6px">Article 4 — Prix et frais de livraison</h4>
-      <p>Les prix incluent la marge officinale, les frais de service Livraisanté (5 % HT du panier) et la TVA applicable. Lorsque le Client est adhérent validé d'un club sportif partenaire, <b>la totalité de ces frais de service est reversée à la cagnotte de son club</b>. Les <b>frais de livraison</b> sont calculés selon la distance officine-domicile :</p>
+      <p>Les prix incluent la marge officinale, la marge Livraisanté et la TVA applicable. S'y ajoutent des <b>frais de fonctionnement de 5 %</b>, calculés sur le montant de la commande <b>frais de livraison compris</b>. Lorsque le Client est adhérent validé d'un club sportif partenaire, <b>la totalité de ces frais de fonctionnement est reversée à la cagnotte de son club</b>.</p>
+      <p>Les <b>frais de livraison</b> sont déterminés par la distance séparant l'officine du lieu de livraison, selon le barème suivant :</p>
       <ul style="padding-left:16px;line-height:2">
-        <li>0–3 km : 2,90 €</li>
-        <li>3–8 km : 4,90 €</li>
-        <li>8–15 km : 7,90 €</li>
-        <li>Au-delà : sur devis</li>
+        <li>Jusqu'à 2 km : <b>3,00 €</b></li>
+        <li>Plus de 2 km et jusqu'à 4 km : <b>4,50 €</b></li>
+        <li>Plus de 4 km et jusqu'à 20 km : <b>6,90 €</b></li>
+        <li>Au-delà de 20 km : <b>9,90 €</b></li>
       </ul>
-      <p>Le Click & Collect en pharmacie est <b>gratuit</b>. Le paiement s'effectue exclusivement en ligne via Stripe (CB, Apple Pay, Google Pay).</p>
+      <p>Lorsque la distance ne peut pas être déterminée automatiquement, un forfait de <b>3,90 €</b> est appliqué. Le montant exact des frais de livraison est affiché dans le récapitulatif du panier <b>avant</b> tout paiement et constitue le montant effectivement débité.</p>
+      <p>Le retrait en pharmacie (Click &amp; Collect) est <b>exempt de frais de livraison</b> ; les frais de fonctionnement de 5 % restent dus et sont alors calculés sur le seul montant des produits. Le paiement s'effectue exclusivement en ligne via Stripe (CB, Apple Pay, Google Pay).</p>
 
       <h4 style="margin:14px 0 6px">Article 5 — Livraison</h4>
       <p>La livraison est assurée par un livreur indépendant partenaire dans un délai <b>estimatif de 45 à 90 minutes</b> à compter de la confirmation de commande par la pharmacie, selon la disponibilité des livreurs. Ce délai est <b>estimatif et non contractuel</b> (Art. L111-1 C. conso). En cas de dépassement supérieur à <b>3 heures à compter de la confirmation de commande</b>, le consommateur peut annuler sans frais et obtenir un remboursement intégral sous 14 jours. La livraison est réalisée à l'adresse renseignée lors de la commande.</p>
