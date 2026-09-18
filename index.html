@@ -578,10 +578,6 @@
   .ref-row .earn{font-weight:700;color:var(--ok)}
 
   /* Abonnements */
-  .plans-toggle{display:flex;align-items:center;gap:12px;margin-bottom:28px}
-  .toggle-btn{font-family:inherit;font-size:13px;font-weight:700;padding:8px 16px;border:1.5px solid var(--line-strong);border-radius:30px;cursor:pointer;background:var(--card)}
-  .toggle-btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .save-tag{font-size:11.5px;font-weight:800;background:var(--accent);color:var(--ink);padding:4px 10px;border-radius:30px}
   .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
   .plan{background:var(--card);border:2px solid var(--ink);border-radius:20px;overflow:hidden;position:relative}
   .plan.popular{border-color:var(--pharma)}
@@ -589,6 +585,7 @@
   .plan-head{padding:22px 22px 18px;border-bottom:2px solid var(--ink)}
   .plan.popular .plan-head{border-bottom-color:var(--pharma)}
   .plan-head .level{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:8px}
+  .plan-tag{display:inline-block;background:#16A34A;color:#fff;font-size:11px;font-weight:800;border-radius:30px;padding:4px 10px;margin-bottom:10px}
   .plan-head h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;margin-bottom:14px}
   .plan-price{margin-bottom:4px}
   .plan-price .amount{font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;line-height:.95}
@@ -1566,16 +1563,19 @@
 
   <!-- Étape 2 : Abonnements -->
   <div class="step-block" id="ps2">
-    <div class="sec-head"><div class="num">02</div><div><h2>Choisissez votre abonnement</h2><p>3 niveaux d'engagement — <strong>2 mois offerts</strong> pour tout engagement annuel.</p></div></div>
-    <div class="plans-toggle">
-      <button class="toggle-btn on" id="toggleMens" onclick="setPlanToggle('mens')">Mensuel</button>
-      <button class="toggle-btn" id="toggleAnn" onclick="setPlanToggle('ann')">Annuel</button>
-      <span class="save-tag">2 mois offerts</span>
+    <div class="sec-head"><div class="num">02</div><div><h2>Choisissez votre abonnement</h2><p>Une offre unique, <strong>toutes les fonctionnalités incluses</strong> — seule la durée d'engagement fait varier le prix.</p></div></div>
+    <div class="form-group" style="max-width:520px;margin-bottom:24px">
+      <label class="form-label">Code promotionnel <span class="opt">(si votre officine en a reçu un)</span></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="planPromoInput" placeholder="Ex. PHARMA2026" autocomplete="off" style="flex:1;min-width:190px" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter'){event.preventDefault();checkPlanPromoCode();}">
+        <button class="btn ghost" type="button" onclick="checkPlanPromoCode()">Appliquer</button>
+      </div>
+      <div class="field-msg" id="planPromoResult"></div>
     </div>
     <div class="plans-grid" id="plansGrid">
       <!-- rendered by JS -->
     </div>
-    <div class="note">💳 <div><b>Sans engagement pour le mensuel.</b> L'abonnement annuel est renouvelable automatiquement avec une réduction de <b>2 mois offerts</b>. Résiliation possible à tout moment avec 30 jours de préavis pour le mensuel.</div></div>
+    <div class="note">💳 <div><b>Résiliable en 3 clics</b> depuis votre tableau de bord, conformément à l'article L215-1 du Code de la consommation. Préavis d'1 mois (offres sans engagement et annuelle) ou de 3 mois (engagement 2 ans). Les offres « mois offerts » ne sont utilisables qu'une seule fois et se renouvellent ensuite au mois, au prix de l'offre souscrite.</div></div>
     <div class="nav" style="border-top:2px solid var(--ink)"><button class="btn ghost" onclick="psGo(1)">← Retour</button></div>
   </div>
 
@@ -2329,6 +2329,27 @@ function resetAll(){
 =================================================================== */
 const MARGE_PCT=0.10;
 const FRAIS_LIVRAISON=3.90; // fallback si distance inconnue
+
+// Frais de fonctionnement prélevés sur le panier, affichés au patient, et
+// intégralement reversés à la cagnotte du club dont il est adhérent validé.
+// Livraisanté ne conserve donc rien sur ces frais : sa rémunération est
+// MARGE_PCT. Ces deux taux existent à l'identique dans
+// supabase/functions/create-payment-intent, confirm-order et
+// backend/src/routes/payments.js — les modifier ici seul ferait diverger le
+// prix affiché du prix débité.
+const PLATFORM_FEE_RATE=0.05;
+const CLUB_SHARE_RATE=1.00;
+
+// Accompagnement Livraisanté. Repris à l'identique dans le pied des e-mails
+// transactionnels (supabase/functions/send-email/index.ts).
+const SUPPORT_PHONE='07 61 65 09 72';
+const SUPPORT_PHONE_HREF='tel:+33761650972';
+function supportBlock(msg='Une question sur votre commande ?'){
+  return `<div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);font-size:12.5px">
+    <span style="font-size:18px">📞</span>
+    <div>${esc(msg)} Appelez-nous au <a href="${SUPPORT_PHONE_HREF}" style="font-weight:800;color:var(--pharma);text-decoration:none">${SUPPORT_PHONE}</a></div>
+  </div>`;
+}
 
 // ── Stripe ───────────────────────────────────────────────────────────
 // Remplacer par votre clé publique Stripe depuis dashboard.stripe.com/apikeys
@@ -3513,12 +3534,11 @@ function labsActive(labs=[]){ return labs.some(l=>activeLabs.has(l)); }
 function toggleLab(lab){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   const planId=phData.plan||'free';
-  const constraints=PLAN_CONSTRAINTS[planId]||PLAN_CONSTRAINTS.free;
-  const maxLabs=constraints.maxLabs;
+  const maxLabs=getPlanConstraints(planId).maxLabs;
   if(!activeLabs.has(lab)){
     if(maxLabs!==null && activeLabs.size>=maxLabs){
       const msg=document.getElementById('labLimitMsg');
-      if(msg){msg.innerHTML=`<div class="limit-warn"><b>⚠ Limite atteinte :</b> votre plan <b>${PLANS.find(p=>p.id===planId)?.name||'Essai gratuit'}</b> permet ${maxLabs} laboratoire${maxLabs>1?'s':''} max. <a href="#" onclick="psGo(2);setPlanToggle('mens')" style="color:var(--err);font-weight:700">Passer au niveau supérieur →</a></div>`;setTimeout(()=>{if(msg)msg.innerHTML='';},5000);}
+      if(msg){msg.innerHTML=`<div class="limit-warn"><b>⚠ Limite atteinte :</b> l'essai gratuit permet ${maxLabs} laboratoire${maxLabs>1?'s':''} max. <a href="#" onclick="psGo(2)" style="color:var(--err);font-weight:700">Choisir un abonnement →</a></div>`;setTimeout(()=>{if(msg)msg.innerHTML='';},5000);}
       return;
     }
   }
@@ -3625,11 +3645,7 @@ function findPharmacies(){
         let items=(data.elements||[]).map(e=>{
           const la=e.lat??e.center?.lat, lo=e.lon??e.center?.lon;
           const dist=haversine(lat,lon,la,lo);
-          let level;
-          if(dist<=PHARM_RADIUS_FREE_REF){const _rl=new Uint8Array(1);crypto.getRandomValues(_rl);level=_rl[0]>=128?'ref':'free';}
-          else if(dist<=PHARM_RADIUS_PRIO) level='prio';
-          else level='alt';
-          return {name:(e.tags&&e.tags.name)||'Pharmacie', la, lo, dist, level};
+          return {name:(e.tags&&e.tags.name)||'Pharmacie', la, lo, dist};
         }).filter(x=>x.la&&x.lo);
         items.sort((a,b)=>a.dist-b.dist);
         if(!items.length){out.innerHTML='<div class="empty-zone-msg"><span style="font-size:2rem">📍</span><p><strong>Bientôt disponible dans votre zone !</strong></p><p>Parlez de Livraisanté à votre pharmacien pour accélérer le déploiement près de chez vous.</p></div>';}
@@ -3638,8 +3654,7 @@ function findPharmacies(){
           out.innerHTML=items.slice(0,8).map(p=>{
             const d=p.dist<1000?Math.round(p.dist)+' m':(p.dist/1000).toFixed(1)+' km';
             const url=`https://www.openstreetmap.org/?mlat=${p.la}&mlon=${p.lo}#map=18/${p.la}/${p.lo}`;
-            const lvlBadge={free:'<span style="font-size:10px;background:var(--accent);color:var(--ink);border-radius:30px;padding:2px 7px;font-weight:800">Essai</span>',ref:'<span style="font-size:10px;background:#d7f0db;color:#1c6b2b;border-radius:30px;padding:2px 7px;font-weight:800">Démarrage 🚀</span>',prio:'<span style="font-size:10px;background:#e8ddff;color:#5b21b6;border-radius:30px;padding:2px 7px;font-weight:800">Développement ⭐</span>',alt:'<span style="font-size:10px;background:var(--ink);color:var(--accent);border-radius:30px;padding:2px 7px;font-weight:800">Premium 👑</span>'}[p.level]||'';
-            return `<div class="ph-item"><a href="${url}" target="_blank" rel="noopener">${esc(p.name)} ${lvlBadge}</a><span class="d">${d}</span></div>`;
+            return `<div class="ph-item"><a href="${url}" target="_blank" rel="noopener">${esc(p.name)}</a><span class="d">${d}</span></div>`;
           }).join('');
         }
         btn.disabled=false; btn.textContent='📍 Rafraîchir';
@@ -4602,7 +4617,7 @@ function showRgpdModal(section='intro'){
       <p>La commande est validée à réception du paiement complet. Un email de confirmation est adressé dans les 15 minutes. La pharmacie partenaire dispose de <b>2 heures</b> pour confirmer la disponibilité du stock. En cas d'indisponibilité, la commande est annulée et le paiement intégralement remboursé sous 3 à 5 jours ouvrés.</p>
 
       <h4 style="margin:14px 0 6px">Article 4 — Prix et frais de livraison</h4>
-      <p>Les prix incluent la marge officinale, les frais de service Livraisanté (10 % HT du panier) et la TVA applicable. Les <b>frais de livraison</b> sont calculés selon la distance officine-domicile :</p>
+      <p>Les prix incluent la marge officinale, les frais de service Livraisanté (5 % HT du panier) et la TVA applicable. Lorsque le Client est adhérent validé d'un club sportif partenaire, <b>la totalité de ces frais de service est reversée à la cagnotte de son club</b>. Les <b>frais de livraison</b> sont calculés selon la distance officine-domicile :</p>
       <ul style="padding-left:16px;line-height:2">
         <li>0–3 km : 2,90 €</li>
         <li>3–8 km : 4,90 €</li>
@@ -5579,7 +5594,7 @@ function renderOrderTrack(id){
     ${o.driver?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">🛵 Pris en charge par un livreur.</div>`:''}
     ${o.patient?.addr?.startsWith('Click & Collect')?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">🏪 ${esc(o.patient.addr)}</div>`:''}
     ${o.patient?.donation?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">${o.patient.donation.icon} Livraisanté reverse <b>€${o.patient.donation.amount}</b> à ${o.patient.donation.assoc} en votre nom.</div>`:''}
-  </div>${renderOrderCode(o)}${renderCheckInBlock(o)}${subHtml}${cagnotteHtml()}`;
+  </div>${renderOrderCode(o)}${renderCheckInBlock(o)}${subHtml}${cagnotteHtml()}${supportBlock('Un problème avec cette livraison ?')}`;
 }
 
 /* ---- helpers d'affichage commande ---- */
@@ -5671,13 +5686,13 @@ function togglePriorityLab(lab){
   try{
     const d=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');
     const planId=d.plan||'free';
-    const maxPL=PLAN_CONSTRAINTS[planId]?.maxPriorityLabs||0;
+    const maxPL=getPlanConstraints(planId).maxPriorityLabs; // null = illimité
     let labs=d.priorityLabs||[];
     if(labs.includes(lab)){
       labs=labs.filter(l=>l!==lab);
     } else {
-      if(labs.length>=maxPL){
-        showToast(`⚠ Limite de ${maxPL} labs prioritaires atteinte (plan ${PLANS.find(p=>p.id===planId)?.name})`, 'var(--warn)');
+      if(maxPL!==null && labs.length>=maxPL){
+        showToast('⚠ Labs prioritaires disponibles avec un abonnement', 'var(--warn)');
         return;
       }
       labs.push(lab);
@@ -5693,34 +5708,34 @@ function renderPriorityWidget(){
   try{
     const d=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');
     const planId=d.plan||'free';
-    const plan=PLANS.find(p=>p.id===planId)||PLANS[0];
-    const c=PLAN_CONSTRAINTS[planId];
-    const maxPL=c.maxPriorityLabs||0;
+    const c=getPlanConstraints(planId);
+    const maxPL=c.maxPriorityLabs; // null = illimité
+    const maxPLLabel=maxPL===null?'illimités':maxPL;
     const mode=d.priorityMode||'science';
     const priorityLabs=d.priorityLabs||[];
 
     const modeBtn=(id,icon,title,desc,locked=false)=>`
-      <button onclick="${locked?`showToast('Disponible dès le plan Démarrage — passez à un abonnement supérieur','var(--warn)')`:` setPriorityMode('${id}')`}"
+      <button onclick="${locked?`showToast('Disponible avec un abonnement — choisissez une durée','var(--warn)')`:` setPriorityMode('${id}')`}"
         style="font-family:inherit;width:100%;text-align:left;padding:14px 16px;border:2.5px solid ${mode===id?'var(--ink)':'#e5e5e5'};border-radius:14px;background:${mode===id?'var(--ink)':'white'};cursor:pointer;transition:.12s;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;${locked?'opacity:.5;cursor:not-allowed':''}">
         <div style="font-size:24px;flex:0 0 auto;margin-top:2px">${mode===id?'<span style="font-size:14px">✓</span>':icon}</div>
         <div>
-          <div style="font-weight:800;font-size:15px;color:${mode===id?'var(--lime)':'var(--ink)'}">${title}${locked?` <span style="font-size:10px;font-weight:700;background:var(--warn);color:white;padding:2px 6px;border-radius:4px;margin-left:6px">Plan Démarrage+</span>`:''}</div>
+          <div style="font-weight:800;font-size:15px;color:${mode===id?'var(--lime)':'var(--ink)'}">${title}${locked?` <span style="font-size:10px;font-weight:700;background:var(--warn);color:white;padding:2px 6px;border-radius:4px;margin-left:6px">Abonnement</span>`:''}</div>
           <div style="font-size:13px;color:${mode===id?'rgba(255,255,255,.6)':'var(--ink-soft)'};margin-top:3px">${desc}</div>
         </div>
       </button>`;
 
     let labsSection='';
     if(mode==='lab'){
-      const canAddLabs=maxPL>0;
+      const canAddLabs=(maxPL===null||maxPL>0);
       labsSection=`<div style="margin-top:12px;border-top:1px solid #eee;padding-top:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div style="font-weight:800;font-size:14px">Mes labs prioritaires</div>
-          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:30px;background:${priorityLabs.length>=maxPL?'var(--err)':'var(--lime)'};color:${priorityLabs.length>=maxPL?'white':'var(--ink)'}">
-            ${priorityLabs.length} / ${maxPL}
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:30px;background:${maxPL!==null&&priorityLabs.length>=maxPL?'var(--err)':'var(--lime)'};color:${maxPL!==null&&priorityLabs.length>=maxPL?'white':'var(--ink)'}">
+            ${priorityLabs.length}${maxPL===null?'':' / '+maxPL}
           </span>
         </div>
-        ${!canAddLabs?`<div style="font-size:13px;color:var(--warn);font-weight:600">⚠ Labs prioritaires disponibles dès le plan <b>Démarrage</b>. <a href="#" onclick="psGo(2)" style="color:var(--pharma)">Passer à un abonnement →</a></div>`:
-        `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">Sélectionnez jusqu'à <b>${maxPL} laboratoires</b> — leurs produits apparaîtront en premier dans les recommandations patients.</div>
+        ${!canAddLabs?`<div style="font-size:13px;color:var(--warn);font-weight:600">⚠ Labs prioritaires disponibles avec un abonnement. <a href="#" onclick="psGo(2)" style="color:var(--pharma)">Choisir une durée →</a></div>`:
+        `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">Sélectionnez vos laboratoires prioritaires — leurs produits apparaîtront en premier dans les recommandations patients.</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${PARTNER_LABS.map(l=>`<button onclick="togglePriorityLab('${l.replace(/'/g,"\\'")}')"
             style="font-family:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:30px;cursor:pointer;transition:.12s;
@@ -5736,7 +5751,7 @@ function renderPriorityWidget(){
     el.innerHTML=`
       ${modeBtn('science','🔬','Preuves scientifiques','Priorité HAS → OMS → OMEDIT → Niveau de preuve A→C. Le meilleur conseil clinique.')}
       ${modeBtn('panier','💰','Panier moyen cible','Les produits les plus rentables apparaissent en premier. Optimise le chiffre d\'affaires.', planId==='free')}
-      ${modeBtn('lab','⭐','Laboratoires prioritaires',`Vos labs sélectionnés passent en tête (${maxPL} lab${maxPL>1?'s':''} max avec votre plan ${plan.name}).`, planId==='free')}
+      ${modeBtn('lab','⭐','Laboratoires prioritaires',`Vos labs sélectionnés passent en tête (labs prioritaires ${maxPLLabel} avec votre abonnement).`, planId==='free')}
       ${labsSection}
       <div style="font-size:11.5px;color:var(--ink-soft);padding:10px 0 0">
         ℹ️ Le choix de priorité s'applique aux cartes produits présentées au patient. Les filtres CRAT et interactions médicamenteuses restent toujours actifs quelle que soit la priorité.
@@ -5871,7 +5886,7 @@ function syncGoogleHours(){
 
 function renderCustomAdvicePanel(){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
-  if(phData.plan!=='alt') return ''; // Premium plan only
+  if(!isPaidPlan(phData.plan)) return ''; // inclus dans toute offre payante
   const advices=phData.customAdvice||[];
 
   // All CA + DM products from AILMENTS (no CIP 3400 = no médicaments)
@@ -6126,11 +6141,11 @@ function renderPro(){
     <div class="lab-panel">
       <h3>🏷️ Mes laboratoires partenaires — COS Pharmacie</h3>
       <p class="sub">Active les laboratoires que tu travailles pour filtrer les produits proposés aux patients en fonction de ton stock réel. Seuls les produits CA (complément alimentaire) et DM (dispositif médical) sont référencés.</p>
-      ${(()=>{let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}; const planId=phData.plan||'free'; const c=PLAN_CONSTRAINTS[planId]; const planName=PLANS.find(p=>p.id===planId)?.name||'Essai gratuit'; const maxL=c.maxLabs; const pct=maxL?Math.round(activeLabs.size/maxL*100):null;
+      ${(()=>{let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}; const planId=phData.plan||'free'; const c=getPlanConstraints(planId); const planName=PLANS.find(p=>p.id===planId)?.name||'Essai gratuit'; const maxL=c.maxLabs; const pct=maxL?Math.round(activeLabs.size/maxL*100):null;
       return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px"><span>Plan : <b>${planName}</b> · Zone : <b>${c.radius/1000} km</b></span><span>Labs sélectionnés : <b>${activeLabs.size}${maxL?' / '+maxL:' (illimité)'}</b></span></div>${maxL?`<div class="plan-limit-bar"><i style="width:${Math.min(100,pct)}%;background:${pct>=100?'var(--err)':'var(--prepa)'}"></i></div>`:''}`;})()}
       <div id="labLimitMsg"></div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="lab-tog on" onclick="PARTNER_LABS.forEach(l=>{ const phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}'); const c=PLAN_CONSTRAINTS[phData.plan||'free']; if(!c.maxLabs||activeLabs.size<c.maxLabs) activeLabs.add(l);}); saveLabs()" style="font-size:12px;padding:5px 12px">✓ Tout activer</button>
+        <button class="lab-tog on" onclick="PARTNER_LABS.forEach(l=>{ const phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}'); const c=getPlanConstraints(phData.plan); if(!c.maxLabs||activeLabs.size<c.maxLabs) activeLabs.add(l);}); saveLabs()" style="font-size:12px;padding:5px 12px">✓ Tout activer</button>
         <button class="lab-tog" onclick="activeLabs.clear();saveLabs()" style="font-size:12px;padding:5px 12px">Tout désactiver</button>
       </div>
       <div class="lab-toggles">
@@ -7260,8 +7275,8 @@ function cartTotal(mode){
   const subtotal=base*(1+MARGE_PCT);
   return mode==='cnc' ? subtotal : subtotal+getDeliveryFee(mode);
 }
-/** 10% de frais de fonctionnement Livraisanté (transparents, affichés au client) */
-function platformCommission(mode){ return parseFloat((cartTotal(mode)*0.10).toFixed(2)); }
+/** Frais de fonctionnement Livraisanté (transparents, affichés au client) */
+function platformCommission(mode){ return parseFloat((cartTotal(mode)*PLATFORM_FEE_RATE).toFixed(2)); }
 function renderCart(){
   const el=document.getElementById('cartSection'); if(!el) return;
   if(!patientCart.length){el.innerHTML='<div style="font-size:13.5px;color:var(--ink-soft);padding:8px 0">Aucun produit sélectionné.</div>';return;}
@@ -7311,13 +7326,13 @@ function renderCart(){
     </div>
     ${feeLine}
     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 20px;border-top:1px solid #eee;font-size:13px">
-      <span style="color:var(--ink-soft)">⚙️ Frais de fonctionnement (10%)</span>
+      <span style="color:var(--ink-soft)">⚙️ Frais de fonctionnement (${(PLATFORM_FEE_RATE*100).toFixed(0)}%)</span>
       <span style="font-weight:700">€${commission.toFixed(2)}</span>
     </div>
     ${currentUser?.role==='patient_licencie'||currentUser?.sportLicense?`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 20px 8px;background:linear-gradient(90deg,#f5f3ff,#faf5ff);font-size:12.5px;border-top:1px solid #ede9fe">
-      <span style="color:#7c3aed">🏆 Reversé à votre club (50% des frais)</span>
-      <span style="font-weight:700;color:#7c3aed">€${(commission*0.5).toFixed(2)}</span>
+      <span style="color:#7c3aed">🏆 Reversé à votre club (${CLUB_SHARE_RATE>=1?'la totalité des frais':(CLUB_SHARE_RATE*100).toFixed(0)+'% des frais'})</span>
+      <span style="font-weight:700;color:#7c3aed">€${(commission*CLUB_SHARE_RATE).toFixed(2)}</span>
     </div>`:''}
     <div class="assoc-section" id="donationSection">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:${donationEnabled?'10px':'0'}">
@@ -7339,7 +7354,8 @@ function renderCart(){
       <div><div class="label">${deliveryMode==='cnc'?'Retrait en pharmacie':deliveryMode==='cnc_club'?'Retrait au club':'Livraison incluse'} · Frais inclus${donationEnabled?' · Don inclus':''}</div>
       ${deliveryMode==='livraison'&&deliveryDistanceKm===null?'<div style="font-size:11px;color:var(--warn);margin-top:3px">📍 Utilisez votre position GPS pour un prix exact</div>':''}</div>
       <div class="cart-grand-total">€${total.toFixed(2)}</div>
-    </div>`;
+    </div>
+    ${supportBlock()}`;
   // Charger les options club en asynchrone après le rendu
   if(donationEnabled) renderDonationClubOptions();
 }
@@ -7353,7 +7369,7 @@ async function renderDonationClubOptions(){
   const contrib=clubContributionAmount(orderTotal);
   el.innerHTML=`<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-radius:10px;padding:10px 12px;font-size:12px">
     <div style="font-weight:700;color:var(--pharma);margin-bottom:3px">🏆 Licencié(e) ${esc(club.nom)}</div>
-    <div style="color:var(--ink-soft)">Livraisanté reverse automatiquement <b>${contrib.toFixed(2)} €</b> à votre club (50% des frais de fonctionnement). Votre don solidaire personnel, s'il est activé, va à l'association du mois.</div>
+    <div style="color:var(--ink-soft)">Livraisanté reverse automatiquement <b>${contrib.toFixed(2)} €</b> à votre club — <b>la totalité</b> des frais de fonctionnement. Votre don solidaire personnel, s'il est activé, va à l'association du mois.</div>
   </div>`;
 }
 
@@ -8576,65 +8592,52 @@ function psGo(n){
 }
 function dsGo_ps(n){psGo(n);}
 
-/* ---- Plans d'abonnement ---- */
-let planPeriod='mens';
-/* Remises annuelles par plan (ex. 0.15 = 15 % de réduction) */
-const ANNUAL_DISCOUNTS={starter:0.15, pro:0.20, premium:0.25};
-/* Rétrocompatibilité des anciens IDs de plan */
-const PLAN_ID_MAP={prio:'pro', alt:'premium', ref:'starter'};
-function getPlanConstraints(planId){ return PLAN_CONSTRAINTS[PLAN_ID_MAP[planId]||planId]||PLAN_CONSTRAINTS.free; }
-/* Contraintes par plan (rayon en mètres, maxLabs null = illimité) */
+/* ---- Offre officine ----
+   Refonte tarifaire : une offre unique, toutes fonctionnalités incluses, dont
+   seule la DURÉE d'engagement fait varier le prix mensuel. Il n'y a donc plus
+   ni paliers de fonctionnalités, ni bascule mensuel/annuel — les anciens
+   identifiants de plan (ref/prio/alt) restent stockés chez les officines
+   inscrites avant la refonte et doivent continuer à ouvrir tous les droits. */
+/* Contraintes (rayon en mètres ; null = illimité) */
 const PLAN_CONSTRAINTS={
-  free:{maxLabs:5,  radius:5000,  maxOrders:10,   trialDays:30, priority:false, altGuarantee:false, maxPriorityLabs:0},
-  ref: {maxLabs:15, radius:5000,  maxOrders:null,              priority:true,  altGuarantee:false, maxPriorityLabs:3},
-  prio:{maxLabs:null,radius:15000,maxOrders:null,              priority:true,  altGuarantee:false, maxPriorityLabs:6},
-  alt: {maxLabs:null,radius:30000,maxOrders:null,              priority:true,  altGuarantee:true,  maxPriorityLabs:10}
+  free:{maxLabs:5,   maxOrders:10,   radius:5000,  trialDays:30, priority:false, altGuarantee:false, maxPriorityLabs:0},
+  paid:{maxLabs:null,maxOrders:null, radius:30000,               priority:true,  altGuarantee:true,  maxPriorityLabs:null}
 };
-const PLANS=[
-  {id:'free',name:'Essai gratuit',icon:'🎁',free:true,monthly:0,features:[
-    {ok:true, t:'5 laboratoires partenaires max'},
-    {ok:true, t:'Référencement dans un rayon de 5 km'},
-    {ok:true, t:'10 commandes par mois'},
-    {ok:true, t:'Accès au tableau de bord'},
-    {ok:false,t:'Référencement prioritaire'},
-    {ok:false,t:'Laboratoires illimités'},
-    {ok:false,t:'Zone élargie (15 km ou +)'},
-  ]},
-  {id:'ref',name:'Démarrage',icon:'🚀',color:'#2B8A3E',monthly:9.90,features:[
-    {ok:true, t:'15 laboratoires partenaires'},
-    {ok:true, t:'Référencement <b>prioritaire</b> dans les suggestions'},
-    {ok:true, t:'Commandes illimitées'},
-    {ok:true, t:'Zone géographique 5 km'},
-    {ok:true, t:'Tableau de bord & statistiques'},
-    {ok:false,t:'Laboratoires illimités'},
-    {ok:false,t:'Zone élargie ou alternative garantie'},
-  ]},
-  {id:'prio',name:'Développement',icon:'⭐',popular:true,monthly:19.90,features:[
-    {ok:true, t:'Laboratoires <b>illimités</b>'},
-    {ok:true, t:'Zone géographique <b>15 km</b>'},
-    {ok:true, t:'Priorité dans toutes les suggestions'},
-    {ok:true, t:'Commandes illimitées'},
-    {ok:true, t:'Rapport analytique mensuel'},
-    {ok:false,t:'Alternative garantie hors stock (30 km)'},
-  ]},
-  {id:'alt',name:'Premium',icon:'👑',color:'var(--sport)',monthly:29.90,features:[
-    {ok:true, t:'Laboratoires <b>illimités</b>'},
-    {ok:true, t:'Zone géographique <b>30 km</b>'},
-    {ok:true, t:'Alternative garantie si stock insuffisant'},
-    {ok:true, t:'Mise en avant <b>maximum</b> — top résultats'},
-    {ok:true, t:'Intégration stock temps réel (API)'},
-    {ok:true, t:'Support dédié COS Pharmacie'},
-  ]}
+function isPaidPlan(planId){ return !!planId && planId!=='free'; }
+function getPlanConstraints(planId){ return isPaidPlan(planId)?PLAN_CONSTRAINTS.paid:PLAN_CONSTRAINTS.free; }
+const PLAN_FEATURES=[
+  'Laboratoires partenaires <b>illimités</b>',
+  'Référencement <b>prioritaire</b> jusqu\'à <b>30 km</b>',
+  'Commandes illimitées',
+  'Alternative garantie si stock insuffisant',
+  'Conseils personnalisés & intégration stock (API)',
+  'Tableau de bord, statistiques et rapport mensuel',
+  `Accompagnement téléphonique au ${SUPPORT_PHONE}`,
 ];
-function setPlanToggle(p){
-  planPeriod=p;
-  document.getElementById('toggleMens').className='toggle-btn'+(p==='mens'?' on':'');
-  document.getElementById('toggleAnn').className='toggle-btn'+(p==='ann'?' on':'');
-  renderPlans();
-}
+/* `upfront` = montant réellement débité à la souscription ; `months` = durée
+   couverte par ce paiement, mois offerts compris ; `renewMonthly` = prix du
+   renouvellement tacite. `commitMonths` n'est renseigné que lorsque la durée
+   d'engagement dépasse la période payée (offre 2 ans : payée par année). */
+const PLANS=[
+  {id:'free',name:'Essai gratuit',icon:'🎁',free:true,monthly:0},
+  {id:'m1',name:'Découverte',icon:'🎁',color:'#2B8A3E',monthly:49.90,upfront:49.90,months:2,renewMonthly:49.90,
+   badge:'1 mois offert',
+   sub:'1 mois acheté = 1 mois offert',
+   terms:'Offre de bienvenue utilisable <b>une seule fois</b> : 49,90 € débités, 2 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 49,90 €/mois, sans engagement, résiliable en 3 clics.'},
+  {id:'m3',name:'Lancement',icon:'🚀',monthly:39.90,upfront:119.70,months:6,renewMonthly:39.90,
+   badge:'3 mois offerts',
+   sub:'3 mois achetés = 3 mois offerts',
+   terms:'Offre utilisable <b>une seule fois</b> : 119,70 € débités, 6 mois d\'abonnement. Ensuite renouvellement mensuel par tacite reconduction à 39,90 €/mois, sans engagement, résiliable en 3 clics.'},
+  {id:'y1',name:'Annuel',icon:'⭐',popular:true,monthly:24.90,upfront:298.80,months:12,renewMonthly:24.90,
+   badge:'Populaire',
+   sub:'Engagement 12 mois, payable en une fois',
+   terms:'298,80 € payables en une fois pour 12 mois. Tacite reconduction annuelle, <b>préavis d\'1 mois</b>, résiliable en 3 clics conformément à l\'article L215-1 du Code de la consommation.'},
+  {id:'y2',name:'Partenaire 2 ans',icon:'👑',color:'var(--sport)',monthly:19.90,upfront:238.80,months:12,commitMonths:24,renewMonthly:19.90,
+   badge:'Le meilleur prix',
+   sub:'Engagement 24 mois, payable une fois par an',
+   terms:'238,80 € payables une fois par an, pendant 2 ans. Tacite reconduction, <b>préavis de 3 mois</b>, résiliable en 3 clics conformément à l\'article L215-1 du Code de la consommation.'},
+];
 function renderPlans(){
-  const ann=(planPeriod==='ann');
-  let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   document.getElementById('plansGrid').innerHTML=PLANS.map(pl=>{
     if(pl.free){
       return `<div class="plan free" style="grid-column:1/-1">
@@ -8644,74 +8647,81 @@ function renderPlans(){
           <h3>${pl.name}</h3>
           <div class="plan-price">
             <div><span class="amount" style="font-size:42px">€0</span><span class="per"> pour 3 livraisons</span></div>
-            <div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px">Puis choisissez un abonnement pour continuer.</div>
+            <div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px">Puis choisissez une durée d'abonnement pour continuer.</div>
           </div>
         </div>
-        <ul>${pl.features.map(f=>`<li><span class="ck">${f.ok?'✅':'❌'}</span>${f.t}</li>`).join('')}</ul>
-        <button class="plan-btn" onclick="selectPlan('free','free')">Essayer gratuitement →</button>
+        <button class="plan-btn" onclick="selectPlan('free')">Essayer gratuitement →</button>
       </div>`;
     }
-    const monthly=pl.monthly;
-    const discountRate=ANNUAL_DISCOUNTS[pl.id]||0;
-    const annualTotal=Math.round(monthly*12*(1-discountRate)*100)/100;
-    const annualMonthly=Math.round(annualTotal/12*100)/100;
-    const saveAmt=Math.round(monthly*12*discountRate*100)/100;
-    const discountPct=Math.round(discountRate*100);
-    const shown=ann?annualMonthly:monthly;
-    const c=getPlanConstraints(pl.id);
     const accentStyle=pl.popular?'border-color:var(--pharma)':pl.color?`border-color:${pl.color}`:'';
     return `<div class="plan ${pl.popular?'popular':''}" style="position:relative;${accentStyle}">
-      ${pl.popular?'<span class="popular-badge">Populaire</span>':''}
-      ${ann&&discountPct?`<span class="annual-discount-badge" style="position:absolute;top:14px;right:14px;background:#16A34A;color:#fff;font-size:11px;font-weight:800;border-radius:30px;padding:4px 10px">-${discountPct}%</span>`:''}
       <div class="plan-head">
-        <div class="level">Niveau ${PLANS.filter(p=>!p.free).indexOf(pl)+1} ${pl.icon}</div>
+        ${pl.badge?`<div><span class="plan-tag" ${pl.popular?'style="background:var(--pharma)"':''}>${esc(pl.badge)}</span></div>`:''}
+        <div class="level">${pl.icon} ${esc(pl.sub)}</div>
         <h3>${pl.name}</h3>
         <div class="plan-price">
-          <div><span class="amount">€${shown}</span><span class="per">/mois${ann?' (facturé an.)':''}</span></div>
-          ${ann?`<div class="plan-save">-${discountPct}% de réduction — économisez €${saveAmt}/an</div>`:'<div style="height:24px"></div>'}
+          <div><span class="amount">€${pl.monthly.toFixed(2)}</span><span class="per">/mois</span></div>
+          <div class="plan-save">${(()=>{const net=planUpfrontAfterPromo(pl.upfront);
+            return net<pl.upfront
+              ? `Soit <s style="opacity:.55;font-weight:600">€${pl.upfront.toFixed(2)}</s> <b>€${net.toFixed(2)}</b> débités pour ${pl.months} mois`
+              : `Soit €${pl.upfront.toFixed(2)} débités pour ${pl.months} mois`;})()}</div>
         </div>
-        <div class="plan-limits">Labs : <b>${c.maxLabs||'Illimité'}</b> · Zone : <b>${c.radius/1000} km</b></div>
+        <div class="plan-limits">Toutes les fonctionnalités incluses · Labs et commandes illimités</div>
       </div>
-      <ul>${pl.features.map(f=>`<li><span class="ck">${f.ok?'✅':'❌'}</span><span>${f.t}</span></li>`).join('')}</ul>
-      <button class="plan-btn" onclick="selectPlan('${pl.id}','${ann?'ann':'mens'}')">${pl.popular?`Choisir ${pl.name} →`:'Choisir ce niveau →'}</button>
+      <ul>${PLAN_FEATURES.map(f=>`<li><span class="ck">✅</span><span>${f}</span></li>`).join('')}</ul>
+      <div style="font-size:11.5px;line-height:1.5;color:var(--ink-soft);padding:0 22px;margin:-8px 0 16px">${pl.terms}</div>
+      <button class="plan-btn" onclick="selectPlan('${pl.id}')">Choisir cette durée →</button>
     </div>`;
   }).join('');
 }
-// Stores the currently-applied promo for plan selection
+/* Code promo saisi par l'officine, émis depuis l'espace administrateur.
+   ATTENTION : la RPC `redeem_promo_code` incrémente `used_count` dès la
+   validation, il n'existe pas de vérification sans consommation. On ne
+   rappelle donc jamais la RPC pour un code déjà appliqué — sans ce garde-fou,
+   chaque clic sur « Appliquer » brûlerait une utilisation du code. */
 let _planAppliedPromo=null;
 
+function promoDiscountLabel(p){ return p.type==='percent'?`-${p.value}%`:`-${p.value}€`; }
+/* Montant réellement débité à la souscription, code promo déduit. */
+function planUpfrontAfterPromo(amount){
+  const p=_planAppliedPromo;
+  if(!p) return amount;
+  const t=p.type==='percent'?amount*(1-p.value/100):amount-p.value;
+  return Math.max(0,Math.round(t*100)/100);
+}
+function clearPlanPromo(){
+  _planAppliedPromo=null;
+  const inp=document.getElementById('planPromoInput'); if(inp) inp.value='';
+  const resultEl=document.getElementById('planPromoResult'); if(resultEl) resultEl.innerHTML='';
+  renderPlans();
+}
 async function checkPlanPromoCode(){
   const code=(document.getElementById('planPromoInput')?.value||'').trim().toUpperCase();
   const resultEl=document.getElementById('planPromoResult');
-  if(!code){if(resultEl) resultEl.innerHTML='';return;}
   if(!resultEl) return;
+  if(!code){ resultEl.innerHTML=''; return; }
+  if(_planAppliedPromo?.code?.toUpperCase()===code) return; // déjà consommé
+  resultEl.innerHTML='<span style="color:var(--ink-soft)">Vérification…</span>';
   const result=await applyPromoCode(code,'pharmacie');
   if(result.error){
     _planAppliedPromo=null;
     resultEl.innerHTML=`<span style="color:var(--err);font-weight:700">❌ ${esc(result.error)}</span>`;
+    renderPlans();
     return;
   }
   _planAppliedPromo=result.promo;
-  const discStr=result.promo.type==='percent'?`-${result.promo.value}%`:`-${result.promo.value}€`;
-  resultEl.innerHTML=`<span style="color:var(--ok);font-weight:700">✅ Code appliqué : ${esc(discStr)} de réduction</span>`;
+  const discStr=promoDiscountLabel(result.promo);
+  resultEl.innerHTML=`<span style="color:var(--ok);font-weight:700">✅ Code ${esc(result.promo.code)} appliqué : ${esc(discStr)}</span> · <a href="#" onclick="event.preventDefault();clearPlanPromo()" style="color:var(--ink-soft)">retirer</a>`;
   showToast(`Code promo ${esc(code)} appliqué (${esc(discStr)}) !`,'var(--ok)');
+  renderPlans();
 }
 
-function selectPlan(pid,period){
-  const pl=PLANS.find(p=>p.id===pid);
-  const ann=(period==='ann');
-  const discountRate=ANNUAL_DISCOUNTS[pid]||0;
-  const monthly=pl.monthly||0;
-  let total=ann?Math.round(monthly*12*(1-discountRate)*100)/100:monthly;
-  let promoNote='';
-  if(_planAppliedPromo){
-    const p=_planAppliedPromo;
-    if(p.type==='percent') { total=Math.round(total*(1-p.value/100)*100)/100; promoNote=` (-${p.value}% code ${p.code})`; }
-    else { total=Math.max(0,Math.round((total-p.value)*100)/100); promoNote=` (-${p.value}€ code ${p.code})`; }
-  }
-  try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=period;ph.planName=pl.name;if(_planAppliedPromo)ph.promoCode=_planAppliedPromo.code;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
-  _planAppliedPromo=null;
-  const planLabel=pid==='free'?'Essai gratuit (3 livraisons offertes)':`"${pl.name}" ${ann?'annuel':'mensuel'} — €${total}${ann?'/an':'/mois'}${promoNote}`;
+function selectPlan(pid){
+  const pl=PLANS.find(p=>p.id===pid)||PLANS[0];
+  const total=planUpfrontAfterPromo(pl.upfront||0);
+  const promoNote=_planAppliedPromo?` (${promoDiscountLabel(_planAppliedPromo)} code ${_planAppliedPromo.code})`:'';
+  try{const ph=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');ph.plan=pid;ph.period=pid;ph.planName=pl.name;if(_planAppliedPromo)ph.promoCode=_planAppliedPromo.code;localStorage.setItem('livraisante_pharmacy',JSON.stringify(ph));}catch(e){}
+  const planLabel=pid==='free'?'Essai gratuit (3 livraisons offertes)':`"${pl.name}" — €${total.toFixed(2)} pour ${pl.months} mois${promoNote}`;
   showToast(`✅ ${planLabel} sélectionné`, 'var(--ok)');
   psGo(3);
 }
@@ -8878,19 +8888,21 @@ function setBasket(ailId,tier){
 function breakEvenWidget(){
   let phData={}; try{phData=JSON.parse(localStorage.getItem('livraisante_pharmacy')||'{}');}catch(e){}
   const plan=PLANS.find(p=>p.id===phData.plan)||PLANS[0];
-  const period=phData.period||'mens';
-  const monthlyCost=period==='ann'?Math.round(plan.monthly*10/12):plan.monthly;
+  /* Coût mensuel réellement supporté : le montant débité lissé sur la durée
+     qu'il couvre — pour les offres « mois offerts », c'est donc moins que le
+     prix affiché (49,90 € pour 2 mois = 24,95 €/mois sur la période). */
+  const monthlyCost=plan.upfront?Math.round(plan.upfront/plan.months*100)/100:0;
   // Estimate average basket from PRODUCT_PRIX
   const allPrices=Object.values(PRODUCT_PRIX);
   const avgPharmaBasket=Math.round(allPrices.reduce((a,b)=>a+b,0)/allPrices.length);
   const pharmacyGrossMargin=0.28; // 28% marque pharmaceutique typique
   const marginPerDelivery=Math.round(avgPharmaBasket*pharmacyGrossMargin);
-  const breakEvenCount=Math.ceil(monthlyCost/marginPerDelivery);
+  const breakEvenCount=Math.max(1,Math.ceil(monthlyCost/marginPerDelivery));
   let currentDeliveries=0; try{currentDeliveries=Object.values(ORDERS).filter(o=>o.status==='livree').length;}catch(e){}
   const progress=Math.min(100,Math.round(currentDeliveries/breakEvenCount*100));
   return `<div class="be-widget">
     <h3>📈 Seuil de rentabilité mensuel</h3>
-    <div class="be-row"><span>Plan : ${plan.name} (${period==='ann'?'annuel':'mensuel'})</span><b>€${monthlyCost}/mois</b></div>
+    <div class="be-row"><span>Abonnement : ${esc(plan.name)}${plan.months?` (${plan.months} mois)`:''}</span><b>€${monthlyCost}/mois</b></div>
     <div class="be-row"><span>Panier moyen estimé (Datastat/Gers)</span><b>€${avgPharmaBasket}</b></div>
     <div class="be-row"><span>Marge pharmacien par livraison (~28%)</span><b>€${marginPerDelivery}</b></div>
     <div class="be-row"><span>Livraisons à atteindre pour rentabiliser</span><div class="be-target">${breakEvenCount} livraisons</div></div>
@@ -8919,8 +8931,6 @@ function basketConfigWidget(){
 // En production, les niveaux seraient issus d'une base de données.
 // Prototype : les pharmacies dans les 5km = niveaux 1+2 ; jusqu'à 15km = niveau 3 uniquement.
 // Rayons par plan : free/ref=5km · prio=15km · alt=30km
-const PHARM_RADIUS_FREE_REF=5000;
-const PHARM_RADIUS_PRIO=15000;
 const PHARM_RADIUS_ALT=30000;
 
 /* ===================================================================
@@ -10765,8 +10775,9 @@ function renderProfile(){
   // Pharmacien profile
   if(u.role==='pharmacien'){
     const ph=u.pharmacyInfo||{};
-    const planName=PLANS.find(p=>p.id===ph.plan)?.name||'—';
-    const c=PLAN_CONSTRAINTS[ph.plan||'free'];
+    const plan=PLANS.find(p=>p.id===ph.plan);
+    const planName=plan?.name||'—';
+    const c=getPlanConstraints(ph.plan);
     html+=`
     <div class="profile-section">
       <h3>💊 Mon officine</h3>
@@ -10786,10 +10797,10 @@ function renderProfile(){
     </div>
     <div class="profile-section">
       <h3>📦 Abonnement Livraisanté</h3>
-      <div class="pfield"><span class="pk">Plan</span><span class="pv highlight">${planName}</span></div>
-      <div class="pfield"><span class="pk">Facturation</span><span class="pv">${ph.period==='ann'?'Annuelle (2 mois offerts)':'Mensuelle'}</span></div>
-      <div class="pfield"><span class="pk">Labs max</span><span class="pv">${c?.maxLabs||'Illimité'}</span></div>
-      <div class="pfield"><span class="pk">Zone</span><span class="pv">${c?.radius?c.radius/1000+' km':'—'}</span></div>
+      <div class="pfield"><span class="pk">Offre</span><span class="pv highlight">${esc(planName)}</span></div>
+      ${plan?.upfront?`<div class="pfield"><span class="pk">Facturation</span><span class="pv">€${plan.upfront.toFixed(2)} pour ${plan.months} mois, puis €${plan.renewMonthly.toFixed(2)}/mois</span></div>`:''}
+      <div class="pfield"><span class="pk">Labs max</span><span class="pv">${c.maxLabs||'Illimité'}</span></div>
+      <div class="pfield"><span class="pk">Zone</span><span class="pv">${c.radius/1000} km</span></div>
     </div>
     <div style="margin-top:10px"><button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="enterRole('pro')">Accéder au tableau de bord →</button></div>`;
   }
@@ -11449,7 +11460,7 @@ function trialWidget(){
   return `<div class="trial-strip">
     <div><b>Essai gratuit</b> · ${daysLeft > 0?`${daysLeft} jour${daysLeft>1?'s':''} restant${daysLeft>1?'s':''}`:`Expiré — passez à un abonnement`}</div>
     <div style="font-size:12px">Commandes : <b>${ordersThisMonth}/10</b> ce mois</div>
-    <button onclick="psGo(2);setPlanToggle('mens');enterRole('pharmacySignup')">Passer à l'abonnement →</button>
+    <button onclick="psGo(2);enterRole('pharmacySignup')">Passer à l'abonnement →</button>
   </div>`;
 }
 
@@ -12149,22 +12160,35 @@ async function loadAllInvoicesAdmin(){
     drivers:Object.entries(byDriver).map(([id,orders])=>({id,months:groupByMonth(orders)}))
   };
 }
+/* Frais de fonctionnement réellement encaissés sur une commande.
+   `pricing.commissionEur` est posé par confirm-order à partir du PaymentIntent :
+   c'est la seule valeur qui fasse foi. Les commandes antérieures à ce champ sont
+   reconstituées depuis le total débité (le don d'arrondi, au plus 1 €, est ignoré).
+   L'ancien calcul — 20 % des frais de LIVRAISON — n'avait ni le bon taux ni la
+   bonne base et sous-estimait la commission d'environ la moitié. */
+function orderCommissionEur(o){
+  const stored=parseFloat(o.pricing?.commissionEur);
+  if(Number.isFinite(stored)) return stored;
+  const total=parseFloat(o.pricing?.totalEur||0);
+  return total ? Math.round(total/(1+PLATFORM_FEE_RATE)*PLATFORM_FEE_RATE*100)/100 : 0;
+}
 function groupByMonth(orders){
   const map={};
   orders.forEach(o=>{
     const d=new Date(o.created_at);
     const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    if(!map[key])map[key]={key,label:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),orders:[],totalCA:0,totalDelivery:0,count:0};
+    if(!map[key])map[key]={key,label:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),orders:[],totalCA:0,totalDelivery:0,totalCommission:0,count:0};
     map[key].orders.push(o);
     map[key].totalCA+=parseFloat(o.pricing?.totalEur||0);
     map[key].totalDelivery+=parseFloat(o.pricing?.deliveryFeeEur||0);
+    map[key].totalCommission+=orderCommissionEur(o);
     map[key].count++;
   });
   return Object.values(map).sort((a,b)=>b.key.localeCompare(a.key));
 }
 function renderInvoiceMonth(m, showDownload=true, entityType='', entityLabel=''){
-  const platformComm=m.totalDelivery*0.20;
-  const clubShare=platformComm*0.50;
+  const platformComm=m.totalCommission||0;
+  const clubShare=platformComm*CLUB_SHARE_RATE;
   return `<div style="border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;text-transform:capitalize">${esc(m.label)}</div>
@@ -12185,7 +12209,7 @@ function renderInvoiceMonth(m, showDownload=true, entityType='', entityLabel='')
       </div>
       <div style="background:var(--paper-2);border-radius:10px;padding:10px;text-align:center">
         <div style="font-weight:800;font-size:16px;color:#16a34a">${platformComm.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div>
-        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Commission (20%)</div>
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:600">Frais de fonctionnement (${(PLATFORM_FEE_RATE*100).toFixed(0)}%)</div>
       </div>
     </div>
     <div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:8px">${m.orders.slice(0,5).map(o=>`<span style="display:inline-block;background:var(--paper-2);border-radius:6px;padding:2px 8px;margin:2px;font-family:monospace">${esc(o.id?.slice(0,8)||'—')}</span>`).join('')}${m.orders.length>5?`<span style="font-size:11px;color:var(--ink-soft)"> +${m.orders.length-5} autres</span>`:''}</div>
@@ -12198,8 +12222,8 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
   const _eLabel=esc(entityLabel);
   const _eType=esc(entityType);
   const _eNum=esc(num);
-  const platformCommission=m.orders.reduce((s,o)=>s+(parseFloat(o.pricing?.deliveryFeeEur||0)*0.20),0);
-  const clubContrib=platformCommission*0.50;
+  const platformCommission=m.orders.reduce((s,o)=>s+orderCommissionEur(o),0);
+  const clubContrib=platformCommission*CLUB_SHARE_RATE;
   const win=window.open('','_blank','width=860,height=750');
   if(!win){alert('Autorisez les popups pour générer le PDF.');return;}
   win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
@@ -12252,18 +12276,18 @@ function downloadInvoicePDF(m, entityLabel='', entityType=''){
     <div class="kpi"><div class="val">${m.count}</div><div class="lbl">Livraisons</div></div>
     <div class="kpi"><div class="val">${m.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">CA total</div></div>
     <div class="kpi"><div class="val">${m.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">Frais livraison</div></div>
-    <div class="kpi green"><div class="val">${platformCommission.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">Commission plateforme (20%)</div></div>
+    <div class="kpi green"><div class="val">${platformCommission.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div class="lbl">Frais de fonctionnement (${(PLATFORM_FEE_RATE*100).toFixed(0)}%)</div></div>
   </div>
   <h2>Détail des commandes</h2>
   <table><thead><tr><th>#</th><th>Réf commande</th><th>Date</th><th>CA (€)</th><th>Livraison (€)</th><th>Commission (€)</th></tr></thead>
   <tbody>${m.orders.map((o,i)=>{
     const fee=parseFloat(o.pricing?.deliveryFeeEur||0);
-    const comm=(fee*0.20).toFixed(2);
+    const comm=orderCommissionEur(o).toFixed(2);
     const d=o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'—';
     return `<tr><td>${i+1}</td><td style="font-family:monospace;font-size:11px">${esc((o.id||'—').slice(0,16))}</td><td>${d}</td><td>${parseFloat(o.pricing?.totalEur||0).toFixed(2)}</td><td>${fee.toFixed(2)}</td><td>${comm}</td></tr>`;
   }).join('')}</tbody>
   <tfoot><tr><td colspan="3" style="font-weight:700">TOTAL</td><td>${m.totalCA.toFixed(2)} €</td><td>${m.totalDelivery.toFixed(2)} €</td><td>${platformCommission.toFixed(2)} €</td></tr></tfoot></table>
-  ${clubContrib>0?`<div class="b2b2c"><div class="ttl">🏆 Reversement clubs (modèle B2B2C)</div><div style="font-size:12px;color:#15803d">50% de la commission plateforme reversés aux clubs de leurs membres licenciés : <b>${clubContrib.toFixed(2)} €</b> estimés ce mois.</div></div>`:''}
+  ${clubContrib>0?`<div class="b2b2c"><div class="ttl">🏆 Reversement clubs (modèle B2B2C)</div><div style="font-size:12px;color:#15803d">${CLUB_SHARE_RATE>=1?'Totalité':(CLUB_SHARE_RATE*100).toFixed(0)+'%'} des frais de fonctionnement reversée aux clubs de leurs membres licenciés : <b>${clubContrib.toFixed(2)} €</b> estimés ce mois.</div></div>`:''}
   <div class="footer">Livraisanté SAS · livraisante.fr · Document généré automatiquement · Non valable comme facture officielle sans signature</div>
   </body></html>`);
   win.document.close();
@@ -12300,8 +12324,8 @@ async function renderDriverInvoicesSection(containerId){
 }
 
 /* ===== CAGNOTTE CLUBS — B2B2C =====
-   Commission plateforme : 10% du total commande (panier + livraison)
-   Reversement club      : 50% de la commission (= 5% du total)
+   Frais de fonctionnement : PLATFORM_FEE_RATE du panier + livraison, hors don
+   Reversement club        : CLUB_SHARE_RATE de ces frais (aujourd'hui la totalité)
    Correctif audit 2026-08-05 (Important #7) : cette cagnotte était calculée
    ET stockée entièrement côté client, dans le localStorage du PATIENT
    (`livraisante_cagnotte_${clubId}`) — invisible du club comme de l'admin
@@ -12313,11 +12337,10 @@ async function renderDriverInvoicesSection(containerId){
    20260805210000_referrals_cagnotte_admin_messages.sql.
 ================================================= */
 // Estimation d'affichage uniquement (panier, avant paiement) — le montant
-// RÉELLEMENT crédité est recalculé côté serveur dans confirm-order/index.ts
-// à partir du total effectivement débité par Stripe (mêmes taux ici, mais
-// cette fonction ne sert jamais à créditer quoi que ce soit).
-const PLATFORM_FEE_RATE=0.10;
-const CLUB_SHARE_RATE=0.50;
+// RÉELLEMENT crédité est déterminé côté serveur par confirm-order/index.ts.
+// `orderTotal` doit être le panier AVANT commission (cartTotal), la même base
+// que platformCommission : la passer après commission surestimerait la
+// cagnotte annoncée par rapport à celle effectivement versée.
 function clubContributionAmount(orderTotal){
   return Math.round(orderTotal*PLATFORM_FEE_RATE*CLUB_SHARE_RATE*100)/100;
 }
@@ -12342,7 +12365,7 @@ async function renderCagnotteClub(el, clubId, clubNom){
       <div style="font-size:26px">🎁</div>
       <div>
         <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px">Cagnotte Livraisanté</div>
-        <div style="font-size:12px;color:var(--ink-soft)">50% de la commission Livraisanté reversés par commande de vos membres</div>
+        <div style="font-size:12px;color:var(--ink-soft)">${CLUB_SHARE_RATE>=1?'La totalité':(CLUB_SHARE_RATE*100).toFixed(0)+'%'} des frais de fonctionnement Livraisanté reversée par commande de vos membres</div>
       </div>
     </div>
     <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:36px;color:var(--pharma);margin-bottom:4px">${c.balance.toFixed(2)} €</div>
@@ -12407,14 +12430,21 @@ async function loadAdminFactures(){
   const filteredDr=drivers.map(dr=>({...dr,months:dr.months.filter(m=>!_adminFacturesMonth||m.key===_adminFacturesMonth)})).filter(dr=>dr.months.length);
 
   // Global summary for selected month
-  const allOrdersMonth=[...pharmacies,...drivers].flatMap(e=>e.months.filter(m=>m.key===_adminFacturesMonth).flatMap(m=>m.orders));
+  // Une même commande apparaît dans `pharmacies` ET dans `drivers` : sans
+  // déduplication par id, le récap global comptait chaque commande deux fois.
+  const allOrdersMonth=[...new Map(
+    [...pharmacies,...drivers]
+      .flatMap(e=>e.months.filter(m=>m.key===_adminFacturesMonth).flatMap(m=>m.orders))
+      .map(o=>[o.id,o])
+  ).values()];
   const globalMonth={
     key:_adminFacturesMonth,
     label:_adminFacturesMonth?new Date(_adminFacturesMonth+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'—',
     orders:allOrdersMonth,
     count:allOrdersMonth.length,
     totalCA:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.pricing?.totalEur||0),0),
-    totalDelivery:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.pricing?.deliveryFeeEur||0),0)
+    totalDelivery:allOrdersMonth.reduce((s,o)=>s+parseFloat(o.pricing?.deliveryFeeEur||0),0),
+    totalCommission:allOrdersMonth.reduce((s,o)=>s+orderCommissionEur(o),0)
   };
 
   let html=`
@@ -12429,15 +12459,15 @@ async function loadAdminFactures(){
   </div>`;
 
   if(globalMonth.count>0){
-    const platformComm=globalMonth.totalDelivery*0.20;
-    const clubContrib=platformComm*0.50;
+    const platformComm=globalMonth.totalCommission||0;
+    const clubContrib=platformComm*CLUB_SHARE_RATE;
     html+=`<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:14px;padding:16px;margin-bottom:20px">
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;margin-bottom:10px">📊 Récap du mois — ${esc(globalMonth.label.charAt(0).toUpperCase()+globalMonth.label.slice(1))}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
         <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.count}</div><div style="font-size:11px;color:#666">Livraisons</div></div>
         <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.totalCA.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0})}</div><div style="font-size:11px;color:#666">CA total</div></div>
         <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px">${globalMonth.totalDelivery.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Frais livraison</div></div>
-        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px;color:#16a34a">${platformComm.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Commission (20%)</div></div>
+        <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px;color:#16a34a">${platformComm.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Frais de fonctionnement (${(PLATFORM_FEE_RATE*100).toFixed(0)}%)</div></div>
         <div style="background:white;border-radius:10px;padding:10px;text-align:center"><div style="font-weight:800;font-size:18px;color:var(--pharma)">${clubContrib.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2})}</div><div style="font-size:11px;color:#666">Part clubs B2B2C</div></div>
       </div>
     </div>`;
