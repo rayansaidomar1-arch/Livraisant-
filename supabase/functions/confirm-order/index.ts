@@ -74,6 +74,46 @@ const ALLOWED_KINDS=['santé','click-collect','cnc-club'];
 const DELIVERY_MODE_BY_KIND: Record<string,string>={ 'santé':'livraison', 'click-collect':'cnc', 'cnc-club':'cnc_club' };
 const MAX_ITEMS=30;
 
+// ── Correctif audit sécurité 2026-09-21 (Critique) — XSS stocké ─────────────
+// `id` et `code` étaient acceptés tels quels, puis interpolés sans échappement
+// dans les tableaux de bord pharmacien et livreur (`${o.code}` en HTML,
+// `'${o.id}'` dans des onclick). Une commande réelle à 0,50 € permettait donc
+// d'exécuter du JavaScript dans la session d'un pharmacien, qui voit les noms,
+// adresses et médicaments de tous les patients de son officine.
+//
+// Le front assainit désormais à la lecture (orderRowToJs), ce qui protège aussi
+// les commandes déjà en base. Ces contrôles-ci ferment l'autre bout : la donnée
+// hostile n'entre plus du tout. Les deux sont nécessaires — le chemin
+// `kind:'sportif'` insère en direct sans passer par cette fonction.
+const SAFE_TOKEN_RE=/^[A-Za-z0-9_-]{1,40}$/;   // `id` : 'LS'+6 chiffres (index.html:5545)
+const SAFE_CODE_RE=/^LIV-[A-HJ-NP-Z2-9]{6}$/;  // `code` : generateOrderCode (index.html:5431)
+
+// Coordonnées : deux nombres finis dans leurs bornes, ou rien. Elles partent
+// dans un href et dans un onclick côté livreur.
+function sanitizePos(p: any){
+  if(!p||typeof p!=='object') return null;
+  const lat=Number(p.lat), lon=Number(p.lon);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)) return null;
+  if(lat< -90||lat>90||lon< -180||lon>180) return null;
+  return {lat,lon};
+}
+function sanitizeText(v: any, max: number){
+  if(v==null) return null;
+  return String(v).replace(/[\u0000-\u001F\u007F]/g,'').slice(0,max);
+}
+
+// Don solidaire : montant numérique, libellés bornés. Le montant réellement
+// encaissé reste celui relu chez Stripe — ceci n'est qu'un libellé d'affichage.
+function sanitizeDonation(d: any){
+  if(!d||typeof d!=='object') return null;
+  const amount=Number(d.amount);
+  return {
+    amount: Number.isFinite(amount)&&amount>=0&&amount<=100000 ? amount : 0,
+    assoc: sanitizeText(d.assoc,80),
+    icon: sanitizeText(d.icon,8),
+  };
+}
+
 // Appel d'une Edge Function depuis une autre. `functions.invoke` échouait
 // systématiquement sur ce trajet — vérifié sur signup-verification, où le passage à
 // fetch a suffi à réparer l'envoi. Ici les deux appels sont délibérément non bloquants,
@@ -107,8 +147,13 @@ Deno.serve(async (req)=>{
     if(typeof paymentIntentId!=='string'||!paymentIntentId.startsWith('pi_')){
       return new Response(JSON.stringify({error:'paymentIntentId invalide'}),{status:400,headers:corsHeaders});
     }
-    if(typeof id!=='string'||!id){
+    if(typeof id!=='string'||!SAFE_TOKEN_RE.test(id)){
       return new Response(JSON.stringify({error:'id invalide'}),{status:400,headers:corsHeaders});
+    }
+    // `code` est facultatif, mais s'il est fourni il doit être au format généré
+    // par le client — sinon il ne servirait de toute façon à rien à la remise.
+    if(code!=null && (typeof code!=='string'||!SAFE_CODE_RE.test(code))){
+      return new Response(JSON.stringify({error:'code invalide'}),{status:400,headers:corsHeaders});
     }
     if(!ALLOWED_KINDS.includes(kind)){
       return new Response(JSON.stringify({error:'kind invalide'}),{status:400,headers:corsHeaders});
@@ -233,11 +278,11 @@ Deno.serve(async (req)=>{
       status: 'nouvelle',
       items,
       delivery_mode: DELIVERY_MODE_BY_KIND[kind]||'livraison',
-      patient_name: patient?.name||null,
-      patient_address: patient?.addr||null,
-      patient_pos: patient?.pos||null,
+      patient_name: sanitizeText(patient?.name,120),
+      patient_address: sanitizeText(patient?.addr,240),
+      patient_pos: sanitizePos(patient?.pos),
       pricing: { totalEur, deliveryFeeEur, commissionEur },
-      payment: { email: patient?.email||'', donation: patient?.donation||null, paymentIntentId },
+      payment: { email: sanitizeText(patient?.email,160)||'', donation: sanitizeDonation(patient?.donation), paymentIntentId },
     };
     const {data,error}=await supabaseAdmin.from('orders').insert(row).select().single();
     if(error){

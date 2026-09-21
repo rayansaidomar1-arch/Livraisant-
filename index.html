@@ -5440,7 +5440,7 @@ function renderOrderCode(o){
   if(!o?.code) return '';
   return `<div style="background:#0D0E09;border-radius:14px;padding:18px;text-align:center;margin:14px 0">
     <div style="font-size:11px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px">Code de validation de commande</div>
-    <div style="font-family:'Bricolage Grotesque',monospace;font-weight:900;font-size:32px;letter-spacing:8px;color:#C2F23E;line-height:1">${o.code}</div>
+    <div style="font-family:'Bricolage Grotesque',monospace;font-weight:900;font-size:32px;letter-spacing:8px;color:#C2F23E;line-height:1">${esc(o.code)}</div>
     <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Montrez ce code au pharmacien (Click &amp; Collect) ou au livreur</div>
     <button onclick="navigator.clipboard?.writeText('${o.code}').then(()=>showToast('Code copié !','var(--ok)'))" style="font-family:inherit;font-weight:700;font-size:12px;padding:7px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:white;cursor:pointer;margin-top:10px">📋 Copier le code</button>
   </div>`;
@@ -5659,7 +5659,7 @@ function renderOrderTrack(id){
     <div class="stepper">${STEPS.map((s,i)=>`<div class="st ${i<=idx?'on':''}"><div class="bub"></div>${s[1]}</div>`).join('')}</div>
     ${o.driver?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">🛵 Pris en charge par un livreur.</div>`:''}
     ${o.patient?.addr?.startsWith('Click & Collect')?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">🏪 ${esc(o.patient.addr)}</div>`:''}
-    ${o.patient?.donation?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">${o.patient.donation.icon} Livraisanté reverse <b>€${o.patient.donation.amount}</b> à ${o.patient.donation.assoc} en votre nom.</div>`:''}
+    ${o.patient?.donation?`<div style="font-size:12.5px;color:var(--pharma);margin-top:6px">${esc(o.patient.donation.icon)} Livraisanté reverse <b>€${o.patient.donation.amount}</b> à ${esc(o.patient.donation.assoc)} en votre nom.</div>`:''}
   </div>${renderOrderCode(o)}${renderCheckInBlock(o)}${subHtml}${cagnotteHtml()}${supportBlock('Un problème avec cette livraison ?')}`;
 }
 
@@ -6187,7 +6187,7 @@ function renderPro(){
   const card=o=>`
     <div class="ocard">
       <div class="otop"><div class="oid">${esc(o.id)}<small>${esc(o.patient.name)} · ${esc(o.kind||'santé')} · il y a ${timeAgo(o.createdAt)}</small></div><span class="ostatus ${o.status}">${STATUS_LABEL[o.status]}</span></div>
-      ${o.code?`<div style="display:flex;align-items:center;gap:8px;padding:6px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)">Code</span><span style="font-family:monospace;font-weight:900;font-size:15px;letter-spacing:3px;background:var(--lime);padding:3px 10px;border-radius:6px;color:var(--ink)">${o.code}</span>${o.codeValidated?'<span style="color:var(--ok);font-size:12px;font-weight:700">✓ Validé</span>':''}</div>`:''}
+      ${o.code?`<div style="display:flex;align-items:center;gap:8px;padding:6px 0 10px;border-bottom:1px solid #f0f0f0;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)">Code</span><span style="font-family:monospace;font-weight:900;font-size:15px;letter-spacing:3px;background:var(--lime);padding:3px 10px;border-radius:6px;color:var(--ink)">${esc(o.code)}</span>${o.codeValidated?'<span style="color:var(--ok);font-size:12px;font-weight:700">✓ Validé</span>':''}</div>`:''}
       <div class="oitems">${orderItemsHtml(o)}</div>
       <div class="oaddr">${orderAddrHtml(o)}</div>
       <div class="oactions">
@@ -6319,7 +6319,7 @@ function renderLivreur(){
         ${o.status==='prete'?`<button onclick="takeOrder('${o.id}')">🛵 Accepter la course</button>`:''}
         ${o.status==='en_livraison'&&!o.codeValidated?`${o.patient.pos?`<button class="alt" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${o.patient.pos.lat},${o.patient.pos.lon}','_blank')">🗺 Itinéraire</button>`:''}${renderCodeValidator(o.id,'livreur')}`:''}
         ${o.status==='en_livraison'&&o.codeValidated?`<span style="color:var(--ok);font-weight:700">✓ Livraison confirmée par code</span>`:''}
-        ${o.code?`<div style="font-size:11px;color:var(--ink-soft);margin-top:8px">Code : <b style="font-family:monospace;letter-spacing:2px">${o.code}</b>${o.codeValidated?' ✓':''}</div>`:''}      </div>
+        ${o.code?`<div style="font-size:11px;color:var(--ink-soft);margin-top:8px">Code : <b style="font-family:monospace;letter-spacing:2px">${esc(o.code)}</b>${o.codeValidated?' ✓':''}</div>`:''}      </div>
     </div>`;
   // Carte allégée pour les commandes pas encore prises en charge : la RLS
   // n'expose ni patient ni contenu (id / pharmacy_id / status / created_at
@@ -6361,6 +6361,9 @@ function applyOrderRealtimePayload(payload){
   }
   const row=payload.new; if(!row) return;
   const o=window.LS_SB.orderRowToJs(row);
+  // orderRowToJs renvoie null pour une commande écartée (id hors format —
+  // correctif XSS stocké du 2026-09-21) : ne pas indexer ORDERS[undefined].
+  if(!o) return;
   ORDERS[o.id]=o; persistOrders();
   refreshViews();
 }
@@ -11662,7 +11665,7 @@ async function confirmCheckIn(orderId,dist,lat,lon){
   o.arrival={checkedIn:true,ts:Date.now(),timeLabel:now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),dist:dist||0,lat:lat||null,lon:lon||null};
   saveOrder(o);
   const section=document.getElementById(`checkin-section-${orderId}`);
-  if(section) section.innerHTML=`<div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${o.arrival.timeLabel}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${dist>0?`Vous êtes à <b>${dist}m</b> de l'officine.`:'Présence validée par le pharmacien.'} L'équipe vous prend en charge.</div>`;
+  if(section) section.innerHTML=`<div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${esc(o.arrival.timeLabel)}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${dist>0?`Vous êtes à <b>${dist}m</b> de l'officine.`:'Présence validée par le pharmacien.'} L'équipe vous prend en charge.</div>`;
   // Doit être écrit côté serveur pour que la pharmacie (autre appareil) soit alertée en temps réel
   if(window.LS_SB?.SB_READY){
     const {error}=await window.LS_SB.sbUpdateOrderFields(orderId,{arrival:o.arrival});
@@ -11689,7 +11692,7 @@ function renderCheckInBlock(o){
   if(!o||o.kind!=='click-collect') return '';
   // Already checked in
   if(o.arrival?.checkedIn){
-    return `<div class="checkin-section" id="checkin-section-${o.id}"><div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${o.arrival.timeLabel}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${o.arrival.dist>0?`Confirmé à <b>${o.arrival.dist}m</b>.`:'Validé par le pharmacien.'} Commande en cours de préparation.</div></div>`;
+    return `<div class="checkin-section" id="checkin-section-${o.id}"><div class="arrival-badge"><div class="green-dot"></div>Arrivée enregistrée à ${esc(o.arrival.timeLabel)}</div><div style="font-size:13px;color:#1c6b2b;margin-top:8px">✓ ${o.arrival.dist>0?`Confirmé à <b>${o.arrival.dist}m</b>.`:'Validé par le pharmacien.'} Commande en cours de préparation.</div></div>`;
   }
   // ✅ Pharmacist has PREPARED (status = 'prete') → patient can now check in
   if(o.status==='prete'){

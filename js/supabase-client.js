@@ -192,22 +192,100 @@ function pharmacyJsToRow(ph){
 // fonctions sont le seul point de traduction entre les deux formats —
 // index.html ne doit jamais construire une ligne `orders` à la main.
 
+// ── Correctif audit sécurité 2026-09-21 (Critique) — XSS stocké ────────────
+// Plusieurs champs d'une commande sont choisis librement par le patient qui la
+// passe (`id`, `code`, `patient_pos`, `payment.donation`, `arrival`) et étaient
+// interpolés SANS échappement dans les tableaux de bord du PHARMACIEN et du
+// LIVREUR — `${o.code}` en HTML, `${o.patient.pos.lat}` dans un href et dans un
+// onclick, `'${o.id}'` dans une quinzaine de onclick. Une commande réelle à
+// 0,50 € suffisait donc à exécuter du JavaScript dans la session d'un
+// pharmacien, qui voit les noms, adresses et MÉDICAMENTS de tous les patients
+// de son officine (données de l'article 9 RGPD).
+//
+// Le correctif est posé ICI plutôt que sur chaque `${...}` : `orderRowToJs` est
+// le seul point par lequel une ligne `orders` entre côté client (cf. le
+// commentaire ci-dessus, et les 8 appelants). Assainir à l'entrée couvre du
+// même coup les sites d'affichage qu'un correctif au cas par cas aurait
+// oubliés, et ceux qui seront écrits demain.
+//
+// ⚠️ Ne pas élargir SAFE_TOKEN_RE : c'est parce que `id` et `code` ne peuvent
+// contenir ni guillemet, ni parenthèse, ni chevron que les `onclick="f('${o.id}')"`
+// du fichier index.html sont sûrs. Y autoriser `'` rouvrirait la faille partout
+// d'un seul coup.
+const SAFE_TOKEN_RE = /^[A-Za-z0-9_-]{1,40}$/;
+
+function safeToken(v){
+  const s = v == null ? '' : String(v);
+  return SAFE_TOKEN_RE.test(s) ? s : null;
+}
+function safeNumber(v, min, max){
+  const n = Number(v);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+// Un texte libre reste un texte libre (il est échappé par esc() à l'affichage),
+// mais on le borne : pas de caractères de contrôle, longueur plafonnée.
+function safeText(v, max){
+  if(v == null) return null;
+  return String(v).replace(/[\u0000-\u001F\u007F]/g, '').slice(0, max);
+}
+function safePos(p){
+  if(!p || typeof p !== 'object') return null;
+  const lat = safeNumber(p.lat, -90, 90);
+  const lon = safeNumber(p.lon, -180, 180);
+  return (lat === null || lon === null) ? null : { lat, lon };
+}
+function safeDonation(d){
+  if(!d || typeof d !== 'object') return null;
+  return {
+    amount: safeNumber(d.amount, 0, 100000),
+    assoc:  safeText(d.assoc, 80),
+    icon:   safeText(d.icon, 8),
+  };
+}
+function safeArrival(a){
+  if(!a || typeof a !== 'object') return null;
+  return {
+    checkedIn: !!a.checkedIn,
+    served:    !!a.served,
+    ts:        safeNumber(a.ts, 0, 4102444800000),
+    timeLabel: safeText(a.timeLabel, 16),
+    dist:      safeNumber(a.dist, 0, 100000) ?? 0,
+    lat:       safeNumber(a.lat, -90, 90),
+    lon:       safeNumber(a.lon, -180, 180),
+  };
+}
+
 function orderRowToJs(row){
   if(!row) return null;
+  // Un `id` hors format ne peut pas venir d'un client légitime (`'LS'+6 chiffres`,
+  // index.html:5545). On écarte la ligne entière plutôt que de la corriger : elle
+  // est soit hostile, soit corrompue, et dans les deux cas elle n'a rien à faire
+  // dans un tableau de bord. Les appelants qui font `.map()` filtrent les nulls.
+  if(!safeToken(row.id)){
+    console.warn('orderRowToJs : commande écartée, id hors format', row.id);
+    return null;
+  }
   return {
     id: row.id,
-    code: row.code,
+    // `code` est affiché brut dans les tableaux de bord pharmacien et livreur.
+    // Un code hors format n'a de toute façon aucune valeur (il ne correspondrait
+    // à rien à la validation de remise) : on le neutralise plutôt que de l'afficher.
+    code: safeToken(row.code),
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
     kind: row.kind,
     deliveryMode: row.delivery_mode,
     patientId: row.patient_id,
     pharmacyId: row.pharmacy_id,
     patient: {
-      name: row.patient_name,
-      addr: row.patient_address,
-      pos: row.patient_pos || null,
-      donation: row.payment?.donation || null,
-      email: row.payment?.email || ''
+      // name / addr sont échappés par esc() partout où ils sont affichés ; on se
+      // contente de les borner pour éviter qu'une valeur démesurée n'assomme le rendu.
+      name: safeText(row.patient_name, 120),
+      addr: safeText(row.patient_address, 240),
+      // pos part dans un href ET dans un onclick (itinéraire Google Maps) :
+      // deux coordonnées numériques ou rien du tout.
+      pos: safePos(row.patient_pos),
+      donation: safeDonation(row.payment?.donation),
+      email: safeText(row.payment?.email, 160) || ''
     },
     items: row.items || [],
     status: row.status,
@@ -218,7 +296,9 @@ function orderRowToJs(row){
     pricing: row.pricing || null,
     codeValidated: !!row.code_validated,
     substitution: row.substitution || null,
-    arrival: row.arrival || null,
+    // `arrival` est écrit par le patient (sbUpdateOrderFields) et son `timeLabel`
+    // s'affiche dans la notification « patient arrivé » côté pharmacien.
+    arrival: safeArrival(row.arrival),
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null
   };
 }
@@ -264,14 +344,14 @@ async function sbInsertOrderFull(orderJs){
 async function sbGetPatientOrders(patientId){
   const sb = getSB(); if(!sb) return [];
   const { data } = await sb.from('orders').select('*').eq('patient_id', patientId).order('created_at', { ascending: false });
-  return (data || []).map(orderRowToJs);
+  return (data || []).map(orderRowToJs).filter(Boolean);
 }
 
 /** Commandes d'une pharmacie (dashboard pharmacien) */
 async function sbGetOrdersForPharmacy(pharmacyId){
   const sb = getSB(); if(!sb) return [];
   const { data } = await sb.from('orders').select('*').eq('pharmacy_id', pharmacyId).order('created_at', { ascending: false });
-  return (data || []).map(orderRowToJs);
+  return (data || []).map(orderRowToJs).filter(Boolean);
 }
 
 /** Commandes disponibles pour un livreur — vue à colonnes limitées
@@ -288,7 +368,7 @@ async function sbGetAvailableOrdersForDriver(){
 async function sbGetMyDriverOrders(driverId){
   const sb = getSB(); if(!sb) return [];
   const { data } = await sb.from('orders').select('*').eq('driver_id', driverId).order('created_at', { ascending: false });
-  return (data || []).map(orderRowToJs);
+  return (data || []).map(orderRowToJs).filter(Boolean);
 }
 
 /** Prise en charge atomique d'une commande disponible par un livreur.
