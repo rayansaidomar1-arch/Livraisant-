@@ -389,16 +389,6 @@
   .cross-insight{background:linear-gradient(135deg,#1F6FEB10,#7C3AED10);border:1.5px solid #7C3AED40;border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:14px}
   .cross-insight b{color:var(--pharma)}
   /* Cartes produits nommés */
-  .prod-card{background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;transition:.13s}
-  .prod-card.in-cart{border-color:var(--ok);background:#f0faf2}
-  .prod-card .pm{flex:1}
-  .prod-card .pname{font-weight:700;font-size:15px}
-  .prod-card .pdosage{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
-  .prod-card .pbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-  .prod-card .pprix{font-family:'Bricolage Grotesque';font-weight:800;font-size:18px;white-space:nowrap;text-align:right}
-  .prod-card .pprix small{font-size:11px;font-weight:400;color:var(--ink-soft);display:block}
-  .add-btn{font-family:inherit;font-size:13px;font-weight:700;padding:8px 14px;border-radius:30px;border:1.5px solid var(--ok);background:transparent;color:var(--ok);cursor:pointer;white-space:nowrap;margin-top:6px}
-  .add-btn.added{background:var(--ok);color:#fff}
   /* Panier */
   .cart-section{background:var(--card);border:3px solid var(--ink);border-radius:18px;overflow:hidden;margin-top:22px;box-shadow:5px 5px 0 var(--lime)}
   .cart-head{background:var(--ink);color:var(--paper);padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
@@ -3426,15 +3416,6 @@ const LAB_CATALOG={
 ],
 };
 
-/* Helpers catalogue */
-function labProducts(lab){return LAB_CATALOG[lab]||[];}
-function allLabProducts(){
-  const out=[];
-  Object.entries(LAB_CATALOG).forEach(([lab,prods])=>{
-    prods.forEach(p=>out.push({n:p.n,s:p.s,cat:p.cat||'CA',f:p.f,lab}));
-  });
-  return out;
-}
 
 /* Métadonnées produit : labs (array) + cat + reco officielle.
    cat = 'CA' (complément alimentaire) | 'DM' (dispositif médical).
@@ -4367,37 +4348,7 @@ async function bookSportRdv(proId,btn){
   renderSportApp();
 }
 
-function saveSportLicense(){
-  const val=document.getElementById('licenseInput')?.value.trim();
-  if(!val||!currentUser) return;
-  const accs=getAccounts(); accs[currentUser.email].sportLicense=val; currentUser.sportLicense=val;
-  localStorage.setItem('livraisante_accounts_v2',JSON.stringify(accs));
-  showToast('✅ Licence sportive liée à votre compte','var(--ok)');
-  renderSportApp();
-}
 
-function selectSportLicence(sport){
-  document.querySelectorAll('[id^="sli-"]').forEach(b=>{b.style.borderColor='#e5e5e5';b.style.background='white';});
-  const btn=document.getElementById('sli-'+sport);
-  if(btn){btn.style.borderColor='#1F6FEB';btn.style.background='#EFF6FF';}
-  const protocols={
-    Football:'Prévention entorses chevilles · Renforcement ischio-jambiers · Hydratation &amp; électrolytes',
-    Rugby:'Protection articulaire (genoux, épaules) · Récupération musculaire intense · Magnésium + Créatine',
-    Natation:'Gestion des épaules (ORL, peau) · Vitamine D (peu de soleil) · Oméga-3 anti-inflammatoire',
-    Athlétisme:'Périodisation nutrition · Fer (coureurs fond) · Créatine (sprinters) · Récupération articulations',
-    Judo:'Gestion du poids · Préservation masse musculaire · Récupération post-combat',
-    Tennis:'Coude et épaule · Hydratation prolongée · Magnésium anti-crampes',
-    Cyclisme:'Nutrition effort longue durée · Vitamines B · Oméga-3 · Genoux',
-    Basket:'Prévention chevilles · Proprioception · Créatine + Whey',
-    Handball:'Épaules · Genoux · Vitesse de récupération · Magnésium',
-    Volley:'Épaules · Genoux · Coordination · Protéines + Oméga-3',
-    Ski:'Articulations (genoux++) · Vitamine D · Récupération altitude',
-    Boxe:'Gestion poids · Protection neuro · Magnésium + Oméga-3',
-  };
-  const proto=protocols[sport]||'Protocole général : hydratation, récupération, prévention articulaire.';
-  const el=document.getElementById('sportProtocol');
-  if(el) el.innerHTML=`<div style="background:#EFF6FF;border:1.5px solid #1F6FEB40;border-radius:12px;padding:14px"><div style="font-weight:800;font-size:14px;color:#1F6FEB;margin-bottom:6px">Protocole ${sport}</div><div style="font-size:13px;color:var(--ink)">${proto}</div><button onclick="enterApp('sante')" style="font-family:inherit;font-size:12px;font-weight:700;margin-top:10px;padding:8px 14px;background:#1F6FEB;color:white;border:none;border-radius:8px;cursor:pointer">Accéder aux produits conseils →</button></div>`;
-}
 
 function renderPartenaireTab(){
   return `
@@ -5055,11 +5006,6 @@ function validateSportAccess(){
   try{localStorage.setItem('livraisante_sport_access',JSON.stringify({code:code||null,lic:lic||null,ts:Date.now()}));}catch(e){}
   enterRole('sportif');
 }
-function checkSportAccess(){
-  try{const a=JSON.parse(localStorage.getItem('livraisante_sport_access')||'null');
-    if(a&&(a.code||a.lic)) return true;}catch(e){}
-  return false;
-}
 
 /* ---- Stockage des commandes (mémoire + localStorage protégé) ---- */
 let ORDERS={};
@@ -5266,12 +5212,6 @@ function toggleNotifPanel(){
   }
   panel.innerHTML=renderNotifPanel();
 }
-// Request browser notification permission on first interaction
-function requestNotifPermission(){
-  if(typeof Notification!=='undefined'&&Notification.permission==='default'){
-    Notification.requestPermission().then(p=>{ if(p==='granted') showToast('✅ Notifications activées','var(--ok)'); });
-  }
-}
 
 function saveOrder(o){ ORDERS[o.id]=o; persistOrders(); broadcast(o); refreshViews(); }
 function refreshViews(){
@@ -5410,9 +5350,6 @@ function renderPharmacyCard(){
   }).join('');
 }
 
-/* ABONNEMENT PATIENT Livraison+ supprimé — livraison à l'acte uniquement */
-function showSubModal(){ /* désactivé */ }
-function subscribePlan(){ /* désactivé */ }
 
 /* ══════════════════════════════════════════════════════════
    PARRAINAGE PATIENT — 5€/parrainage, max 5
@@ -6322,7 +6259,6 @@ async function takeOrder(id){
   renderNotifBell();
   if(currentView==='livreur') renderLivreur();
 }
-function deliverOrder(id){ setStatus(id,'livree'); }
 
 /** Charge : (a) les commandes dispo (vue à colonnes limitées, polling — cf.
  *  note ci-dessous) et (b) les commandes déjà prises en charge par CE livreur
@@ -7505,50 +7441,11 @@ async function renderDonationClubOptions(){
 
 function removeFromCartAndRefresh(key){
   removeFromCart(key);
-  Object.entries(PROD_REG).forEach(([pKey,p])=>{
-    if(cartKey(p)===key){const card=document.getElementById('card-'+pKey);if(card){card.classList.remove('in-cart');const btn=card.querySelector('.add-btn');if(btn){btn.className='add-btn';btn.textContent='+ Ajouter';}}}
-  });
 }
 /* selectAssoc remplacé par don mensuel automatique Livraisanté */
 
 /* ---- Affichage d'un produit nommé ---- */
 /* ---- Registre produit (évite le JSON inline dans onclick) ---- */
-const PROD_REG={};
-function toggleProd(pKey){
-  const p=PROD_REG[pKey]; if(!p) return;
-  const key=cartKey(p);
-  if(patientCart.some(c=>cartKey(c)===key)) removeFromCart(key);
-  else addToCart(p);
-  // Mise à jour ciblée de la carte sans re-render complet
-  const card=document.getElementById('card-'+pKey);
-  if(card){
-    const inCart=patientCart.some(c=>cartKey(c)===key);
-    card.classList.toggle('in-cart',inCart);
-    const btn=card.querySelector('.add-btn');
-    if(btn){btn.className='add-btn'+(inCart?' added':''); btn.textContent=inCart?'✓ Dans le panier':'+ Ajouter';}
-  }
-  renderCart();
-}
-function productCard(p, substance, meta){
-  const key=cartKey(p);
-  const pKey='pk_'+key.replace(/[^a-z0-9]/gi,'_');
-  PROD_REG[pKey]=p; // register for onclick access
-  const inCart=patientCart.some(c=>cartKey(c)===key);
-  const prix=(p.prix*(1+MARGE_PCT)).toFixed(2);
-  return `<div class="prod-card ${inCart?'in-cart':''}" id="card-${pKey}">
-    <div class="pm">
-      <div class="pname">${p.name}</div>
-      <div class="pdosage">${p.dosage}</div>
-      <div class="pbadges">${catBadge(meta?.cat||'CA')}${meta?.reco?`<span class="reco-badge">Reco ${meta.reco}</span>`:''}<span class="lab-badge">${p.lab}</span></div>
-    </div>
-    <div style="text-align:right">
-      <div class="pprix">€${prix}<small>Prix unique</small></div>
-      <button class="add-btn ${inCart?'added':''}" onclick="toggleProd('${pKey}')">
-        ${inCart?'✓ Dans le panier':'+ Ajouter'}
-      </button>
-    </div>
-  </div>`;
-}
 
 /* ===================================================================
    ARRONDI SOLIDAIRE — 10 associations de santé
@@ -7731,8 +7628,6 @@ function evidenceBadges(sub){
   return parts.length?`<div class="ev-badges">${parts.join('')}</div>`:'';
 }
 
-/** Rétrocompat — utiliser evidenceBadges à la place */
-function recoBadge(source){ return evidenceBadges({reco:source,ev:null}); }
 function smartBadge(recoSource){ return evidenceBadges({reco:recoSource,ev:null}); }
 
 /* Rendu d'un item accordéon */
@@ -9587,47 +9482,6 @@ function renderSlotContent(){
   return `<div class="cnc-info">🏪 <b>Click &amp; Collect :</b> votre commande est préparée par la pharmacie. Délai estimé <b>30 à 60 min</b> selon l'affluence.</div>
   ${pharmNote}${pharmCard}${renderTimeSlotPicker()}`;
 }
-function renderCncCheckin(){
-  return `<div id="cncCheckinBox" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-top:12px">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px">🏪 Je suis à la pharmacie</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Cochez cette case lorsque vous êtes physiquement présent à l'officine pour prévenir le pharmacien.</div>
-    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:700">
-      <input type="checkbox" id="cncPresent" onchange="onCncPresent(this)" style="width:20px;height:20px;accent-color:#15803d;cursor:pointer">
-      Je suis présent(e) à la pharmacie
-    </label>
-    <div id="cncCountdown" style="display:none;margin-top:12px;text-align:center">
-      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">Le pharmacien a été notifié — préparation en cours</div>
-      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;color:#15803d" id="cncTimer">5:00</div>
-      <div style="font-size:12px;color:var(--ink-soft)">Délai de dispensation</div>
-    </div>
-  </div>`;
-}
-let _cncTimerInterval=null;
-function onCncPresent(checkbox){
-  const countdown=document.getElementById('cncCountdown');
-  if(!checkbox.checked){
-    clearInterval(_cncTimerInterval); _cncTimerInterval=null;
-    if(countdown) countdown.style.display='none';
-    return;
-  }
-  // Notify pharmacist (in-app notification stored in localStorage)
-  pushNotification('pharmacien','🏪 Patient présent à l\'officine — Click &amp; Collect en attente de dispensation',{type:'cnc_arrival',ts:Date.now()});
-  showToast('✅ Le pharmacien a été notifié de votre présence','var(--ok)');
-  if(countdown) countdown.style.display='block';
-  let secs=300;
-  const timerEl=document.getElementById('cncTimer');
-  clearInterval(_cncTimerInterval);
-  _cncTimerInterval=setInterval(()=>{
-    secs--;
-    const m=Math.floor(secs/60), s=secs%60;
-    if(timerEl) timerEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    if(secs<=0){
-      clearInterval(_cncTimerInterval);
-      if(timerEl) timerEl.textContent='0:00';
-      showToast('⏰ Délai de dispensation écoulé — contactez le pharmacien','var(--warn)');
-    }
-  },1000);
-}
 
 /* ---- CAGNOTTE patient ---- */
 let cagnotte={total:0,history:[]};
@@ -9858,8 +9712,6 @@ function initDemoAccounts(){
   if(changed) saveAccounts();
 }
 
-/* ---- Auth ---- */
-function _dbg(msg){ /* panel debug supprimé en prod */ console.debug('[LV]',msg); }
 
 // ── Correctif audit sécurité 2026-07-23 (Moyen) — hash de mot de passe salé ──
 // Ce hash ne sert QUE au fallback localStorage 100% hors-ligne (mode démo sans
@@ -10484,10 +10336,6 @@ function updateAccountChip(){
     avatar.textContent='👤'; label.textContent='Compte';
   }
 }
-function selectCity(nom){
-  const el=document.getElementById('regCity'); if(el) el.value=nom;
-  const dd=document.getElementById('cityDropdown'); if(dd) dd.style.display='none';
-}
 
 function formatPhone(el){
   let v=el.value.replace(/\D/g,'').slice(0,10);
@@ -10581,7 +10429,6 @@ function selectCity(nom, cityId, dropdownId){
   const el=document.getElementById(cityId||'regCity'); if(el) el.value=nom;
   const dd=document.getElementById(dropdownId||'regCityDropdown'); if(dd) dd.style.display='none';
 }
-function selectRegCity(nom){selectCity(nom,'regCity','regCityDropdown');}
 document.addEventListener('click',e=>{
   ['regCityDropdown','editCityDropdown'].forEach(id=>{
     const dd=document.getElementById(id);
