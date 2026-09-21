@@ -9687,19 +9687,6 @@ loadAccounts();
   if(typeof loadOrdersForCurrentRole==='function') loadOrdersForCurrentRole();
 })();
 
-/* ---- Populate clubs dropdown ---- */
-async function populateClubsDropdown(){
-  const sel=document.getElementById('regClubHP');
-  if(!sel) return;
-  if(window.LS_SB?.SB_READY){
-    const sb=window.LS_SB.getSB(); if(!sb) return;
-    const {data}=await sb.from('clubs_public').select('id,nom,ville').order('nom');
-    if(data&&data.length){
-      sel.innerHTML='<option value="">-- Sélectionner un club --</option>'+data.map(c=>`<option value="${esc(c.id)}">${esc(c.nom)}${c.ville?' — '+esc(c.ville):''}</option>`).join('');
-    }
-  }
-}
-
 /* ---- Comptes de démonstration désactivés ---- */
 function initDemoAccounts(){
   // Comptes démo supprimés — authentification Supabase uniquement
@@ -10059,7 +10046,6 @@ async function doRegister(){
       rpps:(document.getElementById('regRPPSPro')?.value||'').trim(),
       rppsStatus:document.getElementById('regRPPSPro')?.dataset.rppsStatus||'pending',
       profession:document.getElementById('regProfession')?.value||'',
-      clubId:document.getElementById('regClubHP')?.value||null,
       partnerClubs:[...regProSelectedClubs],
     };
   }
@@ -10218,7 +10204,7 @@ async function completeRegistration(){
     const _regDelay=(ms)=>new Promise(r=>setTimeout(r,ms));
     if(role==='professionnel_sante'){
       await _regDelay(1500);
-      const {error:proErr}=await window.LS_SB.sbUpsertHealthPro(user.id,{profession:roleData.profession,rpps:roleData.rpps,club_id:roleData.clubId||null,partner_clubs:roleData.partnerClubs});
+      const {error:proErr}=await window.LS_SB.sbUpsertHealthPro(user.id,{profession:roleData.profession,rpps:roleData.rpps,partner_clubs:roleData.partnerClubs});
       if(proErr){
         console.error('Échec enregistrement profil professionnel de santé :', proErr);
         showToast('⚠️ Compte créé, mais votre profil professionnel n\'a pas pu être enregistré. Complétez-le depuis votre espace.','#f59e0b');
