@@ -97,7 +97,12 @@ Deno.serve(async (req)=>{
   if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
   try{
     const body=await req.json();
-    const { paymentIntentId, id, code, kind, pharmacyId, patient, items }=body||{};
+    // ── Correctif audit 2026-09-21 (Critique, faille 1) ──────────────────────
+    // `items` et `pharmacyId` ne sont VOLONTAIREMENT plus lus du corps de la
+    // requête. Ils proviennent désormais de `payment_carts`, écrit par
+    // create-payment-intent au moment où le montant a été calculé. Le client peut
+    // continuer à les envoyer (le front le fait encore), ils sont ignorés.
+    const { paymentIntentId, id, code, kind, patient }=body||{};
 
     if(typeof paymentIntentId!=='string'||!paymentIntentId.startsWith('pi_')){
       return new Response(JSON.stringify({error:'paymentIntentId invalide'}),{status:400,headers:corsHeaders});
@@ -107,12 +112,6 @@ Deno.serve(async (req)=>{
     }
     if(!ALLOWED_KINDS.includes(kind)){
       return new Response(JSON.stringify({error:'kind invalide'}),{status:400,headers:corsHeaders});
-    }
-    if(!pharmacyId||typeof pharmacyId!=='string'){
-      return new Response(JSON.stringify({error:'pharmacyId manquant'}),{status:400,headers:corsHeaders});
-    }
-    if(!Array.isArray(items)||items.length===0||items.length>MAX_ITEMS){
-      return new Response(JSON.stringify({error:'Panier invalide'}),{status:400,headers:corsHeaders});
     }
 
     const supabaseUrl=Deno.env.get('SUPABASE_URL')!;
@@ -149,10 +148,29 @@ Deno.serve(async (req)=>{
     if(pi.metadata?.userId!==userId){
       return new Response(JSON.stringify({error:"Ce paiement n'appartient pas à cet utilisateur"}),{status:403,headers:corsHeaders});
     }
+    // ── Correctif audit 2026-09-21 (Critique, faille 2) ──────────────────────
+    // `totalEur` plus bas vaut `pi.amount/100`, ce qui ne tient QUE pour une
+    // devise à deux décimales. create-payment-intent force désormais l'euro,
+    // mais un PaymentIntent créé avant ce correctif (ou par un autre chemin)
+    // pourrait porter une devise à zéro décimale : on refuse explicitement
+    // plutôt que d'enregistrer un montant faux et de créditer la cagnotte
+    // dessus.
+    if(pi.currency!=='eur'){
+      console.error('confirm-order devise inattendue',{paymentIntentId,currency:pi.currency});
+      return new Response(JSON.stringify({error:'Devise de paiement non prise en charge'}),{status:400,headers:corsHeaders});
+    }
 
-    // Idempotence : un même PaymentIntent ne doit créer qu'une seule commande
-    // (double-clic, retry réseau côté client...). Si une commande existe déjà
-    // pour ce paiement, on la renvoie telle quelle plutôt que d'en recréer une.
+    // Idempotence (chemin rapide) : un même PaymentIntent ne doit créer qu'une
+    // seule commande (double-clic, retry réseau de createOrder/index.html:5587,
+    // rejeu de resumePendingOrderConfirmation...). Si la commande existe déjà,
+    // on la renvoie telle quelle.
+    //
+    // Cette relecture est faite AVANT les vérifications de panier ci-dessous, et
+    // non après : une commande déjà créée n'a plus rien à prouver — le panier a
+    // servi à la créer, il a pu depuis être purgé (cleanup_stale_payment_carts)
+    // ou ne jamais avoir existé pour un paiement antérieur à ce correctif. La
+    // faire échouer sur un panier manquant reviendrait à rendre infinalisable
+    // une commande déjà payée ET déjà enregistrée.
     const {data:existingOrder}=await supabaseAdmin
       .from('orders').select('*')
       .eq('payment->>paymentIntentId', paymentIntentId)
@@ -162,6 +180,45 @@ Deno.serve(async (req)=>{
         headers:{...corsHeaders,'Content-Type':'application/json'}
       });
     }
+
+    // ── Correctif audit 2026-09-21 (Critique, faille 1) ──────────────────────
+    // Le panier facturé est relu depuis `payment_carts` (écrit par
+    // create-payment-intent avec service_role, table inaccessible aux clients).
+    // C'est ce qui rattache enfin le CONTENU de la commande au montant payé :
+    // auparavant, on pouvait payer un panier d'un article puis faire enregistrer
+    // une commande de trente articles.
+    const {data:cart,error:cartErr}=await supabaseAdmin
+      .from('payment_carts').select('*')
+      .eq('payment_intent_id',paymentIntentId)
+      .maybeSingle();
+    if(cartErr||!cart){
+      console.error('confirm-order panier introuvable',{paymentIntentId,cartErr});
+      return new Response(JSON.stringify({error:'Panier introuvable pour ce paiement.'}),{status:400,headers:corsHeaders});
+    }
+    if(cart.user_id!==userId){
+      return new Response(JSON.stringify({error:"Ce panier n'appartient pas à cet utilisateur"}),{status:403,headers:corsHeaders});
+    }
+    // Le montant relu chez Stripe doit être celui calculé au moment où ce panier
+    // a été figé — sinon le PaymentIntent et le panier ne vont pas ensemble.
+    if(Number(cart.amount_cents)!==Number(pi.amount)){
+      console.error('confirm-order montant/panier désaccordés',{paymentIntentId,cart:cart.amount_cents,pi:pi.amount});
+      return new Response(JSON.stringify({error:'Paiement et panier incohérents.'}),{status:400,headers:corsHeaders});
+    }
+    // Les frais de livraison dépendent du mode : accepter un `kind` qui ne
+    // correspond pas au mode facturé reviendrait à payer un click-collect
+    // (0 € de frais) puis à se faire livrer.
+    if(DELIVERY_MODE_BY_KIND[kind]!==cart.delivery_mode){
+      return new Response(JSON.stringify({error:'Mode de livraison incohérent avec le paiement.'}),{status:400,headers:corsHeaders});
+    }
+
+    const cartItems=Array.isArray(cart.items)?cart.items:[];
+    if(cartItems.length===0||cartItems.length>MAX_ITEMS){
+      return new Response(JSON.stringify({error:'Panier invalide'}),{status:400,headers:corsHeaders});
+    }
+    // Forme d'affichage attendue par le front (cf. orderItemsHtml/index.html),
+    // reconstruite ICI à partir du panier canonique plutôt que reçue du client.
+    const items=cartItems.map((it:any)=>({name:`${it?.name??''} (${it?.lab??''})`,ev:'—'}));
+    const pharmacyId=cart.pharmacy_id;
 
     const totalEur=pi.amount/100;
     const deliveryFeeCents=Number(pi.metadata?.deliveryFeeCents||0);
@@ -192,6 +249,30 @@ Deno.serve(async (req)=>{
       // uniquement dans les logs serveur ; le client ne reçoit qu'un message
       // générique.
       console.error('confirm-order insert error',error);
+      // ── Correctif audit 2026-09-21 (Critique, faille 3) ───────────────────
+      // Le SELECT d'idempotence plus haut est une optimisation, pas une
+      // garantie : entre ce SELECT et cet INSERT, une requête concurrente
+      // portant le même paymentIntentId (et un `id` différent, puisque `id` est
+      // choisi par le client) passait elle aussi — deux commandes pour un seul
+      // paiement, et surtout deux crédits de cagnotte, la contrainte UNIQUE de
+      // `club_cagnotte_entries` portant sur `order_id` et non sur le paiement.
+      // La garantie tient désormais en base (idx_orders_payment_intent_unique,
+      // migration 20260921000000). Reste à traduire la violation 23505 en
+      // réponse idempotente : sans ça, un simple double-clic renverrait une 500
+      // alors que la commande a bel et bien été créée.
+      if((error as any)?.code==='23505'){
+        const {data:raced}=await supabaseAdmin
+          .from('orders').select('*')
+          .eq('payment->>paymentIntentId', paymentIntentId)
+          .maybeSingle();
+        // Les effets de bord (cagnotte, push, email) appartiennent à la requête
+        // qui a gagné la course : on ne les rejoue pas ici.
+        if(raced && raced.patient_id===userId){
+          return new Response(JSON.stringify({order:raced}),{
+            headers:{...corsHeaders,'Content-Type':'application/json'}
+          });
+        }
+      }
       return new Response(JSON.stringify({error:"Impossible d'enregistrer la commande. Réessayez dans un instant."}),{status:500,headers:corsHeaders});
     }
 

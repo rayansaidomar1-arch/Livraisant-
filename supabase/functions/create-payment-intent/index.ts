@@ -81,7 +81,17 @@ function donationAmountEur(rawTotal: number): number{
 Deno.serve(async (req)=>{
   if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
   try{
-    const {items,deliveryMode,distanceKm,donationEnabled,currency='eur',metadata={},pharmacyId}=await req.json();
+    // ── Correctif audit 2026-09-21 (Critique, faille 2) ──────────────────────
+    // `currency` était lu du corps de la requête (`currency='eur'` n'était qu'un
+    // défaut, pas une contrainte) et transmis tel quel à Stripe. Or `finalAmount`
+    // est calculé en CENTIMES D'EURO. En passant une devise à zéro décimale
+    // (`jpy`, `krw`, `vnd`...), `amount:1000` ne vaut plus 10,00 € mais 1000 yens
+    // (~5,80 €) : le patient était débité d'une fraction du prix, tandis que
+    // `confirm-order` enregistrait `pi.amount/100 = 10,00 €` en base et créditait
+    // la cagnotte club sur cette base — donc sur de l'argent jamais encaissé.
+    // La devise n'est plus lue du client : ce service ne facture qu'en euros.
+    const {items,deliveryMode,distanceKm,donationEnabled,metadata={},pharmacyId}=await req.json();
+    const currency='eur';
 
     if(!Array.isArray(items)||items.length===0||items.length>MAX_ITEMS){
       return new Response(JSON.stringify({error:'Panier invalide'}),{status:400,headers:corsHeaders});
@@ -143,6 +153,11 @@ Deno.serve(async (req)=>{
     // jamais depuis un prix fourni par le client — puis application du
     // positionnement tarifaire choisi par la pharmacie.
     let base=0;
+    // `canonicalItems` est le panier RÉELLEMENT facturé : chaque entrée a été
+    // résolue contre le catalogue `products`. C'est lui qui sera enregistré plus
+    // bas dans `payment_carts` puis relu par `confirm-order` — cf. correctif
+    // faille 1 ci-dessous.
+    const canonicalItems: {lab:string;name:string}[]=[];
     for(const it of items){
       const lab=String(it?.lab||'').trim();
       const name=String(it?.name||'').trim();
@@ -156,6 +171,7 @@ Deno.serve(async (req)=>{
         return new Response(JSON.stringify({error:`Produit introuvable : ${name} (${lab})`}),{status:400,headers:corsHeaders});
       }
       base+=Number(prod.prix)*priceMultiplier(prod.category);
+      canonicalItems.push({lab,name});
     }
 
     const subtotal=base*(1+MARGE_PCT);
@@ -190,6 +206,34 @@ Deno.serve(async (req)=>{
       // un déficit net maintenant que la totalité des frais lui revient.
       metadata:{...metadata,platform:'livraisante',userId,deliveryFeeCents:String(Math.round(finalDeliveryFeeEur*100)),commissionCents:String(Math.round(commission*100))},
     });
+
+    // ── Correctif audit 2026-09-21 (Critique, faille 1) ──────────────────────
+    // On enregistre le panier canonique qui vient de servir au calcul du montant,
+    // lié au PaymentIntent. `confirm-order` le relira ici au lieu de faire
+    // confiance aux `items` du corps de sa propre requête : sans cela, le montant
+    // était bien vérifié mais portait sur un panier que plus rien ne rattachait à
+    // celui finalement enregistré en commande.
+    // Bloquant volontairement : si le panier ne peut pas être enregistré, le
+    // PaymentIntent ne doit pas être remis au client, sinon `confirm-order`
+    // refusera la commande APRÈS que le patient aura été débité.
+    const {error:cartErr}=await supabase.from('payment_carts').insert({
+      payment_intent_id: paymentIntent.id,
+      user_id: userId,
+      pharmacy_id: pharmacyId,
+      delivery_mode: deliveryMode,
+      items: canonicalItems,
+      amount_cents: finalAmount,
+    });
+    if(cartErr){
+      console.error('create-payment-intent payment_carts insert error',cartErr);
+      // Le PaymentIntent créé juste au-dessus n'a encore débité personne
+      // (status 'requires_payment_method') : on l'annule pour ne pas laisser
+      // d'intention de paiement orpheline côté Stripe.
+      try{ await stripe.paymentIntents.cancel(paymentIntent.id); }
+      catch(cancelErr){ console.error('create-payment-intent cancel après échec panier',cancelErr); }
+      return new Response(JSON.stringify({error:"Impossible d'initialiser le paiement. Réessayez dans un instant."}),{status:500,headers:corsHeaders});
+    }
+
     return new Response(JSON.stringify({
       clientSecret:paymentIntent.client_secret,
       paymentIntentId:paymentIntent.id,
