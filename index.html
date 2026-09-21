@@ -666,6 +666,7 @@
   .warn-caution b{color:#9a6606}
   .warn-timing{background:#dbeafe;border:1.5px solid #1F6FEB80;border-radius:11px;padding:10px 13px;font-size:12.5px;margin-top:6px}
   .warn-timing b{color:var(--kine)}
+  .acc-warn{padding:0 16px 12px}
   .safe-crat{background:#d7f0db;border-radius:8px;padding:3px 8px;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--ok)}
 
   /* Créneaux Click & Collect */
@@ -7752,6 +7753,11 @@ function renderAccItem(ailId, sub, col){
                sub.reco?`<span class="acc-badge" style="background:${bgColor}15;color:${col.text}">Reco ${sub.reco}</span>`:'';
   // Badges multi-sources : reco officielle + PubMed + AMA
   const amaBadge=evidenceBadges(sub);
+  // Avertissement non bloquant (précaution d'emploi CRAT, interaction ANSM « à
+  // prendre en compte ») : le produit reste commandable, l'alerte doit donc
+  // accompagner chaque état de l'item. Le cas bloquant est traité plus bas, où
+  // le message remplace déjà la description.
+  const warnBox=warn.ok&&warn.level?`<div class="acc-warn">${warnHtml(warn)}</div>`:'';
 
   // ─── INDISPONIBLE ────────────────────────────────────────
   if(!available){
@@ -7783,6 +7789,7 @@ function renderAccItem(ailId, sub, col){
         </div>
         <button class="acc-change-btn" onclick="changeAccSelection('${ailId}','${sk}')">Changer</button>
       </div>
+      ${warnBox}
     </div>`;
   }
 
@@ -7812,6 +7819,7 @@ function renderAccItem(ailId, sub, col){
         <span class="acc-toggle" style="transform:rotate(90deg)">›</span>
       </div>
       <div class="acc-panel">
+        ${warnBox}
         <div class="acc-panel-head">Choisissez un produit · ${named.length} disponible${named.length>1?'s':''}</div>
         ${rows}
       </div>
@@ -7830,6 +7838,7 @@ function renderAccItem(ailId, sub, col){
       ${badge}
       <span class="acc-toggle">›</span>
     </div>
+    ${warnBox}
   </div>`;
 }
 
