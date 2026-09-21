@@ -68,16 +68,26 @@ ajoute un nouveau sous-traitant, ou change une finalité.
 
 | Sous-traitant | Rôle | Localisation | Données concernées |
 |---|---|---|---|
-| Supabase (infra AWS eu-west-3, Paris) | Hébergement base de données, authentification, stockage, fonctions serveur | UE (Paris) | Toutes les données applicatives |
-| GitHub Inc. (GitHub Pages) | Hébergement statique du site (HTML/JS/CSS, aucune donnée personnelle en base côté GitHub) | US (CDN global) | Aucune donnée personnelle stockée — sert uniquement le code statique |
+| Supabase Pte. Ltd. (infra AWS **eu-central-1, Francfort**) | Hébergement base de données, authentification, stockage, fonctions serveur | Données stockées en **UE (Allemagne)** ; sous-traitant établi à **Singapour** (hors UE, pas de décision d'adéquation → SCC requises) | Toutes les données applicatives, y compris les données de santé (voir alerte ci-dessous) |
+| Clever Cloud SAS (Static Web Server) | Hébergement statique du site (HTML/JS/CSS) | **France (région Paris)** | Aucune donnée personnelle stockée — sert uniquement le code statique |
+| Clever Cloud SAS (PostgreSQL **certifié HDS**, région Paris HDS) | Hébergement prévu des données de santé — **déployé mais ne recevant pas encore le trafic applicatif** | France (Paris) | Aucune donnée en production à ce jour |
 | Stripe | Traitement des paiements par carte | UE/US (Stripe Payments Europe Ltd, clauses contractuelles types) | Montant, devise, email/nom du payeur, 4 derniers chiffres carte (Stripe uniquement — jamais transmis à Livraisanté) |
 | Resend | Envoi des emails transactionnels (confirmation compte, commande, etc.) | À vérifier (US ou UE selon config Resend) | Adresse email, contenu de l'email (peut inclure des informations de commande) |
 | Sentry | Suivi des erreurs applicatives (monitoring) | À vérifier selon config | Traces techniques, potentiellement IP, parfois des identifiants utilisateur en cas d'erreur |
 | Google Analytics 4 / Plausible | Mesure d'audience | GA4 : US (si activé, soumis consentement) / Plausible : sans cookie, IP anonymisée | Données de navigation anonymisées |
 
-> **À vérifier par le DPO :** localisation exacte des serveurs Resend et Sentry utilisés (UE ou
-> hors UE) — si hors UE, il faut des clauses contractuelles types (SCC) signées, ce registre ne
-> peut pas confirmer cela depuis le code seul.
+> **⚠️ Non-conformité en cours (Art. L1111-8 CSP).** Les données de santé sont aujourd'hui
+> hébergées sur Supabase (AWS Francfort), qui **n'est pas certifié HDS**. L'infrastructure HDS
+> (Clever Cloud Paris HDS) est déployée et opérationnelle, mais aucun trafic applicatif n'y est
+> routé : le frontend appelle toujours les Edge Functions Supabase. Tant que la bascule n'est pas
+> faite, l'hébergement de données de santé ne satisfait pas l'article L1111-8. Cet écart est
+> assumé et documenté dans les mentions légales du site ; il doit être refermé en priorité.
+
+> **À vérifier par le DPO :** (1) la signature effective des clauses contractuelles types avec
+> Supabase Pte. Ltd., établi à Singapour — pays ne bénéficiant pas d'une décision d'adéquation
+> de la Commission européenne, malgré un stockage des données en Allemagne ; (2) la localisation
+> exacte des serveurs Resend et Sentry utilisés (UE ou hors UE) — si hors UE, il faut également
+> des SCC signées. Ce registre ne peut pas confirmer ces points depuis le code seul.
 
 ---
 

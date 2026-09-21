@@ -2,16 +2,17 @@
 
 ## 1. Site web (déjà en production)
 
-**URL actuelle :** https://rayansaidomar1-arch.github.io/livraisante/
+**URL actuelle :** https://livraisante.fr (et `www.livraisante.fr`, sans redirection entre les deux)
 
 Landing page marketing : `livraisante.fr/landing.html`
 Application principale : `livraisante.fr/index.html`
 
-Pour migrer vers un domaine personnalisé :
-1. Acheter le domaine sur OVH / Gandi
-2. GitHub → Settings → Pages → Custom domain : `livraisante.fr`
-3. DNS : CNAME → `rayansaidomar1-arch.github.io`
-4. Activer "Enforce HTTPS"
+**Hébergement :** Clever Cloud, runtime *Static Web Server*, région Paris
+(app `app_ddc04236-2437-4a1c-8ed2-809cc274f9ae`). Déploiement automatique sur
+push `main`. Le site n'est plus sur GitHub Pages.
+
+L'API backend HDS est déployée séparément sur `api.livraisante.fr`
+(région `parhds`) — voir `backend/README.md`.
 
 ---
 
@@ -69,7 +70,10 @@ Dans Xcode : Signing → Archive → Distribute → App Store Connect
 _Mise à jour 2026-07-22 : cette checklist datait d'avant l'implémentation du modal RGPD_
 _(`showRgpdModal()`, index.html) — vérifié directement dans le code, pas seulement supposé :_
 - [x] Mentions légales (SIREN, siège, hébergeur) — `showRgpdModal('mentions')` : Livraisanté SAS,
-      RCS 933 484 917 Lyon, 1 Rue des Vergers 69120 Vaulx-en-Velin, hébergeur GitHub Pages + Supabase (AWS eu-west-3)
+      RCS 933 484 917 Lyon, 1 Rue des Vergers 69120 Vaulx-en-Velin. Hébergeur du site : **Clever Cloud SAS**
+      (Nantes, serveurs région Paris) ; données : **Supabase Pte. Ltd., AWS eu-central-1 Francfort**.
+      _Corrigé le 2026-09-21 : les mentions annonçaient GitHub Pages et AWS eu-west-3 Paris, deux
+      informations devenues fausses après la migration vers Clever Cloud._
 - [x] Politique de confidentialité RGPD — `showRgpdModal('intro')` : base légale, durées de conservation,
       droits Art. 15-22, consentement granulaire Art. 9 dédié à l'inscription (case à cocher séparée des CGU)
 - [~] Contact protection des données — **correction du 2026-07-22** : le site affichait `dpo@livraisante.fr`
