@@ -72,7 +72,9 @@ function deliveryFeeEur(mode: string, distanceKm: unknown): number|null{
 }
 
 function donationAmountEur(rawTotal: number): number{
-  const cents=rawTotal%1;
+  // cf. donationAmount() index.html : arrondir à 2 décimales AVANT de prendre la
+  // part décimale, sinon un sous-total comme 12.999000000000002 donne un don nul.
+  const cents=Math.round((Math.round(rawTotal*100)/100)%1*100)/100;
   return cents===0 ? 1.00 : parseFloat((1-cents).toFixed(2));
 }
 
