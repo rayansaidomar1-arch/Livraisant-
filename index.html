@@ -7471,14 +7471,12 @@ function renderCart(){
         <span>💚 Don solidaire <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(optionnel)</span>${donationEnabled&&donation>0?' — +€'+donation.toFixed(2):''}</span>
       </label>
       ${donationEnabled?`
-      <div id="donationTargetSection">
-        <div class="donation-line" style="flex-direction:column;align-items:flex-start;gap:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
-            <div><span style="font-size:18px">${assoc.icon}</span> <span style="font-size:12.5px">Ce mois : <b>${assoc.name}</b></span></div>
-            <span class="amt">+€${donation.toFixed(2)}</span>
-          </div>
-          <div id="clubDonationOptions" style="width:100%;display:none"><!-- rempli async --></div>
+      <div class="donation-line" style="flex-direction:column;align-items:flex-start;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <div><span style="font-size:18px">${assoc.icon}</span> <span style="font-size:12.5px">Ce mois : <b>${assoc.name}</b></span></div>
+          <span class="amt">+€${donation.toFixed(2)}</span>
         </div>
+        <div id="clubDonationOptions" style="width:100%;display:none"><!-- rempli async --></div>
       </div>`:''}
     </div>
     <div class="cart-total-row">
@@ -7567,10 +7565,6 @@ const HEALTH_ASSOCIATIONS=[
   {id:'aides',name:'Aides (VIH / Hépatites)',icon:'🌈',color:'#E8590C',url:'https://www.aides.org'},
 ];
 let donationEnabled=false; // opt-in patient (désactivé par défaut)
-// 'assoc' = association du mois uniquement
-// 'club'  = club du patient uniquement (licencié)
-// 'both'  = 50% assoc + 50% club (licencié)
-let donationTarget='assoc';
 
 /* Association mensuelle tournante — décision de Livraisanté (société mère) */
 function getCurrentAssoc(){
@@ -7594,7 +7588,6 @@ function cartTotalFull(mode){
   return parseFloat((raw+comm+don).toFixed(2));
 }
 function toggleDonation(){ donationEnabled=!donationEnabled; renderCart(); }
-function setDonationTarget(t){ donationTarget=t; renderCart(); }
 async function getPatientClub(){
   // Vérifie si le patient courant est licencié dans un club
   if(!currentUser?.id) return null;
