@@ -7465,7 +7465,7 @@ function renderCart(){
       <span style="color:#7c3aed">🏆 Reversé à votre club (${CLUB_SHARE_RATE>=1?'la totalité des frais':(CLUB_SHARE_RATE*100).toFixed(0)+'% des frais'})</span>
       <span style="font-weight:700;color:#7c3aed">€${(commission*CLUB_SHARE_RATE).toFixed(2)}</span>
     </div>`:''}
-    <div class="assoc-section" id="donationSection">
+    <div class="assoc-section">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;font-weight:600;margin-bottom:${donationEnabled?'10px':'0'}">
         <input type="checkbox" ${donationEnabled?'checked':''} onchange="toggleDonation()" style="width:17px;height:17px;accent-color:var(--pharma)">
         <span>💚 Don solidaire <span style="font-weight:400;color:var(--ink-soft);font-size:12px">(optionnel)</span>${donationEnabled&&donation>0?' — +€'+donation.toFixed(2):''}</span>
