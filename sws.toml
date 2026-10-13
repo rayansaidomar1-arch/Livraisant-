@@ -13,7 +13,16 @@
 #
 # Aucune section [general] : SWS n'écrase une option que si le fichier la
 # définit (src/settings/mod.rs, `if let Some(v) = general.root`), et c'est
-# Clever Cloud qui pose la racine servie et le port. Ne pas en ajouter.
+# Clever Cloud qui pose la racine servie et le port.
+#
+# ⚠️ Ne jamais poser `ignore-hidden-files = false` ici. C'est tentant, parce que
+# SWS ignore les dotfiles par défaut et renvoie donc 404 sur
+# /.well-known/assetlinks.json (nécessaire au TWA Android). Mais Clever Cloud
+# sert le site depuis le clone git lui-même — les logs de déploiement montrent
+# `Cloning into '/home/bas/app_…'` puis `Serving static website from` cette même
+# racine. Désactiver ce filtre publierait /.git/config et tout l'historique.
+# Pour exposer un fichier .well-known, passer par une règle
+# [[advanced.rewrites]] vers un chemin sans point.
 
 [[advanced.headers]]
 source = "/**"
