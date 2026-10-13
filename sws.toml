@@ -1,0 +1,48 @@
+# Configuration du serveur web de production.
+#
+# Le runtime « Static » de Clever Cloud sert le site avec Static Web Server
+# (SWS) 2.44, qui charge ce fichier au démarrage depuis la racine de
+# l'application — c'est le chemin par défaut (`./sws.toml`), aucune variable
+# d'environnement à poser. Les en-têtes définis ici sont appliqués en dernier
+# dans la chaîne de réponse (après `cache-control` et `security-headers`), ils
+# ont donc le dernier mot.
+#
+# ⚠️ Une erreur de syntaxe ou un glob invalide ici empêche SWS de démarrer :
+# le site devient indisponible, pas seulement mal configuré. Toute modification
+# doit être suivie d'un `curl -I https://livraisante.fr/`.
+#
+# Aucune section [general] : SWS n'écrase une option que si le fichier la
+# définit (src/settings/mod.rs, `if let Some(v) = general.root`), et c'est
+# Clever Cloud qui pose la racine servie et le port. Ne pas en ajouter.
+
+[[advanced.headers]]
+source = "/**"
+
+[advanced.headers.headers]
+Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+X-Frame-Options = "DENY"
+# Équivalent moderne de X-Frame-Options. Cette politique ne contient que
+# `frame-ancestors`, elle ne restreint donc rien d'autre : le CSP complet reste
+# celui de la balise <meta> d'index.html (frame-ancestors y serait ignoré, une
+# balise meta ne peut pas porter cette directive).
+Content-Security-Policy = "frame-ancestors 'none'"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"
+# `payment` doit inclure js.stripe.com : Apple Pay / Google Pay passent par la
+# Payment Request API appelée depuis l'iframe Stripe, qui est cross-origin.
+# `payment=(self)` seul les désactiverait silencieusement.
+Permissions-Policy = "geolocation=(self), camera=(), microphone=(), payment=(self \"https://js.stripe.com\")"
+# Par défaut SWS renvoie max-age=31536000 sur .js et .css (un an, sans
+# revalidation) et max-age=86400 sur le HTML : un correctif de sécurité
+# n'atteindrait un navigateur déjà visiteur qu'au bout d'un an. `no-cache`
+# n'interdit pas le cache, il impose de le revalider — donc un 304 quand rien
+# n'a changé, et le correctif au premier chargement sinon.
+Cache-Control = "no-cache"
+
+# Les images et polices n'ont pas de contenu sensible et ne portent pas de
+# correctif : elles gardent un cache long.
+[[advanced.headers]]
+source = "/**/*.{png,jpg,jpeg,webp,avif,svg,ico,woff,woff2}"
+
+[advanced.headers.headers]
+Cache-Control = "public, max-age=2592000"
